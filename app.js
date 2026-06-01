@@ -220,7 +220,7 @@ function launchApp() {
     if (navAdmin) navAdmin.style.display = 'flex';
     var navMod = document.getElementById('nav-modules');
     if (navMod) navMod.style.display = 'flex';
-    renderModuleGroups();
+    renderModuleGroups(); syncSidebarModules();
     updateRegBadge();
   }
 
@@ -526,7 +526,7 @@ function editGroupName(gid) {
   inp.onblur = function() {
     var g = moduleGroups.find(function(g){return g.id===gid;});
     if (g && inp.value.trim()) g.name = inp.value.trim();
-    renderModuleGroups();
+    renderModuleGroups(); syncSidebarModules();
     showToast('Đã đổi tên nhóm', 'success');
   };
   inp.onkeydown = function(e){ if(e.key==='Enter') inp.blur(); };
@@ -542,7 +542,7 @@ function editModuleName(gid, mid) {
     var g = moduleGroups.find(function(g){return g.id===gid;});
     var m = g && g.modules.find(function(m){return m.id===mid;});
     if (m && inp.value.trim()) m.name = inp.value.trim();
-    renderModuleGroups();
+    renderModuleGroups(); syncSidebarModules();
     showToast('Đã đổi tên module', 'success');
   };
   inp.onkeydown = function(e){ if(e.key==='Enter') inp.blur(); };
@@ -554,7 +554,7 @@ function addModule(gid) {
   if (!inp || !inp.value.trim()) { showToast('Nhập tên module', 'warning'); return; }
   var g = moduleGroups.find(function(g){return g.id===gid;});
   g.modules.push({ id: Date.now(), icon: '📋', name: inp.value.trim() });
-  renderModuleGroups();
+  renderModuleGroups(); syncSidebarModules();
   showToast('Đã thêm module: ' + inp.value.trim(), 'success');
 }
 
@@ -563,7 +563,7 @@ function deleteModule(gid, mid) {
   var m = g && g.modules.find(function(m){return m.id===mid;});
   if (!confirm('Xóa module "' + (m?m.name:'') + '"?')) return;
   g.modules = g.modules.filter(function(m){return m.id!==mid;});
-  renderModuleGroups();
+  renderModuleGroups(); syncSidebarModules();
   showToast('Đã xóa module', 'error');
 }
 
@@ -571,7 +571,7 @@ function deleteGroup(gid) {
   var g = moduleGroups.find(function(g){return g.id===gid;});
   if (!confirm('Xóa nhóm "' + (g?g.name:'') + '" và toàn bộ modules?')) return;
   moduleGroups = moduleGroups.filter(function(g){return g.id!==gid;});
-  renderModuleGroups();
+  renderModuleGroups(); syncSidebarModules();
   showToast('Đã xóa nhóm', 'error');
 }
 
@@ -580,6 +580,34 @@ function addGroup() {
   if (!inp || !inp.value.trim()) { showToast('Nhập tên nhóm', 'warning'); return; }
   moduleGroups.push({ id: Date.now(), icon: '📂', name: inp.value.trim(), modules: [] });
   inp.value = '';
-  renderModuleGroups();
+  renderModuleGroups(); syncSidebarModules();
   showToast('Đã tạo nhóm mới', 'success');
+}
+
+function syncSidebarModules() {
+  var c = document.getElementById('sidebar-modules');
+  if (!c) return;
+  c.innerHTML = moduleGroups.map(function(g) {
+    return '<div style="padding:8px 16px 2px;color:#666;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase">' + g.icon + ' ' + g.name + '</div>' +
+      g.modules.map(function(m) {
+        return '<div class="nav-item" style="padding-left:24px;font-size:12px" onclick="showModulePage(' + m.id + ',\''+m.name+'\',this)">' + m.icon + ' ' + m.name + '</div>';
+      }).join('');
+  }).join('');
+}
+
+function showModulePage(id, name, el) {
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  var pid = 'page-mod-' + id;
+  var pg = document.getElementById(pid);
+  if (!pg) {
+    pg = document.createElement('div');
+    pg.className = 'page'; pg.id = pid;
+    pg.innerHTML = '<div class="page-header"><div class="page-tag">Module</div><div class="page-title">' + name + '</div><div class="page-meta">Nội dung module — click + Thêm để đóng góp</div></div>' +
+      '<div class="card"><div class="card-title">Nội dung</div><p style="color:#aaa;font-style:italic">Chưa có nội dung. Bấm nút bên dưới để thêm tài liệu.</p><br><button class="btn btn-primary" style="width:auto;padding:8px 20px" onclick="showToast(\'Tính năng upload sắp ra mắt!\',\'warning\')">+ Thêm tài liệu</button></div>';
+    document.querySelector('main').appendChild(pg);
+  }
+  pg.classList.add('active');
+  if(el) el.classList.add('active');
+  document.querySelector('main').scrollTop = 0;
 }

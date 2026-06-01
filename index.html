@@ -69,9 +69,7 @@
     <aside>
       <div class="sidebar-section">Thư viện</div>
       <div class="nav-item active" onclick="showPage('home',this)">🏠 Trang chủ</div>
-      <div class="nav-item" onclick="showPage('standards',this)">📚 BMW Standards</div>
-      <div class="nav-item" onclick="showPage('equipment',this)">🔧 Equipment</div>
-      <div class="nav-item" onclick="showPage('videos',this)">🎬 Videos</div>
+      <div id="sidebar-modules"></div>
       <div class="nav-item" onclick="showPage('myfiles',this)">👤 File cá nhân</div>
       <div class="nav-item" onclick="showPage('files',this)">📁 Quản lý File</div>
       <div class="sidebar-section">Hệ thống</div>
@@ -100,20 +98,20 @@
       </div>
       <div class="page" id="page-videos">
         <div class="page-header"><div class="page-tag">Videos</div><div class="page-title">🎬 Training Videos</div></div>
-        <div class="card"><div class="card-title">Danh sách</div><table><tr><th>Module</th><th>Tac gia</th></tr><tr><td>GSC Introduction</td><td>Pham Tung Lam</td></tr><tr><td>SAS Setup</td><td>Pham Tung Lam</td></tr></table></div>
+        <div class="card"><div class="card-title">Danh sách</div><table><tr><th>Module</th><th>Tac gia</th></tr><tr><td>GSC Introduction</td><td><strong>Nguyễn Tuấn Phong</strong></td></tr><tr><td>SAS Setup</td><td><strong>Nguyễn Tuấn Phong</strong></td></tr></table></div>
         <div id="vid-colleague" style="display:none"><div class="card"><div class="card-title">Upload video</div><button class="btn-sm" style="background:#7c3aed;color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Them video</button></div></div>
       </div>
       <div class="page" id="page-myfiles">
         <div class="page-header"><div class="page-tag">Ca nhan</div><div class="page-title">👤 File của tôi</div></div>
         <div id="myfiles-viewer" style="display:none"><div class="warning-box">Cần tài khoản để sử dụng.</div></div>
         <div id="myfiles-colleague" style="display:none">
-          <div class="card"><div class="card-title">Ghi chú nhanh</div><textarea style="width:100%;height:90px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;resize:vertical"></textarea><br><button class="btn-sm" style="background:var(--blue);color:#fff;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;margin-top:8px" onclick="showToast('Da luu','success')">Luu</button></div>
+          <div class="card"><div class="card-title">Ghi chú nhanh</div><textarea style="width:100%;height:90px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;resize:vertical"></textarea><br><button class="btn-sm" style="background:var(--blue);color:#fff;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;margin-top:8px" onclick="showToast('Da luu','success')">Lưu</button></div>
         </div>
       </div>
       <div class="page" id="page-admin">
         <div class="page-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)"><div class="page-tag">Chỉ Admin</div><div class="page-title">🔐 Admin Panel</div></div>
         <div class="card" style="border-top-color:var(--orange)"><div class="card-title">Yêu cầu đăng ký <span id="reg-count-badge" class="pending-badge" style="display:none"></span></div><div id="reg-requests-list"><p style="color:#aaa;font-style:italic">Chưa có yêu cầu.</p></div></div>
-        <div class="card"><div class="card-title">Thành viên</div><table><tr><th>Ten</th><th>Email</th><th>Vai tro</th><th>Thao tac</th></tr><tr><td>Pham Tung Lam</td><td>kintoki609@gmail.com</td><td><span class="role-badge role-owner">👑 Owner</span></td><td>—</td></tr></table><div id="member-rows"></div></div>
+        <div class="card"><div class="card-title">Thành viên</div><table><tr><th>Tên</th><th>Email</th><th>Vai trò</th><th>Thao tác</th></tr><tr><td><strong>Nguyễn Tuấn Phong</strong></td><td>kintoki609@gmail.com</td><td><span class="role-badge role-owner">👑 Owner</span></td><td>—</td></tr></table><div id="member-rows"></div></div>
         <div class="card"><div class="card-title">Mời thành viên</div><div style="display:flex;gap:8px;margin-top:10px"><input class="form-input" id="invite-email" type="email" placeholder="email@linkgroup.com" style="flex:1"><select class="form-input" id="invite-role" style="width:130px"><option>Colleague</option><option>Viewer</option><option>Admin</option></select><button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="sendInvite()">Gui</button></div></div>
       </div>
       <div class="page" id="page-news">
