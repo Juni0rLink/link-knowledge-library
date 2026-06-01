@@ -12,11 +12,11 @@
     <div class="login-logo">
       <img src="logo.jpg" alt="LINK Group" style="width:100px;height:100px;object-fit:contain;border-radius:12px;margin:0 auto 10px;display:block;">
       <div class="login-title">LINK Knowledge Library</div>
-      <div class="login-sub">Nen tang kien thuc ky thuat noi bo</div>
+      <div class="login-sub">Nền tảng kiến thức kỹ thuật nội bộ</div>
     </div>
     <div class="auth-tabs">
-      <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Dang nhap</div>
-      <div class="auth-tab" id="tab-register" onclick="switchTab('register')">Dang ky</div>
+      <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Đăng nhập</div>
+      <div class="auth-tab" id="tab-register" onclick="switchTab('register')">Đăng ký</div>
     </div>
     <div class="auth-panel active" id="panel-login">
       <div class="alert alert-error" id="login-error"></div>
@@ -25,12 +25,12 @@
         <input class="form-input" id="login-email" type="email" placeholder="your@email.com">
       </div>
       <div class="form-group">
-        <label class="form-label">Mat khau</label>
+        <label class="form-label">Mật khẩu</label>
         <input class="form-input" id="login-pass" type="password" placeholder="Password">
       </div>
-      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Dang nhap</button>
+      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Đăng nhập</button>
       <div class="login-divider">hoac</div>
-      <button class="viewer-btn" onclick="viewerAccess()">Xem voi tu cach khach</button>
+      <button class="viewer-btn" onclick="viewerAccess()">Xem với tư cách khách</button>
       <div style="margin-top:14px;padding:10px;background:#f8f9fb;border-radius:8px;border:1px solid #eee;font-size:11px;color:#555;line-height:2">
         <strong>Demo:</strong><br>
         owner@bmw.com / owner123<br>
@@ -41,11 +41,11 @@
     <div class="auth-panel" id="panel-register">
       <div class="alert alert-success" id="reg-success"></div>
       <div class="alert alert-error" id="reg-error"></div>
-      <div class="form-group"><label class="form-label">Ho va ten *</label><input class="form-input" id="reg-name" type="text"></div>
+      <div class="form-group"><label class="form-label">Họ và tên *</label><input class="form-input" id="reg-name" type="text"></div>
       <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="reg-email" type="email"></div>
-      <div class="form-group"><label class="form-label">Bo phan *</label><input class="form-input" id="reg-dept" type="text"></div>
-      <div class="form-group"><label class="form-label">Ly do</label><textarea class="form-input" id="reg-reason" rows="2" style="resize:none"></textarea></div>
-      <button class="btn btn-primary" onclick="doRegister()">Gui yeu cau</button>
+      <div class="form-group"><label class="form-label">Bộ phận *</label><input class="form-input" id="reg-dept" type="text"></div>
+      <div class="form-group"><label class="form-label">Lý do</label><textarea class="form-input" id="reg-reason" rows="2" style="resize:none"></textarea></div>
+      <button class="btn btn-primary" onclick="doRegister()">Gửi yêu cầu</button>
     </div>
   </div>
 </div>
@@ -54,7 +54,7 @@
   <header>
     <div class="header-left">
       <img src="logo.jpg" alt="LINK" style="width:40px;height:40px;object-fit:contain;border-radius:8px;">
-      <div><div class="header-title">LINK Knowledge Library</div><div class="header-sub">Nen tang kien thuc noi bo</div></div>
+      <div><div class="header-title">LINK Knowledge Library</div><div class="header-sub">Nền tảng kiến thức nội bộ</div></div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
       <div class="user-pill">
@@ -62,76 +62,76 @@
         <span class="user-name" id="user-name-display"></span>
         <span class="role-badge" id="role-badge-display"></span>
       </div>
-      <button class="logout-btn" onclick="doLogout()">Dang xuat</button>
+      <button class="logout-btn" onclick="doLogout()">Đăng xuất</button>
     </div>
   </header>
   <div class="layout">
     <aside>
-      <div class="sidebar-section">Thu vien</div>
-      <div class="nav-item active" onclick="showPage('home',this)">🏠 Trang chu</div>
+      <div class="sidebar-section">Thư viện</div>
+      <div class="nav-item active" onclick="showPage('home',this)">🏠 Trang chủ</div>
       <div class="nav-item" onclick="showPage('standards',this)">📚 BMW Standards</div>
       <div class="nav-item" onclick="showPage('equipment',this)">🔧 Equipment</div>
       <div class="nav-item" onclick="showPage('videos',this)">🎬 Videos</div>
       <div class="nav-item" onclick="showPage('myfiles',this)">👤 File cá nhân</div>
       <div class="nav-item" onclick="showPage('files',this)">📁 Quản lý File</div>
-      <div class="sidebar-section">He thong</div>
+      <div class="sidebar-section">Hệ thống</div>
       <div class="nav-item" id="nav-admin" style="display:none" onclick="showPage('admin',this)">🔐 Admin Panel <span id="pending-badge" class="pending-badge" style="display:none"></span></div>
       <div class="nav-item" style="position:relative" onclick="showPage('news',this)">📢 News <span id="news-dot" style="display:none;position:absolute;top:10px;right:16px;width:8px;height:8px;border-radius:50%;background:#ef4444"></span></div>
-      <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)">⚙️ Cai dat</div>
-      <div class="viewer-notice" id="viewer-notice" style="display:none">Ban dang xem voi tu cach Viewer.</div>
+      <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)">⚙️ Cài đặt</div>
+      <div class="viewer-notice" id="viewer-notice" style="display:none">Bạn đang xem với tư cách Viewer.</div>
     </aside>
     <main>
       <div class="page active" id="page-home">
         <div class="page-header"><div class="page-tag">v1.0</div><div class="page-title">Chao mung, <span id="welcome-name"></span></div><div class="page-meta" id="welcome-desc"></div></div>
-        <div class="card"><div class="card-title">Quyen truy cap</div><div id="permission-list"></div></div>
-        <div class="card"><div class="card-title">Danh muc</div><table><tr><th>Danh muc</th><th>Quyen</th></tr><tr><td>BMW Standards</td><td id="acc-standards"></td></tr><tr><td>Equipment</td><td id="acc-equipment"></td></tr><tr><td>Videos</td><td id="acc-videos"></td></tr><tr><td>File ca nhan</td><td id="acc-myfiles"></td></tr></table></div>
+        <div class="card"><div class="card-title">Quyền truy cập</div><div id="permission-list"></div></div>
+        <div class="card"><div class="card-title">Danh mục</div><table><tr><th>Danh mục</th><th>Quyen</th></tr><tr><td>BMW Standards</td><td id="acc-standards"></td></tr><tr><td>Equipment</td><td id="acc-equipment"></td></tr><tr><td>Videos</td><td id="acc-videos"></td></tr><tr><td>File cá nhân</td><td id="acc-myfiles"></td></tr></table></div>
       </div>
       <div class="page" id="page-standards">
         <div class="page-header"><div class="page-tag">BMW Standards</div><div class="page-title">📚 BMW Standards</div></div>
         <div class="card"><div class="card-title">GSC – Group Standard Controls</div><p>10 modules: Introduction, Software Structure, Safety, SAS, MEDIA, User Blocks, Phase Concept, User Sequence, Type Management, Exercises.</p></div>
-        <div id="std-colleague" style="display:none"><div class="card"><div class="card-title">Dong gop</div><button class="btn-sm" style="background:var(--blue);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer" onclick="showToast('Upload coming soon!','warning')">+ Them tai lieu</button></div></div>
-        <div id="std-viewer" style="display:none"><div class="card" style="opacity:0.5"><div class="card-title">Can tai khoan de xem chi tiet</div></div></div>
+        <div id="std-colleague" style="display:none"><div class="card"><div class="card-title">Đóng góp</div><button class="btn-sm" style="background:var(--blue);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer" onclick="showToast('Tính năng upload sắp ra mắt!','warning')">+ Thêm tài liệu</button></div></div>
+        <div id="std-viewer" style="display:none"><div class="card" style="opacity:0.5"><div class="card-title">Cần tài khoản để xem chi tiết</div></div></div>
       </div>
       <div class="page" id="page-equipment">
         <div class="page-header"><div class="page-tag">Equipment</div><div class="page-title">🔧 Equipment & Issues</div></div>
-        <div class="card"><div class="card-title">Van de thuong gap</div><table><tr><th>Loi</th><th>Giai phap</th></tr><tr><td>E-STOP khong reset</td><td>Kiem tra SAFE_CONF_ZONE</td></tr><tr><td>SAS Export loi</td><td>Validate roi export lai</td></tr></table></div>
-        <div id="eq-colleague" style="display:none"><div class="card"><div class="card-title">Bao cao van de</div><button class="btn-sm" style="background:var(--orange);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Bao cao</button></div></div>
+        <div class="card"><div class="card-title">Vấn đề thường gặp</div><table><tr><th>Loi</th><th>Giai phap</th></tr><tr><td>E-STOP khong reset</td><td>Kiem tra SAFE_CONF_ZONE</td></tr><tr><td>SAS Export loi</td><td>Validate roi export lai</td></tr></table></div>
+        <div id="eq-colleague" style="display:none"><div class="card"><div class="card-title">Báo cáo vấn đề</div><button class="btn-sm" style="background:var(--orange);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Bao cao</button></div></div>
       </div>
       <div class="page" id="page-videos">
         <div class="page-header"><div class="page-tag">Videos</div><div class="page-title">🎬 Training Videos</div></div>
-        <div class="card"><div class="card-title">Danh sach</div><table><tr><th>Module</th><th>Tac gia</th></tr><tr><td>GSC Introduction</td><td>Pham Tung Lam</td></tr><tr><td>SAS Setup</td><td>Pham Tung Lam</td></tr></table></div>
+        <div class="card"><div class="card-title">Danh sách</div><table><tr><th>Module</th><th>Tac gia</th></tr><tr><td>GSC Introduction</td><td>Pham Tung Lam</td></tr><tr><td>SAS Setup</td><td>Pham Tung Lam</td></tr></table></div>
         <div id="vid-colleague" style="display:none"><div class="card"><div class="card-title">Upload video</div><button class="btn-sm" style="background:#7c3aed;color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Them video</button></div></div>
       </div>
       <div class="page" id="page-myfiles">
-        <div class="page-header"><div class="page-tag">Ca nhan</div><div class="page-title">👤 File cua toi</div></div>
-        <div id="myfiles-viewer" style="display:none"><div class="warning-box">Can tai khoan de su dung.</div></div>
+        <div class="page-header"><div class="page-tag">Ca nhan</div><div class="page-title">👤 File của tôi</div></div>
+        <div id="myfiles-viewer" style="display:none"><div class="warning-box">Cần tài khoản để sử dụng.</div></div>
         <div id="myfiles-colleague" style="display:none">
-          <div class="card"><div class="card-title">Ghi chu nhanh</div><textarea style="width:100%;height:90px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;resize:vertical"></textarea><br><button class="btn-sm" style="background:var(--blue);color:#fff;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;margin-top:8px" onclick="showToast('Da luu','success')">Luu</button></div>
+          <div class="card"><div class="card-title">Ghi chú nhanh</div><textarea style="width:100%;height:90px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;resize:vertical"></textarea><br><button class="btn-sm" style="background:var(--blue);color:#fff;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;margin-top:8px" onclick="showToast('Da luu','success')">Luu</button></div>
         </div>
       </div>
       <div class="page" id="page-admin">
-        <div class="page-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)"><div class="page-tag">Admin only</div><div class="page-title">🔐 Admin Panel</div></div>
-        <div class="card" style="border-top-color:var(--orange)"><div class="card-title">Yeu cau dang ky <span id="reg-count-badge" class="pending-badge" style="display:none"></span></div><div id="reg-requests-list"><p style="color:#aaa;font-style:italic">Chua co yeu cau.</p></div></div>
-        <div class="card"><div class="card-title">Thanh vien</div><table><tr><th>Ten</th><th>Email</th><th>Vai tro</th><th>Thao tac</th></tr><tr><td>Pham Tung Lam</td><td>kintoki609@gmail.com</td><td><span class="role-badge role-owner">👑 Owner</span></td><td>—</td></tr></table><div id="member-rows"></div></div>
-        <div class="card"><div class="card-title">Moi thanh vien</div><div style="display:flex;gap:8px;margin-top:10px"><input class="form-input" id="invite-email" type="email" placeholder="email@linkgroup.com" style="flex:1"><select class="form-input" id="invite-role" style="width:130px"><option>Colleague</option><option>Viewer</option><option>Admin</option></select><button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="sendInvite()">Gui</button></div></div>
+        <div class="page-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)"><div class="page-tag">Chỉ Admin</div><div class="page-title">🔐 Admin Panel</div></div>
+        <div class="card" style="border-top-color:var(--orange)"><div class="card-title">Yêu cầu đăng ký <span id="reg-count-badge" class="pending-badge" style="display:none"></span></div><div id="reg-requests-list"><p style="color:#aaa;font-style:italic">Chưa có yêu cầu.</p></div></div>
+        <div class="card"><div class="card-title">Thành viên</div><table><tr><th>Ten</th><th>Email</th><th>Vai tro</th><th>Thao tac</th></tr><tr><td>Pham Tung Lam</td><td>kintoki609@gmail.com</td><td><span class="role-badge role-owner">👑 Owner</span></td><td>—</td></tr></table><div id="member-rows"></div></div>
+        <div class="card"><div class="card-title">Mời thành viên</div><div style="display:flex;gap:8px;margin-top:10px"><input class="form-input" id="invite-email" type="email" placeholder="email@linkgroup.com" style="flex:1"><select class="form-input" id="invite-role" style="width:130px"><option>Colleague</option><option>Viewer</option><option>Admin</option></select><button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="sendInvite()">Gui</button></div></div>
       </div>
       <div class="page" id="page-news">
         <div class="page-header" style="background:linear-gradient(135deg,#d97706,#b45309)"><div class="page-tag">Thong bao</div><div class="page-title">📢 News & Changelog</div></div>
         <div id="news-compose" style="display:none;background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid var(--orange)">
-          <div class="card-title">Dang thong bao</div>
-          <input id="news-title-inp" class="form-input" type="text" placeholder="Tieu de..." style="margin-bottom:10px">
-          <textarea id="news-body-inp" class="form-input" rows="3" placeholder="Noi dung..." style="resize:none"></textarea>
+          <div class="card-title">Đăng thông báo</div>
+          <input id="news-title-inp" class="form-input" type="text" placeholder="Tiêu đề..." style="margin-bottom:10px">
+          <textarea id="news-body-inp" class="form-input" rows="3" placeholder="Nội dung..." style="resize:none"></textarea>
           <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
             <select class="form-input" id="news-type-sel" style="width:140px"><option value="update">Update</option><option value="new">Moi</option><option value="alert">Quan trong</option></select>
             <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="news-pin"> Ghim</label>
-            <button class="btn btn-primary" style="width:auto;padding:0 16px;margin-left:auto" onclick="postNews()">Dang</button>
+            <button class="btn btn-primary" style="width:auto;padding:0 16px;margin-left:auto" onclick="postNews()">Đăng</button>
           </div>
         </div>
         <div id="news-list"></div>
       </div>
       <div class="page" id="page-settings">
-        <div class="page-header" style="background:linear-gradient(135deg,#374151,#1f2937)"><div class="page-tag">Admin only</div><div class="page-title">⚙️ Cai dat</div></div>
-        <div class="card"><div class="card-title">Thong tin Platform</div><table><tr><td style="color:#888">Ten</td><td><strong>LINK Knowledge Library</strong></td></tr><tr><td style="color:#888">Phien ban</td><td><strong>v1.0.0</strong></td></tr><tr><td style="color:#888">Owner</td><td><strong>Pham Tung Lam</strong></td></tr></table></div>
+        <div class="page-header" style="background:linear-gradient(135deg,#374151,#1f2937)"><div class="page-tag">Chỉ Admin</div><div class="page-title">⚙️ Cài đặt</div></div>
+        <div class="card"><div class="card-title">Thông tin Platform</div><table><tr><td style="color:#888">Ten</td><td><strong>LINK Knowledge Library</strong></td></tr><tr><td style="color:#888">Phiên bản</td><td><strong>v1.0.0</strong></td></tr><tr><td style="color:#888">Owner</td><td><strong>Pham Tung Lam</strong></td></tr></table></div>
       </div>
 
       <div class="page" id="page-files">
