@@ -2,16 +2,16 @@
 // DATA
 // ============================================================
 const USERS = {
-  'owner@bmw.com':  { password: 'owner123',  name: 'Pham Tung Lam', role: 'owner' },
+  'owner@bmw.com':  { password: 'owner123',  name: 'Nguyễn Tuấn Phong', role: 'owner' },
   'admin@bmw.com':  { password: 'admin123',  name: 'Tran Thi B',    role: 'admin' },
   'editor@bmw.com': { password: 'editor123', name: 'Le Van C',       role: 'colleague' },
 };
 
 const ROLE_CFG = {
-  owner:     { label: '👑 Owner',     cls: 'role-owner',     color: '#fbbf24', desc: 'Toan quyen tuyet doi tren platform' },
-  admin:     { label: '🔑 Admin',     cls: 'role-admin',     color: '#3b82f6', desc: 'Quan ly thanh vien, phan quyen, cap nhat tinh nang' },
-  colleague: { label: '👥 Colleague', cls: 'role-colleague', color: '#22c55e', desc: 'Xem, upload, chinh sua noi dung' },
-  viewer:    { label: '👁️ Viewer',    cls: 'role-viewer',    color: '#6b7280', desc: 'Chi xem trang Admin chi dinh cong khai' },
+  owner:     { label: '👑 Owner',     cls: 'role-owner',     color: '#fbbf24', desc: 'Toàn quyền tuyệt đối trên platform' },
+  admin:     { label: '🔑 Admin',     cls: 'role-admin',     color: '#3b82f6', desc: 'Quản lý thành viên, phân quyền, cập nhật tính năng' },
+  colleague: { label: '👥 Colleague', cls: 'role-colleague', color: '#22c55e', desc: 'Xem, upload, chỉnh sửa nội dung' },
+  viewer:    { label: '👁️ Viewer',    cls: 'role-viewer',    color: '#6b7280', desc: 'Chỉ xem trang Admin chỉ định công khai' },
 };
 
 let currentUser = null;
@@ -22,8 +22,8 @@ const MAX_ATTEMPTS = 3;
 let pendingRegs = [];
 
 let newsItems = [
-  { id: 1, title: 'Platform ra mat chinh thuc', body: 'LINK Knowledge Library v1.0 chinh thuc hoat dong.', type: 'new', pinned: true, date: '01/06/2024', author: 'Pham Tung Lam', isNew: true },
-  { id: 2, title: 'GSC Training Portal tich hop', body: 'Toan bo 10 modules GSC da duoc tich hop vao thu vien.', type: 'update', pinned: false, date: '01/06/2024', author: 'Pham Tung Lam', isNew: true },
+  { id: 1, title: 'Platform ra mắt chính thức', body: 'LINK Knowledge Library v1.0 chính thức hoạt động.', type: 'new', pinned: true, date: '01/06/2024', author: 'Nguyễn Tuấn Phong', isNew: true },
+  { id: 2, title: 'GSC Training Portal tích hợp', body: 'Toàn bộ 10 modules GSC đã được tích hợp vào thư viện.', type: 'update', pinned: false, date: '01/06/2024', author: 'Nguyễn Tuấn Phong', isNew: true },
 ];
 let unreadCount = newsItems.filter(function(n) { return n.isNew; }).length;
 
@@ -50,7 +50,7 @@ function doLogin() {
 
   if (lockUntil > 0 && Date.now() < lockUntil) {
     var secs = Math.ceil((lockUntil - Date.now()) / 1000);
-    err.textContent = 'Tai khoan bi khoa. Thu lai sau ' + secs + ' giay.';
+    err.textContent = 'Tài khoản bị khóa. Thử lại sau ' + secs + ' giây.';
     err.style.display = 'block';
     return;
   }
@@ -59,7 +59,7 @@ function doLogin() {
   var pass  = passEl.value;
 
   if (!email || !pass) {
-    err.textContent = 'Vui long nhap day du email va mat khau';
+    err.textContent = 'Vui lòng nhập đầy đủ email và mật khẩu';
     err.style.display = 'block';
     if (!email) emailEl.focus(); else passEl.focus();
     return;
@@ -79,18 +79,18 @@ function doLogin() {
       var t = 30;
       var iv = setInterval(function() {
         t--;
-        btn.textContent = 'Thu lai sau ' + t + 's';
+        btn.textContent = 'Thử lại sau ' + t + 's';
         if (t <= 0) {
           clearInterval(iv);
           lockUntil = 0;
           btn.disabled = false;
-          btn.textContent = 'Dang nhap';
+          btn.textContent = 'Đăng nhập';
           err.style.display = 'none';
         }
       }, 1000);
-      err.textContent = 'Sai ' + MAX_ATTEMPTS + ' lan - bi khoa 30 giay.';
+      err.textContent = 'Sai ' + MAX_ATTEMPTS + ' lần - bị khóa 30 giây.';
     } else {
-      err.textContent = 'Mat khau khong dung. Con ' + left + ' lan thu.';
+      err.textContent = 'Mật khẩu không đúng. Còn ' + left + ' lần thử.';
     }
     err.style.display = 'block';
     passEl.focus();
@@ -105,7 +105,7 @@ function doLogin() {
 }
 
 function viewerAccess() {
-  currentUser = { email: null, name: 'Khach', role: 'viewer' };
+  currentUser = { email: null, name: 'Khách', role: 'viewer' };
   launchApp();
 }
 
@@ -114,7 +114,7 @@ function doLogout() {
   loginAttempts = 0;
   lockUntil = 0;
   var btn = document.getElementById('login-btn');
-  if (btn) { btn.disabled = false; btn.textContent = 'Dang nhap'; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Đăng nhập'; }
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-email').value = '';
@@ -143,12 +143,12 @@ function doRegister() {
   ok.style.display = 'none';
 
   if (!name || !email || !dept) {
-    err.textContent = 'Vui long dien day du Ho ten, Email va Bo phan';
+    err.textContent = 'Vui lòng điền đầy đủ Họ tên, Email và Bộ phận';
     err.style.display = 'block';
     return;
   }
   if (!email.includes('@')) {
-    err.textContent = 'Email khong hop le';
+    err.textContent = 'Email không hợp lệ';
     err.style.display = 'block';
     return;
   }
@@ -156,7 +156,7 @@ function doRegister() {
   var reg = { id: Date.now(), name: name, email: email, dept: dept, reason: reason, time: new Date().toLocaleString('vi-VN') };
   pendingRegs.push(reg);
 
-  ok.textContent = 'Da gui yeu cau! Admin se xem xet va phan hoi qua email ' + email;
+  ok.textContent = 'Đã gửi yêu cầu! Admin sẽ xem xét và phản hồi qua email ' + email;
   ok.style.display = 'block';
 
   ['reg-name', 'reg-email', 'reg-dept', 'reg-reason'].forEach(function(id) {
@@ -190,10 +190,10 @@ function launchApp() {
   document.getElementById('welcome-desc').textContent = cfg.desc;
 
   var perms = {
-    owner:     ['Xem tat ca noi dung', 'Chinh sua & upload', 'Quan ly thanh vien', 'Cap quyen & cai dat platform'],
-    admin:     ['Xem tat ca noi dung', 'Chinh sua & upload', 'Quan ly thanh vien', 'Cap quyen Admin (can Admin khac xac nhan)'],
-    colleague: ['Xem tat ca noi dung', 'Chinh sua & upload tai lieu', 'File ca nhan rieng', 'Khong the quan ly thanh vien'],
-    viewer:    ['Chi xem trang Admin chi dinh', 'Khong chinh sua/upload', 'Khong co file ca nhan'],
+    owner:     ['Xem tất cả nội dung', 'Chỉnh sửa & upload', 'Quản lý thành viên', 'Cấp quyền & cài đặt platform'],
+    admin:     ['Xem tất cả nội dung', 'Chỉnh sửa & upload', 'Quản lý thành viên', 'Cấp quyền Admin (cần Admin khác xác nhận)'],
+    colleague: ['Xem tất cả nội dung', 'Chỉnh sửa & upload tài liệu', 'File cá nhân riêng', 'Không thể quản lý thành viên'],
+    viewer:    ['Chỉ xem trang Admin chỉ định', 'Không chỉnh sửa/upload', 'Không có file cá nhân'],
   };
   var ul = document.createElement('ul');
   ul.style.paddingLeft = '18px';
@@ -224,7 +224,7 @@ function launchApp() {
   if (!isAdmin) {
     var sNav = document.getElementById('nav-settings');
     if (sNav) {
-      sNav.onclick = function() { showToast('Chi Admin moi vao duoc Cai dat', 'warning'); };
+      sNav.onclick = function() { showToast('Chỉ Admin mới vào được Cài đặt', 'warning'); };
     }
   }
 
@@ -261,7 +261,7 @@ function showPage(id, el) {
   var role = currentUser ? currentUser.role : 'viewer';
   var isAdmin = ['owner', 'admin'].includes(role);
   if ((id === 'admin' || id === 'settings') && !isAdmin) {
-    showToast('Chi Admin moi vao duoc trang nay', 'warning');
+    showToast('Chỉ Admin mới vào được trang này', 'warning');
     return;
   }
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
@@ -289,7 +289,7 @@ function renderRegRequests() {
   var list = document.getElementById('reg-requests-list');
   if (!list) return;
   if (pendingRegs.length === 0) {
-    list.innerHTML = '<p style="color:#aaa;font-style:italic;font-size:13px">Chua co yeu cau dang ky nao.</p>';
+    list.innerHTML = '<p style="color:#aaa;font-style:italic;font-size:13px">Chưa có yêu cầu đăng ký nào.</p>';
     return;
   }
   list.innerHTML = pendingRegs.map(function(r) {
@@ -298,14 +298,14 @@ function renderRegRequests() {
       '<div class="reg-detail">' + r.email + ' | ' + r.dept + '</div>' +
       '<div class="reg-detail">' + r.time + '</div>' +
       '<div class="reg-actions">' +
-      '<span style="font-size:12px;font-weight:600">Phan quyen:</span>' +
+      '<span style="font-size:12px;font-weight:600">Phân quyền:</span>' +
       '<select class="assign-select" id="role-sel-' + r.id + '">' +
       '<option value="colleague">Colleague</option>' +
       '<option value="viewer">Viewer</option>' +
       '<option value="admin">Admin (can duyet)</option>' +
       '</select>' +
-      '<button class="btn-sm approve-btn" onclick="acceptReg(' + r.id + ')">Chap nhan</button>' +
-      '<button class="btn-sm reject-btn" onclick="rejectReg(' + r.id + ')">Tu choi</button>' +
+      '<button class="btn-sm approve-btn" onclick="acceptReg(' + r.id + ')">Chấp nhận</button>' +
+      '<button class="btn-sm reject-btn" onclick="rejectReg(' + r.id + ')">Từ chối</button>' +
       '</div></div>';
   }).join('');
 }
@@ -316,7 +316,7 @@ function acceptReg(id) {
   var roleSel = document.getElementById('role-sel-' + id);
   var chosenRole = roleSel ? roleSel.value : 'colleague';
   addMemberRow(reg.name, reg.email, chosenRole);
-  showToast('Da cap quyen cho ' + reg.name, 'success');
+  showToast('Đã cấp quyền cho ' + reg.name, 'success');
   pendingRegs = pendingRegs.filter(function(r) { return r.id !== id; });
   updateRegBadge();
 }
@@ -324,7 +324,7 @@ function acceptReg(id) {
 function rejectReg(id) {
   var reg = pendingRegs.find(function(r) { return r.id === id; });
   pendingRegs = pendingRegs.filter(function(r) { return r.id !== id; });
-  showToast('Da tu choi yeu cau cua ' + (reg ? reg.name : ''), 'error');
+  showToast('Đã từ chối yêu cầu của ' + (reg ? reg.name : ''), 'error');
   updateRegBadge();
 }
 
@@ -336,15 +336,15 @@ function addMemberRow(name, email, role) {
   tr.innerHTML = '<td>' + name + '</td><td>' + email + '</td>' +
     '<td><span class="role-badge ' + cfg.cls + '">' + cfg.label + '</span></td>' +
     '<td>Active</td>' +
-    '<td><button class="btn-sm reject-btn" onclick="this.closest(\'tr\').remove();showToast(\'Da xoa\',\'error\')">Xoa</button></td>';
+    '<td><button class="btn-sm reject-btn" onclick="this.closest(\'tr\').remove();showToast(\'Đã xóa\',\'error\')">Xóa</button></td>';
   container.appendChild(tr);
 }
 
 function sendInvite() {
   var email = document.getElementById('invite-email').value.trim();
   var role  = document.getElementById('invite-role').value;
-  if (!email) { showToast('Vui long nhap email', 'warning'); return; }
-  showToast('Da gui loi moi ' + role + ' toi ' + email, 'success');
+  if (!email) { showToast('Vui lòng nhập email', 'warning'); return; }
+  showToast('Đã gửi lời mời ' + role + ' tới ' + email, 'success');
   document.getElementById('invite-email').value = '';
 }
 
@@ -365,7 +365,7 @@ function renderNews() {
       '<div class="news-body">' + n.body + '</div>' +
       '<div style="margin-top:8px;font-size:11px;color:#aaa;">' + n.date + ' - ' + n.author + '</div>' +
       '</div>';
-  }).join('') || '<p style="color:#aaa">Chua co thong bao.</p>';
+  }).join('') || '<p style="color:#aaa">Chưa có thông báo.</p>';
 }
 
 function postNews() {
@@ -373,7 +373,7 @@ function postNews() {
   var body  = document.getElementById('news-body-inp').value.trim();
   var type  = document.getElementById('news-type-sel').value;
   var pin   = document.getElementById('news-pin').checked;
-  if (!title || !body) { showToast('Vui long nhap tieu de va noi dung', 'warning'); return; }
+  if (!title || !body) { showToast('Vui lòng nhập tiêu đề và nội dung', 'warning'); return; }
   newsItems.unshift({ id: Date.now(), title: title, body: body, type: type, pinned: pin,
     date: new Date().toLocaleDateString('vi-VN'), author: currentUser.name, isNew: true });
   document.getElementById('news-title-inp').value = '';
@@ -381,7 +381,7 @@ function postNews() {
   document.getElementById('news-pin').checked = false;
   renderNews();
   updateNewsDot();
-  showToast('Da dang thong bao', 'success');
+  showToast('Đã đăng thông báo', 'success');
 }
 
 function updateNewsDot() {
@@ -406,4 +406,61 @@ function showToast(msg, type) {
   t.className = 'show ' + type;
   clearTimeout(window._tt);
   window._tt = setTimeout(function() { t.className = ''; }, 3500);
+}
+
+// ============================================================
+// FILE MANAGEMENT
+// ============================================================
+var userFiles = [];
+
+function renderFiles() {
+  var list = document.getElementById('file-list');
+  if (!list) return;
+  if (userFiles.length === 0) {
+    list.innerHTML = '<p style="color:#aaa;font-style:italic">Chưa có file nào. Upload file đầu tiên bên dưới.</p>';
+    return;
+  }
+  list.innerHTML = userFiles.map(function(f) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #eee;border-radius:8px;margin-bottom:8px;">' +
+      '<span style="font-size:20px">' + getFileIcon(f.type) + '</span>' +
+      '<div style="flex:1"><div style="font-weight:600;font-size:13px">' + f.name + '</div>' +
+      '<div style="font-size:11px;color:#888">' + f.size + ' · ' + f.date + ' · ' + f.author + '</div></div>' +
+      '<button class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer" onclick="deleteFile(' + f.id + ')">Xóa</button>' +
+      '</div>';
+  }).join('');
+}
+
+function getFileIcon(type) {
+  if (type.includes('pdf')) return '📄';
+  if (type.includes('image')) return '🖼️';
+  if (type.includes('video')) return '🎬';
+  if (type.includes('sheet') || type.includes('excel')) return '📊';
+  if (type.includes('presentation') || type.includes('powerpoint')) return '📑';
+  return '📁';
+}
+
+function handleFileUpload(input) {
+  var files = input.files;
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    var size = f.size > 1024*1024 ? (f.size/1024/1024).toFixed(1)+'MB' : (f.size/1024).toFixed(0)+'KB';
+    userFiles.push({
+      id: Date.now() + i,
+      name: f.name,
+      type: f.type,
+      size: size,
+      date: new Date().toLocaleDateString('vi-VN'),
+      author: currentUser ? currentUser.name : 'Không rõ',
+      url: URL.createObjectURL(f)
+    });
+  }
+  renderFiles();
+  showToast('Đã upload ' + files.length + ' file thành công', 'success');
+  input.value = '';
+}
+
+function deleteFile(id) {
+  userFiles = userFiles.filter(function(f) { return f.id !== id; });
+  renderFiles();
+  showToast('Đã xóa file', 'error');
 }

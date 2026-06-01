@@ -72,7 +72,8 @@
       <div class="nav-item" onclick="showPage('standards',this)">📚 BMW Standards</div>
       <div class="nav-item" onclick="showPage('equipment',this)">🔧 Equipment</div>
       <div class="nav-item" onclick="showPage('videos',this)">🎬 Videos</div>
-      <div class="nav-item" onclick="showPage('myfiles',this)">👤 File cua toi</div>
+      <div class="nav-item" onclick="showPage('myfiles',this)">👤 File cá nhân</div>
+      <div class="nav-item" onclick="showPage('files',this)">📁 Quản lý File</div>
       <div class="sidebar-section">He thong</div>
       <div class="nav-item" id="nav-admin" style="display:none" onclick="showPage('admin',this)">🔐 Admin Panel <span id="pending-badge" class="pending-badge" style="display:none"></span></div>
       <div class="nav-item" style="position:relative" onclick="showPage('news',this)">📢 News <span id="news-dot" style="display:none;position:absolute;top:10px;right:16px;width:8px;height:8px;border-radius:50%;background:#ef4444"></span></div>
@@ -131,6 +132,24 @@
       <div class="page" id="page-settings">
         <div class="page-header" style="background:linear-gradient(135deg,#374151,#1f2937)"><div class="page-tag">Admin only</div><div class="page-title">⚙️ Cai dat</div></div>
         <div class="card"><div class="card-title">Thong tin Platform</div><table><tr><td style="color:#888">Ten</td><td><strong>LINK Knowledge Library</strong></td></tr><tr><td style="color:#888">Phien ban</td><td><strong>v1.0.0</strong></td></tr><tr><td style="color:#888">Owner</td><td><strong>Pham Tung Lam</strong></td></tr></table></div>
+      </div>
+
+      <div class="page" id="page-files">
+        <div class="page-header"><div class="page-tag">File Manager</div><div class="page-title">📁 Quản lý File</div><div class="page-meta">Upload, xem và quản lý tài liệu của bạn</div></div>
+        <div class="card">
+          <div class="card-title">⬆️ Upload File</div>
+          <div style="border:2px dashed #1c69d4;border-radius:10px;padding:24px;text-align:center;background:#f0f5ff;">
+            <div style="font-size:32px;margin-bottom:8px">📂</div>
+            <p style="color:#555;margin-bottom:12px">Kéo thả file vào đây hoặc bấm để chọn</p>
+            <input type="file" id="file-upload-input" multiple style="display:none" onchange="handleFileUpload(this)">
+            <button class="btn btn-primary" style="width:auto;padding:8px 24px" onclick="document.getElementById('file-upload-input').click()">Chọn file</button>
+          </div>
+          <p style="font-size:11px;color:#aaa;margin-top:8px">Hỗ trợ: PDF, Word, Excel, PowerPoint, hình ảnh, video</p>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 Danh sách file</div>
+          <div id="file-list"><p style="color:#aaa;font-style:italic">Chưa có file nào.</p></div>
+        </div>
       </div>
     </main>
   </div>
