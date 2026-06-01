@@ -71,9 +71,12 @@
       <div class="nav-item active" onclick="showPage('home',this)">🏠 Trang chủ</div>
       <div id="sidebar-modules"></div>
       <div class="nav-item" onclick="showPage('myfiles',this)">👤 File cá nhân</div>
+      <div class="nav-item" onclick="showPage('rooms',this)">📂 Document Rooms</div>
+      <div class="nav-item" onclick="showPage('spreadsheet',this)">📊 Bảng tính</div>
       <div class="nav-item" onclick="showPage('files',this)">📁 Quản lý File</div>
       <div class="sidebar-section">Hệ thống</div>
       <div class="nav-item" id="nav-modules" style="display:none" onclick="showPage('modules',this)">🗂️ Quản lý Modules</div>
+      <div class="nav-item" id="nav-trash" style="display:none" onclick="showPage('trash',this)">🗑️ Thùng rác <span id="trash-badge" class="pending-badge" style="display:none"></span></div>
       <div class="nav-item" id="nav-admin" style="display:none" onclick="showPage('admin',this)">🔐 Admin Panel <span id="pending-badge" class="pending-badge" style="display:none"></span></div>
       <div class="nav-item" style="position:relative" onclick="showPage('news',this)">📢 News <span id="news-dot" style="display:none;position:absolute;top:10px;right:16px;width:8px;height:8px;border-radius:50%;background:#ef4444"></span></div>
       <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)">⚙️ Cài đặt</div>
@@ -140,10 +143,10 @@
           <div style="border:2px dashed #1c69d4;border-radius:10px;padding:24px;text-align:center;background:#f0f5ff;">
             <div style="font-size:32px;margin-bottom:8px">📂</div>
             <p style="color:#555;margin-bottom:12px">Kéo thả file vào đây hoặc bấm để chọn</p>
-            <input type="file" id="file-upload-input" multiple style="display:none" onchange="handleFileUpload(this)">
+            <input type="file" id="file-upload-input" multiple style="display:none" onchange="uploadToCloudinary(this)">
             <button class="btn btn-primary" style="width:auto;padding:8px 24px" onclick="document.getElementById('file-upload-input').click()">Chọn file</button>
           </div>
-          <p style="font-size:11px;color:#aaa;margin-top:8px">Hỗ trợ: PDF, Word, Excel, PowerPoint, hình ảnh, video</p>
+          <p id="upload-progress" style="display:none;color:#1c69d4;font-size:12px;margin-top:8px;font-weight:600"></p><p style="font-size:11px;color:#aaa;margin-top:4px">Hỗ trợ: PDF, Word, Excel, PowerPoint, hình ảnh, video</p>
         </div>
         <div class="card">
           <div class="card-title">📋 Danh sách file</div>
@@ -166,11 +169,356 @@
           </div>
         </div>
       </div>
+
+      <!-- DOCUMENT ROOMS -->
+      <div class="page" id="page-rooms">
+        <div class="page-header" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
+          <div class="page-tag">Cộng tác tài liệu</div>
+          <div class="page-title">📂 Document Rooms</div>
+          <div class="page-meta">Soạn thảo, review, comment và so sánh thay đổi — cộng tác real-time</div>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 1fr;gap:16px">
+          <!-- Room list -->
+          <div>
+            <div class="card" style="padding:14px">
+              <div class="card-title" style="margin-bottom:10px">Rooms</div>
+              <div id="room-list-sidebar"></div>
+              <button onclick="createRoom()" class="btn btn-primary" style="width:100%;padding:8px;margin-top:10px;font-size:12px">+ Tạo Room mới</button>
+            </div>
+          </div>
+          <!-- Room content -->
+          <div id="room-content">
+            <div class="card" style="text-align:center;padding:40px;color:#aaa">
+              <div style="font-size:48px;margin-bottom:12px">📂</div>
+              <p>Chọn một Room hoặc tạo mới để bắt đầu</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SPREADSHEET -->
+      <div class="page" id="page-spreadsheet">
+        <div class="page-header" style="background:linear-gradient(135deg,#217346,#1a5c38)">
+          <div class="page-tag">Bảng tính</div>
+          <div class="page-title">📊 Spreadsheet với công thức</div>
+          <div class="page-meta">Nhập công thức =SUM, =AVG, =IF, =MAX, =MIN — Xuất CSV/PDF</div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <button class="btn-sm" style="background:#217346;color:#fff;border:none" onclick="insertF('SUM')">Σ SUM</button>
+            <button class="btn-sm" style="background:#1a5c38;color:#fff;border:none" onclick="insertF('AVG')">⌀ AVG</button>
+            <button class="btn-sm approve-btn" onclick="insertF('MAX')">↑ MAX</button>
+            <button class="btn-sm approve-btn" onclick="insertF('MIN')">↓ MIN</button>
+            <button class="btn-sm approve-btn" onclick="insertF('COUNT')">🔢 COUNT</button>
+            <button class="btn-sm approve-btn" onclick="insertF('IF')">❓ IF</button>
+            <div style="width:1px;height:20px;background:#e5e7eb;margin:0 4px"></div>
+            <button class="btn-sm" onclick="addSheetRow()">+ Hàng</button>
+            <button class="btn-sm" onclick="addSheetCol()">+ Cột</button>
+            <div style="flex:1"></div>
+            <button class="btn-sm" style="background:#217346;color:#fff;border:none" onclick="exportSheetCSV()">⬇️ Xuất Excel/CSV</button>
+            <button class="btn-sm reject-btn" onclick="window.print()">⬇️ Xuất PDF</button>
+          </div>
+          <div style="background:#f1f3f5;border-bottom:1px solid #e5e7eb;padding:5px 12px;display:flex;gap:10px;align-items:center;font-size:13px">
+            <span style="background:#1c69d4;color:#fff;padding:2px 10px;border-radius:5px;font-size:12px;font-weight:700;min-width:40px;text-align:center" id="sheet-cell-ref">A1</span>
+            <span style="color:#888">fx</span>
+            <input id="sheet-fbar" style="flex:1;border:none;outline:none;font-size:13px;font-family:monospace;background:transparent" placeholder="Nhập công thức hoặc giá trị..." onkeydown="if(event.key==='Enter')applySheetFormula()">
+          </div>
+          <div style="overflow:auto;max-height:400px">
+            <table id="main-sheet" style="border-collapse:collapse;min-width:100%"></table>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px">
+          <div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e5e7eb"><b>=SUM(B2:B6)</b><br><span style="color:#888">Tổng dải ô</span></div>
+          <div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e5e7eb"><b>=AVG(C2:C6)</b><br><span style="color:#888">Trung bình cộng</span></div>
+          <div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e5e7eb"><b>=IF(A1>10,"Cao","Thấp")</b><br><span style="color:#888">Điều kiện</span></div>
+        </div>
+      </div>
+
+      <!-- TRASH & STORAGE -->
+      <div class="page" id="page-trash">
+        <div class="page-header" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">
+          <div class="page-tag">Chỉ Admin & Owner</div>
+          <div class="page-title">🗑️ Thùng rác & Dung lượng</div>
+          <div class="page-meta">Khôi phục items đã xóa · Theo dõi dung lượng Cloudinary · Xóa vĩnh viễn</div>
+        </div>
+
+        <!-- Storage widget -->
+        <div class="card" style="border-top-color:#e8a000">
+          <div class="card-title">💾 Dung lượng lưu trữ</div>
+          <div id="storage-widget"></div>
+        </div>
+
+        <!-- Trash list -->
+        <div class="card" style="border-top-color:#ef4444;padding:0;overflow:hidden">
+          <div style="display:flex;align-items:center;padding:16px 22px;border-bottom:1px solid #f0f0f0">
+            <div class="card-title" style="margin:0;flex:1">🗑️ Thùng rác <span id="trash-count" style="font-size:12px;color:#888;font-weight:400"></span></div>
+            <button onclick="emptyTrash()" style="background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">Làm trống tất cả</button>
+          </div>
+          <div class="warning-box" style="margin:12px 16px;border-radius:8px">
+            ⏰ Items trong thùng rác sẽ tự động xóa vĩnh viễn sau <strong>30 ngày</strong>. Chỉ Admin & Owner mới thấy trang này.
+          </div>
+          <div id="trash-list"></div>
+        </div>
+      </div>
     </main>
   </div>
 </div>
 
 <div id="toast"></div>
 <script src="app.js"></script>
+
+<!-- CLAUDE AI CHAT -->
+<button id="claude-fab" onclick="toggleChat()" title="Hỏi Claude AI" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);display:none;align-items:center;justify-content:center;font-size:22px;z-index:800;transition:transform .2s">🤖</button>
+
+<div id="claude-panel" style="display:none;position:fixed;bottom:88px;right:24px;width:380px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:900;flex-direction:column;max-height:520px;border:1px solid #e5e7eb;overflow:hidden">
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 16px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:20px">🤖</span>
+    <div style="flex:1">
+      <div style="color:#fff;font-weight:700;font-size:14px">Claude AI Assistant</div>
+      <div style="color:#c4b5fd;font-size:11px">Hỗ trợ kỹ thuật BMW GSC</div>
+    </div>
+    <button onclick="toggleChat()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
+  </div>
+
+  <!-- API Key setup -->
+  <div id="claude-setup" style="padding:16px">
+    <div style="font-size:13px;color:#555;margin-bottom:10px">🔑 Nhập Anthropic API key của bạn để sử dụng Claude AI:</div>
+    <input id="claude-api-key" type="password" placeholder="sk-ant-..." style="width:100%;border:2px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;margin-bottom:8px;font-family:monospace">
+    <div style="font-size:11px;color:#888;margin-bottom:10px">Key được lưu trong trình duyệt của bạn, không chia sẻ cho ai.</div>
+    <button onclick="saveApiKey()" style="width:100%;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">Bắt đầu dùng Claude</button>
+    <div style="text-align:center;margin-top:8px;font-size:11px;color:#aaa">Tạo API key miễn phí tại <a href="https://console.anthropic.com" target="_blank" style="color:#7c3aed">console.anthropic.com</a></div>
+  </div>
+
+  <!-- Chat area -->
+  <div id="claude-chat" style="display:none;flex-direction:column;flex:1;min-height:0">
+    <div id="claude-msgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;max-height:320px;min-height:200px"></div>
+    <div style="border-top:1px solid #eee;padding:10px 12px;display:flex;gap:8px;align-items:flex-end">
+      <textarea id="claude-input" rows="2" placeholder="Hỏi về GSC, E-STOP, SAS..." style="flex:1;border:1px solid #ddd;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;resize:none;font-family:'Segoe UI',Arial" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendClaude();}"></textarea>
+      <button onclick="sendClaude()" id="claude-send-btn" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:13px;flex-shrink:0">Gửi</button>
+    </div>
+    <div style="padding:4px 12px 8px;display:flex;gap:6px;flex-wrap:wrap">
+      <button onclick="quickQ('E-STOP zone là gì?')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#555">E-STOP zone?</button>
+      <button onclick="quickQ('Cách tạo SAS file trong GSC')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#555">Tạo SAS file</button>
+      <button onclick="quickQ('MDB là gì trong GSC?')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#555">MDB là gì?</button>
+      <button onclick="clearApiKey()" style="background:#fee2e2;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#ef4444;margin-left:auto">Đổi API key</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// CLAUDE AI
+var SYSTEM_PROMPT = "Bạn là trợ lý kỹ thuật chuyên về BMW GSC (Group Standard Controls). Hỗ trợ kỹ thuật viên về: TIA Portal V18, WinCC Unified, SAS, SiVArc, Safety (E-STOP, Zone concept), Software structure, Phase concept, Type management. Trả lời ngắn gọn, chính xác bằng tiếng Việt. Dùng ví dụ thực tế từ BMW GSC khi cần.";
+var chatHistory = [];
+
+function toggleChat() {
+  var panel = document.getElementById('claude-panel');
+  var fab = document.getElementById('claude-fab');
+  var isOpen = panel.style.display === 'flex';
+  panel.style.display = isOpen ? 'none' : 'flex';
+  panel.style.flexDirection = isOpen ? '' : 'column';
+  fab.style.transform = isOpen ? '' : 'scale(1.1)';
+  if (!isOpen) {
+    var key = localStorage.getItem('claude-api-key');
+    if (key) { showChatArea(); }
+  }
+}
+
+function saveApiKey() {
+  var key = document.getElementById('claude-api-key').value.trim();
+  if (!key.startsWith('sk-ant-') && !key.startsWith('sk-')) {
+    alert('API key không hợp lệ. Phải bắt đầu bằng sk-ant-');
+    return;
+  }
+  localStorage.setItem('claude-api-key', key);
+  showChatArea();
+  addMsg('assistant', 'Xin chào! Tôi là Claude AI, sẵn sàng hỗ trợ bạn về kỹ thuật BMW GSC. Hỏi tôi bất cứ điều gì về TIA Portal, SAS, Safety, E-STOP...');
+}
+
+function clearApiKey() {
+  localStorage.removeItem('claude-api-key');
+  document.getElementById('claude-chat').style.display = 'none';
+  document.getElementById('claude-setup').style.display = 'block';
+  document.getElementById('claude-api-key').value = '';
+  chatHistory = [];
+}
+
+function showChatArea() {
+  document.getElementById('claude-setup').style.display = 'none';
+  document.getElementById('claude-chat').style.display = 'flex';
+  document.getElementById('claude-chat').style.flexDirection = 'column';
+}
+
+function addMsg(role, text) {
+  var msgs = document.getElementById('claude-msgs');
+  var div = document.createElement('div');
+  var isUser = role === 'user';
+  div.style.cssText = 'display:flex;' + (isUser ? 'justify-content:flex-end' : 'justify-content:flex-start');
+  div.innerHTML = '<div style="max-width:85%;padding:9px 13px;border-radius:' + (isUser?'14px 14px 4px 14px':'14px 14px 14px 4px') + ';background:' + (isUser?'linear-gradient(135deg,#7c3aed,#4f46e5)':'#f3f4f6') + ';color:' + (isUser?'#fff':'#1a1a1a') + ';font-size:13px;line-height:1.6;white-space:pre-wrap">' + text + '</div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function quickQ(q) {
+  document.getElementById('claude-input').value = q;
+  sendClaude();
+}
+
+async function sendClaude() {
+  var input = document.getElementById('claude-input');
+  var btn = document.getElementById('claude-send-btn');
+  var msg = input.value.trim();
+  if (!msg) return;
+  var key = localStorage.getItem('claude-api-key');
+  if (!key) { clearApiKey(); return; }
+
+  addMsg('user', msg);
+  chatHistory.push({ role: 'user', content: msg });
+  input.value = '';
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  // Loading indicator
+  var loadId = 'load-' + Date.now();
+  var loadDiv = document.createElement('div');
+  loadDiv.id = loadId;
+  loadDiv.style.cssText = 'display:flex;justify-content:flex-start';
+  loadDiv.innerHTML = '<div style="padding:9px 13px;border-radius:14px 14px 14px 4px;background:#f3f4f6;font-size:13px;color:#888">⏳ Đang xử lý...</div>';
+  document.getElementById('claude-msgs').appendChild(loadDiv);
+  document.getElementById('claude-msgs').scrollTop = 99999;
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: chatHistory.slice(-10)
+      })
+    });
+
+    var data = await res.json();
+    document.getElementById(loadId).remove();
+
+    if (data.content && data.content[0]) {
+      var reply = data.content[0].text;
+      addMsg('assistant', reply);
+      chatHistory.push({ role: 'assistant', content: reply });
+    } else if (data.error) {
+      addMsg('assistant', '❌ Lỗi: ' + (data.error.message || 'API key không hợp lệ'));
+    }
+  } catch(e) {
+    document.getElementById(loadId) && document.getElementById(loadId).remove();
+    addMsg('assistant', '❌ Không kết nối được. Kiểm tra API key hoặc kết nối mạng.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Gửi';
+}
+
+// Show FAB when logged in
+var origLaunch = window.launchApp;
+document.addEventListener('DOMContentLoaded', function() {
+  var observer = new MutationObserver(function() {
+    var app = document.getElementById('app');
+    if (app && app.style.display !== 'none') {
+      document.getElementById('claude-fab').style.display = 'flex';
+    } else {
+      document.getElementById('claude-fab').style.display = 'none';
+    }
+  });
+  var app = document.getElementById('app');
+  if (app) observer.observe(app, {attributes:true, attributeFilter:['style']});
+});
+</script>
+
+<!-- EMOJI PICKER -->
+<div id="emoji-picker" style="display:none;position:fixed;z-index:2000;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);border:1px solid #e5e7eb;width:280px;padding:12px">
+  <div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px;letter-spacing:1px">CHỌN ICON</div>
+  <input id="emoji-search" type="text" placeholder="Tìm icon..." style="width:100%;border:1px solid #ddd;border-radius:7px;padding:6px 10px;font-size:13px;outline:none;margin-bottom:8px">
+  <div id="emoji-categories" style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap"></div>
+  <div id="emoji-grid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:200px;overflow-y:auto"></div>
+  <div style="margin-top:8px;display:flex;gap:8px">
+    <input id="emoji-custom" placeholder="Nhập emoji..." style="flex:1;border:1px solid #ddd;border-radius:6px;padding:5px 8px;font-size:20px;text-align:center;outline:none">
+    <button onclick="selectEmoji(document.getElementById('emoji-custom').value)" style="background:#1c69d4;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Chọn</button>
+  </div>
+</div>
+
+<script>
+var EMOJIS = {
+  'Kỹ thuật': ['⚙️','🔧','🔩','🛠️','⚡','🔌','💻','🖥️','📡','🔬','🏭','🤖','🦾','🔋','💡','🌡️','🧲','⛽','🔭','🧪'],
+  'Tài liệu': ['📄','📝','📋','📊','📈','📉','📑','🗂️','📁','📂','🗒️','📖','📚','🔖','📌','📍','✏️','🖊️','📏','📐'],
+  'An toàn': ['🛡️','⚠️','🚨','🔴','🟡','🟢','❌','✅','🚫','🔒','🔓','🔐','🔑','🚧','⛔','🆘','📛','🧯','🪖','🦺'],
+  'BMW/Xe': ['🚗','🏎️','🚙','⚙️','🏭','🔧','🛞','🚦','🛣️','🏁','🔩','⛽','🚀','✈️','🚂','🏗️','🏢','🌐','🗺️','📍'],
+  'Giao tiếp': ['💬','📢','📣','📨','📩','📬','🔔','🔕','💌','📞','☎️','📱','💻','🖥️','🖨️','📺','📻','🎙️','🎚️','🎛️'],
+  'Khác': ['⭐','🌟','💫','✨','🎯','🎖️','🏆','🥇','🎗️','🌈','🔥','💎','👑','🎪','🎨','🎭','🎬','🎮','🕹️','🎲'],
+};
+
+var emojiCallback = null;
+var currentCategory = 'Kỹ thuật';
+
+function openEmojiPicker(callback, anchorEl) {
+  emojiCallback = callback;
+  var picker = document.getElementById('emoji-picker');
+  var rect = anchorEl ? anchorEl.getBoundingClientRect() : {top:200,left:200};
+  var top = rect.bottom + 8;
+  var left = rect.left;
+  if (left + 280 > window.innerWidth) left = window.innerWidth - 290;
+  if (top + 320 > window.innerHeight) top = rect.top - 330;
+  picker.style.top = top + 'px';
+  picker.style.left = left + 'px';
+  picker.style.display = 'block';
+  renderEmojiCategories();
+  renderEmojiGrid(currentCategory);
+  document.getElementById('emoji-search').value = '';
+  document.getElementById('emoji-search').oninput = function() { searchEmoji(this.value); };
+  setTimeout(function(){document.getElementById('emoji-search').focus();},100);
+}
+
+function renderEmojiCategories() {
+  var el = document.getElementById('emoji-categories');
+  el.innerHTML = Object.keys(EMOJIS).map(function(cat) {
+    return '<button onclick="renderEmojiGrid(''+cat+'')" style="padding:3px 8px;border-radius:12px;border:1px solid '+(cat===currentCategory?'#1c69d4':'#ddd')+';background:'+(cat===currentCategory?'#dbeafe':'#fff')+';font-size:10px;font-weight:700;cursor:pointer;color:'+(cat===currentCategory?'#1c69d4':'#555')+'">'+cat+'</button>';
+  }).join('');
+}
+
+function renderEmojiGrid(cat) {
+  currentCategory = cat;
+  renderEmojiCategories();
+  var emojis = EMOJIS[cat] || [];
+  document.getElementById('emoji-grid').innerHTML = emojis.map(function(e) {
+    return '<button onclick="selectEmoji(''+e+'')" style="font-size:20px;padding:4px;border:none;background:transparent;cursor:pointer;border-radius:6px;transition:background .1s" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">'+e+'</button>';
+  }).join('');
+}
+
+function searchEmoji(q) {
+  if (!q) { renderEmojiGrid(currentCategory); return; }
+  var all = [].concat.apply([], Object.values(EMOJIS));
+  document.getElementById('emoji-grid').innerHTML = all.map(function(e) {
+    return '<button onclick="selectEmoji(''+e+'')" style="font-size:20px;padding:4px;border:none;background:transparent;cursor:pointer;border-radius:6px" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">'+e+'</button>';
+  }).join('');
+}
+
+function selectEmoji(emoji) {
+  if (!emoji) return;
+  document.getElementById('emoji-picker').style.display = 'none';
+  if (emojiCallback) emojiCallback(emoji);
+}
+
+// Close on outside click
+document.addEventListener('click', function(e) {
+  var picker = document.getElementById('emoji-picker');
+  if (picker && !picker.contains(e.target) && !e.target.classList.contains('emoji-trigger')) {
+    picker.style.display = 'none';
+  }
+});
+</script>
 </body>
 </html>
