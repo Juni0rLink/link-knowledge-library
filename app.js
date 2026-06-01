@@ -206,18 +206,21 @@ function launchApp() {
   var pl = document.getElementById('permission-list');
   if (pl) { pl.innerHTML = ''; pl.appendChild(ul); }
 
-  var ok = '<span class="tag tag-green">Truy cap day du</span>';
-  var no = '<span class="tag tag-red">Bi gioi han</span>';
+  var ok = '<span class="tag tag-green">Truy cập đầy đủ</span>';
+  var no = '<span class="tag tag-red">Bị giới hạn</span>';
   ['acc-standards', 'acc-equipment', 'acc-videos'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.innerHTML = isColleague ? ok : no;
   });
   var am = document.getElementById('acc-myfiles');
-  if (am) am.innerHTML = isColleague ? ok + ' (rieng tu)' : no;
+  if (am) am.innerHTML = isColleague ? ok + ' (riêng tư)' : no;
 
   if (isAdmin) {
     var navAdmin = document.getElementById('nav-admin');
     if (navAdmin) navAdmin.style.display = 'flex';
+    var navMod = document.getElementById('nav-modules');
+    if (navMod) navMod.style.display = 'flex';
+    renderModuleGroups();
     updateRegBadge();
   }
 
@@ -463,4 +466,120 @@ function deleteFile(id) {
   userFiles = userFiles.filter(function(f) { return f.id !== id; });
   renderFiles();
   showToast('Đã xóa file', 'error');
+}
+
+// ============================================================
+// MODULE MANAGER
+// ============================================================
+var moduleGroups = [
+  { id:1, icon:'📚', name:'BMW Standards', modules:[
+    { id:101, icon:'🔷', name:'GSC – Group Standard Controls' },
+    { id:102, icon:'🏭', name:'TKB – Body Shop' },
+    { id:103, icon:'🔧', name:'TMO – Assembly' },
+  ]},
+  { id:2, icon:'🛡️', name:'Safety & Compliance', modules:[
+    { id:201, icon:'🛡️', name:'Safety General' },
+    { id:202, icon:'⚡', name:'E-STOP & Zone Concept' },
+  ]},
+  { id:3, icon:'⚙️', name:'Tools & Software', modules:[
+    { id:301, icon:'⚙️', name:'SAS – System Architecture' },
+    { id:302, icon:'💻', name:'TIA Portal V18' },
+  ]},
+  { id:4, icon:'🔬', name:'Advanced Modules', modules:[
+    { id:401, icon:'🔄', name:'Phase Concept & Resequencing' },
+    { id:402, icon:'📊', name:'User Sequence' },
+    { id:403, icon:'🗂️', name:'Type Management' },
+  ]},
+];
+
+function renderModuleGroups() {
+  var c = document.getElementById('module-groups-container');
+  if (!c) return;
+  c.innerHTML = moduleGroups.map(function(g) {
+    return '<div style="background:#fff;border-radius:10px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);overflow:hidden">' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f8f9fb;border-bottom:1px solid #eee">' +
+      '<span style="font-size:18px">' + g.icon + '</span>' +
+      '<span style="font-weight:700;font-size:14px;flex:1" id="gname-' + g.id + '">' + g.name + '</span>' +
+      '<button class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;cursor:pointer" onclick="editGroupName(' + g.id + ')">✏️ Đổi tên nhóm</button>' +
+      '<button class="btn-sm reject-btn" style="margin-left:6px" onclick="deleteGroup(' + g.id + ')">🗑️ Xóa</button>' +
+      '</div>' +
+      g.modules.map(function(m) {
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0">' +
+          '<span>' + m.icon + '</span>' +
+          '<span style="flex:1;font-size:13px" id="mname-' + m.id + '">' + m.name + '</span>' +
+          '<button class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;cursor:pointer" onclick="editModuleName(' + g.id + ',' + m.id + ')">✏️</button>' +
+          '<button class="btn-sm reject-btn" style="margin-left:4px" onclick="deleteModule(' + g.id + ',' + m.id + ')">🗑️</button>' +
+          '</div>';
+      }).join('') +
+      '<div style="display:flex;gap:8px;padding:10px 16px;background:#fafafa">' +
+      '<input class="form-input" id="mod-inp-' + g.id + '" placeholder="Tên module mới..." style="flex:1;padding:7px 10px">' +
+      '<button class="btn btn-primary" style="width:auto;padding:0 14px" onclick="addModule(' + g.id + ')">+ Thêm</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function editGroupName(gid) {
+  var el = document.getElementById('gname-' + gid);
+  var cur = el.textContent;
+  var inp = document.createElement('input');
+  inp.className = 'form-input'; inp.value = cur; inp.style.cssText='padding:4px 8px;width:200px';
+  inp.onblur = function() {
+    var g = moduleGroups.find(function(g){return g.id===gid;});
+    if (g && inp.value.trim()) g.name = inp.value.trim();
+    renderModuleGroups();
+    showToast('Đã đổi tên nhóm', 'success');
+  };
+  inp.onkeydown = function(e){ if(e.key==='Enter') inp.blur(); };
+  el.replaceWith(inp); inp.focus(); inp.select();
+}
+
+function editModuleName(gid, mid) {
+  var el = document.getElementById('mname-' + mid);
+  var cur = el.textContent;
+  var inp = document.createElement('input');
+  inp.className = 'form-input'; inp.value = cur; inp.style.cssText='padding:4px 8px;width:200px';
+  inp.onblur = function() {
+    var g = moduleGroups.find(function(g){return g.id===gid;});
+    var m = g && g.modules.find(function(m){return m.id===mid;});
+    if (m && inp.value.trim()) m.name = inp.value.trim();
+    renderModuleGroups();
+    showToast('Đã đổi tên module', 'success');
+  };
+  inp.onkeydown = function(e){ if(e.key==='Enter') inp.blur(); };
+  el.replaceWith(inp); inp.focus(); inp.select();
+}
+
+function addModule(gid) {
+  var inp = document.getElementById('mod-inp-' + gid);
+  if (!inp || !inp.value.trim()) { showToast('Nhập tên module', 'warning'); return; }
+  var g = moduleGroups.find(function(g){return g.id===gid;});
+  g.modules.push({ id: Date.now(), icon: '📋', name: inp.value.trim() });
+  renderModuleGroups();
+  showToast('Đã thêm module: ' + inp.value.trim(), 'success');
+}
+
+function deleteModule(gid, mid) {
+  var g = moduleGroups.find(function(g){return g.id===gid;});
+  var m = g && g.modules.find(function(m){return m.id===mid;});
+  if (!confirm('Xóa module "' + (m?m.name:'') + '"?')) return;
+  g.modules = g.modules.filter(function(m){return m.id!==mid;});
+  renderModuleGroups();
+  showToast('Đã xóa module', 'error');
+}
+
+function deleteGroup(gid) {
+  var g = moduleGroups.find(function(g){return g.id===gid;});
+  if (!confirm('Xóa nhóm "' + (g?g.name:'') + '" và toàn bộ modules?')) return;
+  moduleGroups = moduleGroups.filter(function(g){return g.id!==gid;});
+  renderModuleGroups();
+  showToast('Đã xóa nhóm', 'error');
+}
+
+function addGroup() {
+  var inp = document.getElementById('new-group-name');
+  if (!inp || !inp.value.trim()) { showToast('Nhập tên nhóm', 'warning'); return; }
+  moduleGroups.push({ id: Date.now(), icon: '📂', name: inp.value.trim(), modules: [] });
+  inp.value = '';
+  renderModuleGroups();
+  showToast('Đã tạo nhóm mới', 'success');
 }

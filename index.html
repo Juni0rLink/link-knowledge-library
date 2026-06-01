@@ -75,6 +75,7 @@
       <div class="nav-item" onclick="showPage('myfiles',this)">👤 File cá nhân</div>
       <div class="nav-item" onclick="showPage('files',this)">📁 Quản lý File</div>
       <div class="sidebar-section">Hệ thống</div>
+      <div class="nav-item" id="nav-modules" style="display:none" onclick="showPage('modules',this)">🗂️ Quản lý Modules</div>
       <div class="nav-item" id="nav-admin" style="display:none" onclick="showPage('admin',this)">🔐 Admin Panel <span id="pending-badge" class="pending-badge" style="display:none"></span></div>
       <div class="nav-item" style="position:relative" onclick="showPage('news',this)">📢 News <span id="news-dot" style="display:none;position:absolute;top:10px;right:16px;width:8px;height:8px;border-radius:50%;background:#ef4444"></span></div>
       <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)">⚙️ Cài đặt</div>
@@ -149,6 +150,22 @@
         <div class="card">
           <div class="card-title">📋 Danh sách file</div>
           <div id="file-list"><p style="color:#aaa;font-style:italic">Chưa có file nào.</p></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-modules">
+        <div class="page-header" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
+          <div class="page-tag">Chỉ Admin & Owner</div>
+          <div class="page-title">🗂️ Quản lý Modules</div>
+          <div class="page-meta">Đổi tên, thêm module, nhóm module — thay đổi áp dụng ngay</div>
+        </div>
+        <div id="module-groups-container"></div>
+        <div class="card" style="border-top-color:#0891b2">
+          <div class="card-title">➕ Tạo nhóm mới</div>
+          <div style="display:flex;gap:8px">
+            <input class="form-input" id="new-group-name" placeholder="Tên nhóm mới..." style="flex:1">
+            <button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="addGroup()">+ Tạo nhóm</button>
+          </div>
         </div>
       </div>
     </main>
