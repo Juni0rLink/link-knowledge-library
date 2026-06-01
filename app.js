@@ -1,0 +1,409 @@
+// ============================================================
+// DATA
+// ============================================================
+const USERS = {
+  'owner@bmw.com':  { password: 'owner123',  name: 'Pham Tung Lam', role: 'owner' },
+  'admin@bmw.com':  { password: 'admin123',  name: 'Tran Thi B',    role: 'admin' },
+  'editor@bmw.com': { password: 'editor123', name: 'Le Van C',       role: 'colleague' },
+};
+
+const ROLE_CFG = {
+  owner:     { label: '👑 Owner',     cls: 'role-owner',     color: '#fbbf24', desc: 'Toan quyen tuyet doi tren platform' },
+  admin:     { label: '🔑 Admin',     cls: 'role-admin',     color: '#3b82f6', desc: 'Quan ly thanh vien, phan quyen, cap nhat tinh nang' },
+  colleague: { label: '👥 Colleague', cls: 'role-colleague', color: '#22c55e', desc: 'Xem, upload, chinh sua noi dung' },
+  viewer:    { label: '👁️ Viewer',    cls: 'role-viewer',    color: '#6b7280', desc: 'Chi xem trang Admin chi dinh cong khai' },
+};
+
+let currentUser = null;
+let loginAttempts = 0;
+let lockUntil = 0;
+const MAX_ATTEMPTS = 3;
+
+let pendingRegs = [];
+
+let newsItems = [
+  { id: 1, title: 'Platform ra mat chinh thuc', body: 'LINK Knowledge Library v1.0 chinh thuc hoat dong.', type: 'new', pinned: true, date: '01/06/2024', author: 'Pham Tung Lam', isNew: true },
+  { id: 2, title: 'GSC Training Portal tich hop', body: 'Toan bo 10 modules GSC da duoc tich hop vao thu vien.', type: 'update', pinned: false, date: '01/06/2024', author: 'Pham Tung Lam', isNew: true },
+];
+let unreadCount = newsItems.filter(function(n) { return n.isNew; }).length;
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab) {
+  ['login', 'register'].forEach(function(t) {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+function doLogin() {
+  var emailEl = document.getElementById('login-email');
+  var passEl  = document.getElementById('login-pass');
+  var btn     = document.getElementById('login-btn');
+  var err     = document.getElementById('login-error');
+
+  err.style.display = 'none';
+
+  if (lockUntil > 0 && Date.now() < lockUntil) {
+    var secs = Math.ceil((lockUntil - Date.now()) / 1000);
+    err.textContent = 'Tai khoan bi khoa. Thu lai sau ' + secs + ' giay.';
+    err.style.display = 'block';
+    return;
+  }
+
+  var email = emailEl.value.trim().toLowerCase();
+  var pass  = passEl.value;
+
+  if (!email || !pass) {
+    err.textContent = 'Vui long nhap day du email va mat khau';
+    err.style.display = 'block';
+    if (!email) emailEl.focus(); else passEl.focus();
+    return;
+  }
+
+  var u = USERS[email];
+  if (!u || u.password !== pass) {
+    loginAttempts++;
+    passEl.value = '';
+    passEl.style.borderColor = '#ef4444';
+    setTimeout(function() { passEl.style.borderColor = ''; }, 1500);
+    var left = MAX_ATTEMPTS - loginAttempts;
+    if (loginAttempts >= MAX_ATTEMPTS) {
+      lockUntil = Date.now() + 30000;
+      loginAttempts = 0;
+      btn.disabled = true;
+      var t = 30;
+      var iv = setInterval(function() {
+        t--;
+        btn.textContent = 'Thu lai sau ' + t + 's';
+        if (t <= 0) {
+          clearInterval(iv);
+          lockUntil = 0;
+          btn.disabled = false;
+          btn.textContent = 'Dang nhap';
+          err.style.display = 'none';
+        }
+      }, 1000);
+      err.textContent = 'Sai ' + MAX_ATTEMPTS + ' lan - bi khoa 30 giay.';
+    } else {
+      err.textContent = 'Mat khau khong dung. Con ' + left + ' lan thu.';
+    }
+    err.style.display = 'block';
+    passEl.focus();
+    return;
+  }
+
+  loginAttempts = 0;
+  lockUntil = 0;
+  passEl.style.borderColor = '';
+  currentUser = { email: email, name: u.name, role: u.role };
+  launchApp();
+}
+
+function viewerAccess() {
+  currentUser = { email: null, name: 'Khach', role: 'viewer' };
+  launchApp();
+}
+
+function doLogout() {
+  currentUser = null;
+  loginAttempts = 0;
+  lockUntil = 0;
+  var btn = document.getElementById('login-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Dang nhap'; }
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').style.display = 'none';
+  switchTab('login');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var passEl = document.getElementById('login-pass');
+  if (passEl) passEl.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+});
+
+// ============================================================
+// REGISTER
+// ============================================================
+function doRegister() {
+  var name   = document.getElementById('reg-name').value.trim();
+  var email  = document.getElementById('reg-email').value.trim();
+  var dept   = document.getElementById('reg-dept').value.trim();
+  var reason = document.getElementById('reg-reason').value.trim();
+  var err    = document.getElementById('reg-error');
+  var ok     = document.getElementById('reg-success');
+
+  err.style.display = 'none';
+  ok.style.display = 'none';
+
+  if (!name || !email || !dept) {
+    err.textContent = 'Vui long dien day du Ho ten, Email va Bo phan';
+    err.style.display = 'block';
+    return;
+  }
+  if (!email.includes('@')) {
+    err.textContent = 'Email khong hop le';
+    err.style.display = 'block';
+    return;
+  }
+
+  var reg = { id: Date.now(), name: name, email: email, dept: dept, reason: reason, time: new Date().toLocaleString('vi-VN') };
+  pendingRegs.push(reg);
+
+  ok.textContent = 'Da gui yeu cau! Admin se xem xet va phan hoi qua email ' + email;
+  ok.style.display = 'block';
+
+  ['reg-name', 'reg-email', 'reg-dept', 'reg-reason'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+
+  updateRegBadge();
+}
+
+// ============================================================
+// LAUNCH APP
+// ============================================================
+function launchApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  var role = currentUser.role;
+  var cfg  = ROLE_CFG[role];
+  var isAdmin     = ['owner', 'admin'].includes(role);
+  var isColleague = ['owner', 'admin', 'colleague'].includes(role);
+
+  var av = document.getElementById('user-avatar');
+  av.textContent = currentUser.name.charAt(0).toUpperCase();
+  av.style.background = cfg.color;
+  document.getElementById('user-name-display').textContent = currentUser.name;
+  var rb = document.getElementById('role-badge-display');
+  rb.textContent = cfg.label;
+  rb.className = 'role-badge ' + cfg.cls;
+
+  document.getElementById('welcome-name').textContent = currentUser.name;
+  document.getElementById('welcome-desc').textContent = cfg.desc;
+
+  var perms = {
+    owner:     ['Xem tat ca noi dung', 'Chinh sua & upload', 'Quan ly thanh vien', 'Cap quyen & cai dat platform'],
+    admin:     ['Xem tat ca noi dung', 'Chinh sua & upload', 'Quan ly thanh vien', 'Cap quyen Admin (can Admin khac xac nhan)'],
+    colleague: ['Xem tat ca noi dung', 'Chinh sua & upload tai lieu', 'File ca nhan rieng', 'Khong the quan ly thanh vien'],
+    viewer:    ['Chi xem trang Admin chi dinh', 'Khong chinh sua/upload', 'Khong co file ca nhan'],
+  };
+  var ul = document.createElement('ul');
+  ul.style.paddingLeft = '18px';
+  (perms[role] || []).forEach(function(p) {
+    var li = document.createElement('li');
+    li.textContent = p;
+    li.style.cssText = 'margin-bottom:5px;font-size:13px;';
+    ul.appendChild(li);
+  });
+  var pl = document.getElementById('permission-list');
+  if (pl) { pl.innerHTML = ''; pl.appendChild(ul); }
+
+  var ok = '<span class="tag tag-green">Truy cap day du</span>';
+  var no = '<span class="tag tag-red">Bi gioi han</span>';
+  ['acc-standards', 'acc-equipment', 'acc-videos'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = isColleague ? ok : no;
+  });
+  var am = document.getElementById('acc-myfiles');
+  if (am) am.innerHTML = isColleague ? ok + ' (rieng tu)' : no;
+
+  if (isAdmin) {
+    var navAdmin = document.getElementById('nav-admin');
+    if (navAdmin) navAdmin.style.display = 'flex';
+    updateRegBadge();
+  }
+
+  if (!isAdmin) {
+    var sNav = document.getElementById('nav-settings');
+    if (sNav) {
+      sNav.onclick = function() { showToast('Chi Admin moi vao duoc Cai dat', 'warning'); };
+    }
+  }
+
+  if (role === 'viewer') {
+    var vn = document.getElementById('viewer-notice');
+    if (vn) vn.style.display = 'block';
+  }
+
+  if (isColleague) {
+    ['std-colleague', 'eq-colleague', 'vid-colleague', 'myfiles-colleague'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'block';
+    });
+  } else {
+    ['std-viewer', 'myfiles-viewer'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'block';
+    });
+  }
+
+  if (isAdmin) {
+    var nc = document.getElementById('news-compose');
+    if (nc) nc.style.display = 'block';
+  }
+
+  updateNewsDot();
+  renderNews();
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(id, el) {
+  var role = currentUser ? currentUser.role : 'viewer';
+  var isAdmin = ['owner', 'admin'].includes(role);
+  if ((id === 'admin' || id === 'settings') && !isAdmin) {
+    showToast('Chi Admin moi vao duoc trang nay', 'warning');
+    return;
+  }
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  if (el) el.classList.add('active');
+  document.querySelector('main').scrollTop = 0;
+  if (id === 'news') markNewsRead();
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+function updateRegBadge() {
+  var n = pendingRegs.length;
+  var badge = document.getElementById('reg-count-badge');
+  var navBadge = document.getElementById('pending-badge');
+  if (badge) { badge.textContent = n; badge.style.display = n > 0 ? 'inline' : 'none'; }
+  if (navBadge) { navBadge.textContent = n; navBadge.style.display = n > 0 ? 'inline' : 'none'; }
+  renderRegRequests();
+}
+
+function renderRegRequests() {
+  var list = document.getElementById('reg-requests-list');
+  if (!list) return;
+  if (pendingRegs.length === 0) {
+    list.innerHTML = '<p style="color:#aaa;font-style:italic;font-size:13px">Chua co yeu cau dang ky nao.</p>';
+    return;
+  }
+  list.innerHTML = pendingRegs.map(function(r) {
+    return '<div class="reg-item" id="reg-' + r.id + '">' +
+      '<div class="reg-name">' + r.name + '</div>' +
+      '<div class="reg-detail">' + r.email + ' | ' + r.dept + '</div>' +
+      '<div class="reg-detail">' + r.time + '</div>' +
+      '<div class="reg-actions">' +
+      '<span style="font-size:12px;font-weight:600">Phan quyen:</span>' +
+      '<select class="assign-select" id="role-sel-' + r.id + '">' +
+      '<option value="colleague">Colleague</option>' +
+      '<option value="viewer">Viewer</option>' +
+      '<option value="admin">Admin (can duyet)</option>' +
+      '</select>' +
+      '<button class="btn-sm approve-btn" onclick="acceptReg(' + r.id + ')">Chap nhan</button>' +
+      '<button class="btn-sm reject-btn" onclick="rejectReg(' + r.id + ')">Tu choi</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function acceptReg(id) {
+  var reg = pendingRegs.find(function(r) { return r.id === id; });
+  if (!reg) return;
+  var roleSel = document.getElementById('role-sel-' + id);
+  var chosenRole = roleSel ? roleSel.value : 'colleague';
+  addMemberRow(reg.name, reg.email, chosenRole);
+  showToast('Da cap quyen cho ' + reg.name, 'success');
+  pendingRegs = pendingRegs.filter(function(r) { return r.id !== id; });
+  updateRegBadge();
+}
+
+function rejectReg(id) {
+  var reg = pendingRegs.find(function(r) { return r.id === id; });
+  pendingRegs = pendingRegs.filter(function(r) { return r.id !== id; });
+  showToast('Da tu choi yeu cau cua ' + (reg ? reg.name : ''), 'error');
+  updateRegBadge();
+}
+
+function addMemberRow(name, email, role) {
+  var cfg = ROLE_CFG[role] || ROLE_CFG.colleague;
+  var container = document.getElementById('member-rows');
+  if (!container) return;
+  var tr = document.createElement('tr');
+  tr.innerHTML = '<td>' + name + '</td><td>' + email + '</td>' +
+    '<td><span class="role-badge ' + cfg.cls + '">' + cfg.label + '</span></td>' +
+    '<td>Active</td>' +
+    '<td><button class="btn-sm reject-btn" onclick="this.closest(\'tr\').remove();showToast(\'Da xoa\',\'error\')">Xoa</button></td>';
+  container.appendChild(tr);
+}
+
+function sendInvite() {
+  var email = document.getElementById('invite-email').value.trim();
+  var role  = document.getElementById('invite-role').value;
+  if (!email) { showToast('Vui long nhap email', 'warning'); return; }
+  showToast('Da gui loi moi ' + role + ' toi ' + email, 'success');
+  document.getElementById('invite-email').value = '';
+}
+
+// ============================================================
+// NEWS
+// ============================================================
+function renderNews() {
+  var list = document.getElementById('news-list');
+  if (!list) return;
+  var sorted = newsItems.slice().sort(function(a, b) { return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0); });
+  list.innerHTML = sorted.map(function(n) {
+    return '<div class="news-item ' + (n.pinned ? 'pinned' : '') + '">' +
+      '<div class="news-header">' +
+      (n.pinned ? '<span>📌</span>' : '') +
+      '<div class="news-title">' + n.title + '</div>' +
+      (n.isNew ? '<span class="tag tag-green" style="font-size:10px">MOI</span>' : '') +
+      '</div>' +
+      '<div class="news-body">' + n.body + '</div>' +
+      '<div style="margin-top:8px;font-size:11px;color:#aaa;">' + n.date + ' - ' + n.author + '</div>' +
+      '</div>';
+  }).join('') || '<p style="color:#aaa">Chua co thong bao.</p>';
+}
+
+function postNews() {
+  var title = document.getElementById('news-title-inp').value.trim();
+  var body  = document.getElementById('news-body-inp').value.trim();
+  var type  = document.getElementById('news-type-sel').value;
+  var pin   = document.getElementById('news-pin').checked;
+  if (!title || !body) { showToast('Vui long nhap tieu de va noi dung', 'warning'); return; }
+  newsItems.unshift({ id: Date.now(), title: title, body: body, type: type, pinned: pin,
+    date: new Date().toLocaleDateString('vi-VN'), author: currentUser.name, isNew: true });
+  document.getElementById('news-title-inp').value = '';
+  document.getElementById('news-body-inp').value = '';
+  document.getElementById('news-pin').checked = false;
+  renderNews();
+  updateNewsDot();
+  showToast('Da dang thong bao', 'success');
+}
+
+function updateNewsDot() {
+  var dot = document.getElementById('news-dot');
+  if (dot) dot.style.display = unreadCount > 0 ? 'block' : 'none';
+}
+
+function markNewsRead() {
+  newsItems.forEach(function(n) { n.isNew = false; });
+  unreadCount = 0;
+  updateNewsDot();
+  renderNews();
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function showToast(msg, type) {
+  type = type || 'success';
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(window._tt);
+  window._tt = setTimeout(function() { t.className = ''; }, 3500);
+}

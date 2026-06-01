@@ -4,293 +4,57 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LINK Knowledge Library</title>
-<style>
-:root {
-  --blue:#1c69d4; --dark:#1a1a1a; --mid:#2d2d2d;
-  --light:#f4f6fb; --accent:#0653b6; --silver:#8c8c8c;
-  --green:#22c55e; --orange:#e8a000; --red:#ef4444; --purple:#7c3aed;
-  --link-red:#e8001c; --link-blue:#004fa3;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',Arial,sans-serif;background:var(--light);min-height:100vh;}
-
-/* ===== LOGIN SCREEN ===== */
-#login-screen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,#0a1628 0%,#1c3a6b 50%,#0a1628 100%);
-}
-.login-box{
-  background:#fff;border-radius:16px;padding:36px 40px;
-  width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.35);
-}
-.login-logo{text-align:center;margin-bottom:20px;}
-.login-title{font-size:19px;font-weight:800;color:var(--dark);margin-top:10px;}
-.login-sub{font-size:12px;color:var(--silver);margin-top:3px;}
-
-/* Auth tabs */
-.auth-tabs{display:flex;border-bottom:2px solid #eee;margin-bottom:20px;}
-.auth-tab{
-  flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;
-  cursor:pointer;color:#aaa;border-bottom:3px solid transparent;margin-bottom:-2px;
-  transition:all 0.2s;
-}
-.auth-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
-.auth-panel{display:none;}
-.auth-panel.active{display:block;}
-
-.form-group{margin-bottom:14px;}
-.form-label{font-size:12px;font-weight:700;color:#555;margin-bottom:5px;display:block;}
-.form-input{
-  width:100%;padding:10px 13px;border:2px solid #e0e0e0;
-  border-radius:8px;font-size:13px;outline:none;transition:border 0.2s;
-}
-.form-input:focus{border-color:var(--blue);}
-.form-select{
-  width:100%;padding:10px 13px;border:2px solid #e0e0e0;
-  border-radius:8px;font-size:13px;outline:none;background:#fff;
-}
-.btn{width:100%;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
-.btn-primary{background:var(--blue);color:#fff;}
-.btn-primary:hover{background:var(--accent);}
-.btn-sm{padding:6px 12px;font-size:12px;border-radius:6px;border:none;cursor:pointer;font-weight:600;transition:all 0.2s;}
-.login-divider{text-align:center;color:#aaa;font-size:12px;margin:14px 0;}
-.viewer-btn{
-  width:100%;padding:9px;border:2px dashed #ccc;border-radius:8px;
-  background:transparent;color:#888;font-size:13px;cursor:pointer;transition:all 0.2s;
-}
-.viewer-btn:hover{border-color:var(--blue);color:var(--blue);}
-.alert{padding:10px 13px;border-radius:6px;font-size:12px;margin-bottom:12px;display:none;}
-.alert-error{background:#fee2e2;color:#991b1b;border-left:4px solid var(--red);}
-.alert-success{background:#dcfce7;color:#166534;border-left:4px solid var(--green);}
-.alert-info{background:#e8f0fd;color:#0653b6;border-left:4px solid var(--blue);}
-
-/* ===== APP ===== */
-#app{display:none;flex-direction:column;min-height:100vh;}
-header{
-  background:var(--dark);height:60px;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 20px;position:fixed;top:0;left:0;right:0;z-index:100;
-}
-.header-left{display:flex;align-items:center;gap:14px;}
-.header-title{color:#fff;font-size:15px;font-weight:700;}
-.header-sub{color:var(--silver);font-size:11px;}
-.user-pill{display:flex;align-items:center;gap:8px;background:#333;border-radius:20px;padding:5px 14px;}
-.user-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;}
-.user-name{color:#fff;font-size:12px;font-weight:600;}
-.role-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;}
-.role-owner{background:#fbbf24;color:#78350f;}
-.role-admin{background:#3b82f6;color:#fff;}
-.role-colleague{background:#22c55e;color:#fff;}
-.role-viewer{background:#6b7280;color:#fff;}
-.logout-btn{background:transparent;border:1px solid #555;color:#aaa;padding:4px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all 0.2s;}
-.logout-btn:hover{border-color:var(--red);color:var(--red);}
-
-.layout{display:flex;margin-top:60px;min-height:calc(100vh - 60px);}
-aside{width:260px;background:var(--mid);flex-shrink:0;border-right:1px solid #444;overflow-y:auto;position:fixed;top:60px;bottom:0;left:0;}
-main{margin-left:260px;flex:1;padding:28px;}
-
-.sidebar-section{padding:12px 16px 4px;color:#666;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:#ccc;font-size:13px;border-left:3px solid transparent;transition:all 0.2s;}
-.nav-item:hover{background:#3a3a3a;color:#fff;}
-.nav-item.active{background:#1a3a6b;color:#fff;border-left-color:var(--blue);}
-.nav-lock{margin-left:auto;font-size:11px;}
-.viewer-notice{margin:12px;padding:10px 12px;background:#1a1a1a;border-radius:8px;font-size:11px;color:#888;border:1px dashed #444;}
-
-.page{display:none;max-width:900px;}
-.page.active{display:block;}
-.page-header{color:#fff;border-radius:12px;padding:24px 28px;margin-bottom:24px;background:linear-gradient(135deg,var(--accent),var(--blue));}
-.page-tag{font-size:11px;opacity:.75;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
-.page-title{font-size:22px;font-weight:800;margin-bottom:4px;}
-.page-meta{font-size:12px;opacity:.7;}
-.card{background:#fff;border-radius:10px;padding:22px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid var(--blue);}
-.card-title{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-.locked-card{background:#fff;border-radius:10px;padding:22px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid #ccc;opacity:.5;position:relative;pointer-events:none;}
-
-/* Tables */
-table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0;}
-th{background:var(--blue);color:#fff;padding:9px 12px;text-align:left;font-size:12px;}
-td{padding:9px 12px;border-bottom:1px solid #eee;vertical-align:middle;}
-tr:hover td{background:#f0f5ff;}
-
-/* User mgmt */
-.approve-btn{background:var(--green);color:#fff;}
-.reject-btn{background:var(--red);color:#fff;margin-left:4px;}
-.demote-btn{background:#6b7280;color:#fff;margin-left:4px;}
-.promote-btn{background:var(--orange);color:#fff;}
-.assign-select{padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;margin-right:6px;}
-.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;}
-.dot-active{background:var(--green);}
-.dot-pending{background:var(--orange);}
-.dot-viewer{background:#aaa;}
-
-/* Invite */
-.invite-row{display:flex;gap:8px;margin-top:14px;}
-.invite-input{flex:1;padding:9px 13px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;}
-.invite-input:focus{border-color:var(--blue);}
-.role-select-inv{padding:9px 10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fff;outline:none;}
-.invite-send{background:var(--blue);color:#fff;padding:9px 18px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;}
-.invite-send:hover{background:var(--accent);}
-
-/* Misc */
-p,li{font-size:13px;line-height:1.7;color:#333;}
-ul{padding-left:18px;} li{margin-bottom:3px;}
-.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;margin:2px;}
-.tag-blue{background:#dbeafe;color:var(--accent);}
-.tag-green{background:#dcfce7;color:#166534;}
-.tag-orange{background:#fef3c7;color:#92400e;}
-.highlight{background:#e8f0fd;border-left:4px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin:10px 0;font-size:13px;}
-.warning-box{background:#fff8e7;border-left:4px solid var(--orange);border-radius:0 8px 8px 0;padding:12px 16px;margin:10px 0;font-size:13px;}
-.danger-box{background:#fef0f0;border-left:4px solid var(--red);border-radius:0 8px 8px 0;padding:12px 16px;margin:10px 0;font-size:13px;}
-
-.pending-badge{background:var(--orange);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px;animation:pulse 1.5s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-
-/* NEWS */
-.news-dot{position:absolute;top:10px;right:16px;width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1.5s infinite;}
-.news-item{border-left:4px solid var(--blue);background:#fff;border-radius:0 10px 10px 0;padding:16px 18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
-.news-item.pinned{border-left-color:var(--orange);}
-.news-item.new{border-left-color:var(--green);}
-.news-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-.news-title{font-weight:700;font-size:14px;flex:1;}
-.news-date{font-size:11px;color:#888;}
-.news-type{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
-.type-update{background:#dbeafe;color:#1e40af;}
-.type-new{background:#dcfce7;color:#166534;}
-.type-alert{background:#fee2e2;color:#991b1b;}
-.type-info{background:#f3e8ff;color:#6b21a8;}
-.news-body{font-size:13px;color:#444;line-height:1.6;}
-.news-compose{background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid var(--orange);}
-.news-compose textarea{width:100%;padding:10px 13px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;resize:vertical;min-height:80px;}
-.news-compose textarea:focus{border-color:var(--blue);}
-.news-row{display:flex;gap:8px;margin-top:10px;align-items:center;}
-.news-type-sel{padding:8px 10px;border:2px solid #e0e0e0;border-radius:8px;font-size:12px;background:#fff;outline:none;}
-.news-post-btn{background:var(--orange);color:#fff;padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;}
-.news-post-btn:hover{opacity:.85;}
-.news-pin-chk{display:flex;align-items:center;gap:6px;font-size:12px;color:#555;margin-left:auto;}
-
-/* Toast */
-#toast{position:fixed;bottom:24px;right:24px;background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;transform:translateY(80px);transition:transform .3s;max-width:340px;box-shadow:0 4px 20px rgba(0,0,0,.3);}
-#toast.show{transform:translateY(0);}
-#toast.success{border-left:4px solid var(--green);}
-#toast.warning{border-left:4px solid var(--orange);}
-#toast.error{border-left:4px solid var(--red);}
-
-::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-thumb{background:#555;border-radius:3px;}
-
-/* Reg item in admin */
-.reg-item{border:1px solid #e0e0e0;border-radius:8px;padding:14px 16px;margin-bottom:10px;background:#fffbf0;border-left:4px solid var(--orange);}
-.reg-name{font-weight:700;font-size:14px;margin-bottom:4px;}
-.reg-detail{font-size:12px;color:#666;margin-bottom:2px;}
-.reg-actions{margin-top:10px;display:flex;align-items:center;gap:8px;}
-
-/* MODULE MANAGER */
-.mod-group{background:#fff;border-radius:10px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);overflow:hidden;}
-.mod-group-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f8f9fb;border-bottom:1px solid #eee;cursor:pointer;}
-.mod-group-name{font-weight:700;font-size:14px;flex:1;}
-.mod-group-icon{font-size:18px;}
-.mod-group-actions{display:flex;gap:6px;margin-left:auto;}
-.mod-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0;}
-.mod-item:last-child{border-bottom:none;}
-.mod-item-icon{font-size:15px;}
-.mod-item-name{font-size:13px;flex:1;}
-.mod-item-actions{display:flex;gap:5px;}
-.mod-edit-inp{padding:5px 10px;border:2px solid var(--blue);border-radius:6px;font-size:13px;outline:none;width:180px;}
-.mod-btn{padding:4px 10px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-weight:700;}
-.mod-btn-edit{background:#e8f0fd;color:var(--blue);}
-.mod-btn-save{background:var(--green);color:#fff;}
-.mod-btn-del{background:#fee2e2;color:var(--red);}
-.mod-btn-move{background:#f3e8ff;color:var(--purple);}
-.mod-add-row{display:flex;gap:8px;padding:12px 16px;background:#fafafa;border-top:1px dashed #ddd;}
-.mod-add-inp{flex:1;padding:7px 12px;border:2px solid #e0e0e0;border-radius:7px;font-size:13px;outline:none;}
-.mod-add-inp:focus{border-color:var(--blue);}
-.icon-sel{padding:7px 8px;border:2px solid #e0e0e0;border-radius:7px;font-size:13px;background:#fff;outline:none;}
-.mod-add-btn{background:var(--blue);color:#fff;padding:7px 14px;border-radius:7px;border:none;font-size:13px;font-weight:700;cursor:pointer;}
-.new-group-row{display:flex;gap:8px;margin-top:14px;}
-.drag-handle{cursor:grab;color:#bbb;font-size:14px;padding:0 4px;}
-.drag-handle:active{cursor:grabbing;}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<!-- ===================== LOGIN / REGISTER SCREEN ===================== -->
 <div id="login-screen">
   <div class="login-box">
-
-    <!-- Logo LINK GROUP -->
     <div class="login-logo">
-      <img src="data:image/jpeg;base64,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" alt="LINK Group" style="width:110px;height:110px;object-fit:contain;border-radius:12px;margin:0 auto 10px;display:block;">
+      <img src="logo.jpg" alt="LINK Group" style="width:100px;height:100px;object-fit:contain;border-radius:12px;margin:0 auto 10px;display:block;">
       <div class="login-title">LINK Knowledge Library</div>
-      <div class="login-sub">Nền tảng kiến thức kỹ thuật nội bộ · LINK Group</div>
+      <div class="login-sub">Nen tang kien thuc ky thuat noi bo</div>
     </div>
-
-    <!-- Tabs -->
     <div class="auth-tabs">
-      <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">🔐 Đăng nhập</div>
-      <div class="auth-tab" id="tab-register" onclick="switchTab('register')">📝 Đăng ký</div>
+      <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Dang nhap</div>
+      <div class="auth-tab" id="tab-register" onclick="switchTab('register')">Dang ky</div>
     </div>
-
-    <!-- LOGIN PANEL -->
     <div class="auth-panel active" id="panel-login">
       <div class="alert alert-error" id="login-error"></div>
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input class="form-input" id="login-email" type="email" placeholder="your@email.com" autocomplete="email">
+        <input class="form-input" id="login-email" type="email" placeholder="your@email.com">
       </div>
       <div class="form-group">
-        <label class="form-label">Mật khẩu</label>
-        <input class="form-input" id="login-pass" type="password" placeholder="••••••••">
+        <label class="form-label">Mat khau</label>
+        <input class="form-input" id="login-pass" type="password" placeholder="Password">
       </div>
-      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Đăng nhập →</button>
-      <div class="login-divider">hoặc</div>
-      <button class="viewer-btn" onclick="viewerAccess()">👁️ Xem với tư cách khách (Viewer)</button>
-      <p style="font-size:11px;color:#aaa;text-align:center;margin-top:14px">Chưa có tài khoản? Bấm tab <strong>Đăng ký</strong> để gửi yêu cầu.</p>
-      <div style="margin-top:14px;padding:10px 12px;background:#f8f9fb;border-radius:8px;border:1px solid #eee;">
-        <div style="font-size:10px;font-weight:700;color:#888;margin-bottom:6px;letter-spacing:1px">DEMO ACCOUNTS</div>
-        <div style="font-size:11px;color:#555;line-height:1.9">
-          👑 <code style="background:#eee;padding:1px 5px;border-radius:3px">owner@bmw.com</code> / <code style="background:#eee;padding:1px 5px;border-radius:3px">owner123</code><br>
-          🔑 <code style="background:#eee;padding:1px 5px;border-radius:3px">admin@bmw.com</code> / <code style="background:#eee;padding:1px 5px;border-radius:3px">admin123</code><br>
-          👥 <code style="background:#eee;padding:1px 5px;border-radius:3px">editor@bmw.com</code> / <code style="background:#eee;padding:1px 5px;border-radius:3px">editor123</code>
-        </div>
+      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Dang nhap</button>
+      <div class="login-divider">hoac</div>
+      <button class="viewer-btn" onclick="viewerAccess()">Xem voi tu cach khach</button>
+      <div style="margin-top:14px;padding:10px;background:#f8f9fb;border-radius:8px;border:1px solid #eee;font-size:11px;color:#555;line-height:2">
+        <strong>Demo:</strong><br>
+        owner@bmw.com / owner123<br>
+        admin@bmw.com / admin123<br>
+        editor@bmw.com / editor123
       </div>
     </div>
-
-    <!-- REGISTER PANEL -->
     <div class="auth-panel" id="panel-register">
       <div class="alert alert-success" id="reg-success"></div>
       <div class="alert alert-error" id="reg-error"></div>
-      <div class="form-group">
-        <label class="form-label">Họ và tên *</label>
-        <input class="form-input" id="reg-name" type="text" placeholder="Nguyễn Văn A">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Email công ty *</label>
-        <input class="form-input" id="reg-email" type="email" placeholder="your@linkgroup.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Bộ phận / Vị trí *</label>
-        <input class="form-input" id="reg-dept" type="text" placeholder="PLC Engineer · Automation Dept.">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Lý do cần truy cập</label>
-        <textarea class="form-input" id="reg-reason" rows="2" placeholder="Cần tham khảo tài liệu GSC, tham gia đóng góp kiến thức..." style="resize:none;"></textarea>
-      </div>
-      <button class="btn btn-primary" style="background:var(--link-red)" onclick="doRegister()">Gửi yêu cầu đăng ký →</button>
-      <p style="font-size:11px;color:#aaa;text-align:center;margin-top:12px">Thông tin sẽ được gửi đến Admin. Bạn sẽ nhận email xác nhận khi được cấp quyền.</p>
+      <div class="form-group"><label class="form-label">Ho va ten *</label><input class="form-input" id="reg-name" type="text"></div>
+      <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="reg-email" type="email"></div>
+      <div class="form-group"><label class="form-label">Bo phan *</label><input class="form-input" id="reg-dept" type="text"></div>
+      <div class="form-group"><label class="form-label">Ly do</label><textarea class="form-input" id="reg-reason" rows="2" style="resize:none"></textarea></div>
+      <button class="btn btn-primary" onclick="doRegister()">Gui yeu cau</button>
     </div>
-
   </div>
 </div>
 
-<!-- ===================== APP ===================== -->
-<div id="app">
+<div id="app" style="display:none">
   <header>
     <div class="header-left">
-      <!-- LINK logo mini in header -->
-      <img src="data:image/jpeg;base64,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" alt="LINK Group" style="width:44px;height:44px;object-fit:contain;border-radius:8px;">
-      <div>
-        <div class="header-title">LINK Knowledge Library</div>
-        <div class="header-sub">Nền tảng kiến thức kỹ thuật nội bộ</div>
-      </div>
+      <img src="logo.jpg" alt="LINK" style="width:40px;height:40px;object-fit:contain;border-radius:8px;">
+      <div><div class="header-title">LINK Knowledge Library</div><div class="header-sub">Nen tang kien thuc noi bo</div></div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
       <div class="user-pill">
@@ -298,699 +62,81 @@ ul{padding-left:18px;} li{margin-bottom:3px;}
         <span class="user-name" id="user-name-display"></span>
         <span class="role-badge" id="role-badge-display"></span>
       </div>
-      <button class="logout-btn" onclick="doLogout()">Đăng xuất</button>
+      <button class="logout-btn" onclick="doLogout()">Dang xuat</button>
     </div>
   </header>
-
   <div class="layout">
-    <aside id="sidebar">
-      <div class="sidebar-section" id="sidebar-lib-label">Thư viện</div>
-      <div class="nav-item active" onclick="showPage('home',this)" id="nav-home">🏠 Trang chủ</div>
-      <div id="sidebar-dynamic-modules"></div>
-      <div class="nav-item" onclick="showPage('myfiles',this)">👤 File của tôi</div>
-      <div class="sidebar-section">Hệ thống</div>
-      <div class="nav-item" onclick="showPage('admin',this)" id="nav-admin" style="display:none">
-        🔐 Admin Panel
-        <span id="pending-badge" class="pending-badge" style="display:none"></span>
-      </div>
-      <div class="nav-item" onclick="showPage('modules',this)" id="nav-modules" style="display:none">🗂️ Quản lý Modules</div>
-      <div class="nav-item" onclick="showPage('news',this)" id="nav-news" style="position:relative">
-        📢 News / Changelog
-        <span class="news-dot" id="news-dot" style="display:none"></span>
-      </div>
-      <div class="nav-item" onclick="showPage('settings',this)" id="nav-settings">
-        ⚙️ Cài đặt <span class="nav-lock" id="lock-settings"></span>
-      </div>
-      <div class="viewer-notice" id="viewer-notice" style="display:none">
-        👁️ <strong>Viewer</strong> — Xem trang công khai.<br><br>Liên hệ Admin hoặc <strong>đăng ký tài khoản</strong> để truy cập đầy đủ.
-      </div>
+    <aside>
+      <div class="sidebar-section">Thu vien</div>
+      <div class="nav-item active" onclick="showPage('home',this)">🏠 Trang chu</div>
+      <div class="nav-item" onclick="showPage('standards',this)">📚 BMW Standards</div>
+      <div class="nav-item" onclick="showPage('equipment',this)">🔧 Equipment</div>
+      <div class="nav-item" onclick="showPage('videos',this)">🎬 Videos</div>
+      <div class="nav-item" onclick="showPage('myfiles',this)">👤 File cua toi</div>
+      <div class="sidebar-section">He thong</div>
+      <div class="nav-item" id="nav-admin" style="display:none" onclick="showPage('admin',this)">🔐 Admin Panel <span id="pending-badge" class="pending-badge" style="display:none"></span></div>
+      <div class="nav-item" style="position:relative" onclick="showPage('news',this)">📢 News <span id="news-dot" style="display:none;position:absolute;top:10px;right:16px;width:8px;height:8px;border-radius:50%;background:#ef4444"></span></div>
+      <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)">⚙️ Cai dat</div>
+      <div class="viewer-notice" id="viewer-notice" style="display:none">Ban dang xem voi tu cach Viewer.</div>
     </aside>
-
     <main>
-      <!-- HOME -->
       <div class="page active" id="page-home">
-        <div class="page-header">
-          <div class="page-tag">LINK Knowledge Library · v1.0</div>
-          <div class="page-title">Chào mừng, <span id="welcome-name"></span> 👋</div>
-          <div class="page-meta" id="welcome-desc"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">📊 Quyền truy cập của bạn</div>
-          <div id="permission-list"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">🗂️ Danh mục</div>
-          <table>
-            <tr><th>Danh mục</th><th>Nội dung</th><th>Quyền của bạn</th></tr>
-            <tr><td>📚 BMW Standards</td><td>GSC, TKB, TMO...</td><td id="acc-standards"></td></tr>
-            <tr><td>🔧 Equipment & Issues</td><td>Lỗi & giải pháp</td><td id="acc-equipment"></td></tr>
-            <tr><td>🎬 Training Videos</td><td>Video đào tạo</td><td id="acc-videos"></td></tr>
-            <tr><td>👤 File cá nhân</td><td>Không gian riêng</td><td id="acc-myfiles"></td></tr>
-          </table>
-        </div>
+        <div class="page-header"><div class="page-tag">v1.0</div><div class="page-title">Chao mung, <span id="welcome-name"></span></div><div class="page-meta" id="welcome-desc"></div></div>
+        <div class="card"><div class="card-title">Quyen truy cap</div><div id="permission-list"></div></div>
+        <div class="card"><div class="card-title">Danh muc</div><table><tr><th>Danh muc</th><th>Quyen</th></tr><tr><td>BMW Standards</td><td id="acc-standards"></td></tr><tr><td>Equipment</td><td id="acc-equipment"></td></tr><tr><td>Videos</td><td id="acc-videos"></td></tr><tr><td>File ca nhan</td><td id="acc-myfiles"></td></tr></table></div>
       </div>
-
-      <!-- STANDARDS -->
       <div class="page" id="page-standards">
-        <div class="page-header">
-          <div class="page-tag">BMW Standards</div>
-          <div class="page-title">📚 BMW Standards Library</div>
-          <div class="page-meta">GSC, TKB, TMO và các tiêu chuẩn kỹ thuật BMW</div>
-        </div>
-        <div class="card">
-          <div class="card-title">🔷 GSC – Group Standard Controls</div>
-          <p>Tiêu chuẩn điều khiển thống nhất BMW — 10 modules: Introduction, Software Structure, Safety, SAS, MEDIA, User Blocks, Phase Concept, User Sequence, Type Management, Exercises.</p>
-          <br><span class="tag tag-blue">TIA Portal V18</span><span class="tag tag-green">WinCC Unified</span><span class="tag tag-orange">Safety</span><span class="tag tag-blue">SiVArc</span>
-        </div>
-        <div id="std-colleague" style="display:none">
-          <div class="card">
-            <div class="card-title">✏️ Đóng góp nội dung</div>
-            <p>Thêm tài liệu, ghi chú, kinh nghiệm thực tế vào thư viện.</p><br>
-            <button class="btn-sm" style="background:var(--blue);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Thêm tài liệu mới</button>
-          </div>
-        </div>
-        <div id="std-viewer" style="display:none">
-          <div class="locked-card"><div class="card-title" style="color:#aaa">🔒 Nội dung chi tiết — Cần tài khoản Colleague trở lên</div></div>
-        </div>
+        <div class="page-header"><div class="page-tag">BMW Standards</div><div class="page-title">📚 BMW Standards</div></div>
+        <div class="card"><div class="card-title">GSC – Group Standard Controls</div><p>10 modules: Introduction, Software Structure, Safety, SAS, MEDIA, User Blocks, Phase Concept, User Sequence, Type Management, Exercises.</p></div>
+        <div id="std-colleague" style="display:none"><div class="card"><div class="card-title">Dong gop</div><button class="btn-sm" style="background:var(--blue);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer" onclick="showToast('Upload coming soon!','warning')">+ Them tai lieu</button></div></div>
+        <div id="std-viewer" style="display:none"><div class="card" style="opacity:0.5"><div class="card-title">Can tai khoan de xem chi tiet</div></div></div>
       </div>
-
-      <!-- EQUIPMENT -->
       <div class="page" id="page-equipment">
-        <div class="page-header">
-          <div class="page-tag">Equipment & Issues</div>
-          <div class="page-title">🔧 Equipment & Issues</div>
-          <div class="page-meta">Thiết bị, lỗi thường gặp và giải pháp</div>
-        </div>
-        <div class="card">
-          <div class="card-title">🤖 Vấn đề thường gặp</div>
-          <table>
-            <tr><th>Lỗi</th><th>Nguyên nhân</th><th>Giải pháp</th></tr>
-            <tr><td>E-STOP không reset</td><td>Zone chưa acknowledge</td><td>Kiểm tra SAFE_CONF_ZONE</td></tr>
-            <tr><td>SAS Export lỗi</td><td>SAS chưa validate</td><td>Validate → export lại</td></tr>
-            <tr><td>HMI không kết nối</td><td>IP sai / Profinet lỗi</td><td>Kiểm tra IP-Net-List</td></tr>
-          </table>
-        </div>
-        <div id="eq-colleague" style="display:none">
-          <div class="card">
-            <div class="card-title">➕ Báo cáo vấn đề mới</div>
-            <button class="btn-sm" style="background:var(--orange);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Báo cáo vấn đề</button>
-          </div>
-        </div>
+        <div class="page-header"><div class="page-tag">Equipment</div><div class="page-title">🔧 Equipment & Issues</div></div>
+        <div class="card"><div class="card-title">Van de thuong gap</div><table><tr><th>Loi</th><th>Giai phap</th></tr><tr><td>E-STOP khong reset</td><td>Kiem tra SAFE_CONF_ZONE</td></tr><tr><td>SAS Export loi</td><td>Validate roi export lai</td></tr></table></div>
+        <div id="eq-colleague" style="display:none"><div class="card"><div class="card-title">Bao cao van de</div><button class="btn-sm" style="background:var(--orange);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Bao cao</button></div></div>
       </div>
-
-      <!-- VIDEOS -->
       <div class="page" id="page-videos">
-        <div class="page-header">
-          <div class="page-tag">Training Videos</div>
-          <div class="page-title">🎬 Training Videos</div>
-          <div class="page-meta">Video đào tạo theo module — YouTube Unlisted</div>
-        </div>
-        <div class="card">
-          <div class="card-title">📹 Danh sách video</div>
-          <table>
-            <tr><th>Module</th><th>Tiêu đề</th><th>Tác giả</th></tr>
-            <tr><td>GSC Intro</td><td>Tổng quan GSC v18</td><td>Pham Tung Lam</td></tr>
-            <tr><td>SAS</td><td>Hướng dẫn tạo SAS file</td><td>Pham Tung Lam</td></tr>
-            <tr><td>Safety</td><td>Cấu hình E-STOP Zone</td><td>—</td></tr>
-          </table>
-        </div>
-        <div id="vid-colleague" style="display:none">
-          <div class="card">
-            <div class="card-title">⬆️ Upload video mới</div>
-            <p>Upload YouTube Unlisted → paste link → xuất hiện trong thư viện.</p><br>
-            <button class="btn-sm" style="background:var(--purple);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Thêm video</button>
-          </div>
-        </div>
+        <div class="page-header"><div class="page-tag">Videos</div><div class="page-title">🎬 Training Videos</div></div>
+        <div class="card"><div class="card-title">Danh sach</div><table><tr><th>Module</th><th>Tac gia</th></tr><tr><td>GSC Introduction</td><td>Pham Tung Lam</td></tr><tr><td>SAS Setup</td><td>Pham Tung Lam</td></tr></table></div>
+        <div id="vid-colleague" style="display:none"><div class="card"><div class="card-title">Upload video</div><button class="btn-sm" style="background:#7c3aed;color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Them video</button></div></div>
       </div>
-
-      <!-- MY FILES -->
       <div class="page" id="page-myfiles">
-        <div class="page-header">
-          <div class="page-tag">Cá nhân</div>
-          <div class="page-title">👤 File của tôi</div>
-          <div class="page-meta">Ghi chú và tài liệu cá nhân — chỉ bạn và Admin xem được</div>
-        </div>
-        <div id="myfiles-viewer" style="display:none">
-          <div class="warning-box">⚠️ Tính năng chỉ dành cho thành viên có tài khoản.</div>
-        </div>
+        <div class="page-header"><div class="page-tag">Ca nhan</div><div class="page-title">👤 File cua toi</div></div>
+        <div id="myfiles-viewer" style="display:none"><div class="warning-box">Can tai khoan de su dung.</div></div>
         <div id="myfiles-colleague" style="display:none">
-          <div class="card">
-            <div class="card-title">📁 Tài liệu của tôi</div>
-            <p style="color:#aaa;font-style:italic">Chưa có tài liệu. Tạo tài liệu đầu tiên →</p><br>
-            <button class="btn-sm" style="background:var(--green);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Tạo tài liệu mới</button>
-          </div>
-          <div class="card">
-            <div class="card-title">📝 Ghi chú nhanh</div>
-            <textarea style="width:100%;height:90px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;resize:vertical" placeholder="Ghi chú nhanh..."></textarea>
-            <button class="btn-sm" style="background:var(--blue);color:#fff;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;margin-top:8px">Lưu</button>
-          </div>
+          <div class="card"><div class="card-title">Ghi chu nhanh</div><textarea style="width:100%;height:90px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;resize:vertical"></textarea><br><button class="btn-sm" style="background:var(--blue);color:#fff;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;margin-top:8px" onclick="showToast('Da luu','success')">Luu</button></div>
         </div>
       </div>
-
-      <!-- ADMIN PANEL -->
       <div class="page" id="page-admin">
-        <div class="page-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
-          <div class="page-tag">Admin & Owner only</div>
-          <div class="page-title">🔐 Admin Panel</div>
-          <div class="page-meta">Duyệt đăng ký mới, quản lý thành viên, phân quyền</div>
-        </div>
-
-        <!-- NEW REGISTRATION REQUESTS -->
-        <div class="card" style="border-top-color:var(--orange)">
-          <div class="card-title">
-            📥 Yêu cầu đăng ký mới
-            <span id="reg-count-badge" class="pending-badge" style="display:none"></span>
-          </div>
-          <div class="warning-box">Admin xem xét thông tin, chọn quyền phù hợp rồi <strong>Chấp nhận</strong> hoặc <strong>Từ chối</strong>.</div>
-          <div id="reg-requests-list" style="margin-top:14px">
-            <p style="color:#aaa;font-style:italic;font-size:13px">Chưa có yêu cầu đăng ký nào.</p>
-          </div>
-        </div>
-
-        <!-- PENDING ADMIN APPROVALS -->
-        <div class="card" style="border-top-color:#4f46e5">
-          <div class="card-title">⏳ Chờ duyệt nâng cấp Admin</div>
-          <div class="warning-box">Nâng cấp lên Admin cần được ít nhất <strong>1 Admin hiện tại</strong> phê duyệt.</div>
-          <div id="admin-approval-list" style="margin-top:14px">
-            <p style="color:#aaa;font-style:italic;font-size:13px">Không có yêu cầu đang chờ.</p>
-          </div>
-        </div>
-
-        <!-- MEMBER LIST -->
-        <div class="card">
-          <div class="card-title">👥 Danh sách thành viên</div>
-          <table>
-            <tr><th>Tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th>Thao tác</th></tr>
-            <tr>
-              <td><strong>Pham Tung Lam</strong></td>
-              <td>kintoki609@gmail.com</td>
-              <td><span class="role-badge role-owner">👑 Owner</span></td>
-              <td><span class="status-dot dot-active"></span>Active</td>
-              <td><span style="color:#aaa;font-size:11px">—</span></td>
-            </tr>
-          </table>
-          <div id="member-rows"></div>
-        </div>
-
-        <!-- INVITE -->
-        <div class="card">
-          <div class="card-title">✉️ Mời thành viên trực tiếp</div>
-          <div class="invite-row">
-            <input class="invite-input" id="invite-email" type="email" placeholder="email@linkgroup.com">
-            <select class="role-select-inv" id="invite-role">
-              <option value="Colleague">👥 Colleague</option>
-              <option value="Viewer">👁️ Viewer</option>
-              <option value="Admin">🔑 Admin (cần duyệt)</option>
-            </select>
-            <button class="invite-send" onclick="sendInvite()">Gửi</button>
-          </div>
-        </div>
-
-        <!-- PUBLIC PAGES -->
-        <div class="card" style="border-top-color:var(--silver)">
-          <div class="card-title">👁️ Trang công khai cho Viewer (không cần tài khoản)</div>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px"><input type="checkbox" checked disabled> 🏠 Trang chủ (luôn bật)</label>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px"><input type="checkbox"> 📚 BMW Standards (danh sách)</label>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px"><input type="checkbox"> 🎬 Training Videos (danh sách)</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox"> 🔧 Equipment & Issues</label>
-          <button class="btn-sm" style="background:var(--blue);color:#fff;padding:7px 16px;border-radius:6px;border:none;cursor:pointer;margin-top:12px" onclick="showToast('✅ Đã lưu cài đặt trang công khai','success')">💾 Lưu</button>
-        </div>
+        <div class="page-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)"><div class="page-tag">Admin only</div><div class="page-title">🔐 Admin Panel</div></div>
+        <div class="card" style="border-top-color:var(--orange)"><div class="card-title">Yeu cau dang ky <span id="reg-count-badge" class="pending-badge" style="display:none"></span></div><div id="reg-requests-list"><p style="color:#aaa;font-style:italic">Chua co yeu cau.</p></div></div>
+        <div class="card"><div class="card-title">Thanh vien</div><table><tr><th>Ten</th><th>Email</th><th>Vai tro</th><th>Thao tac</th></tr><tr><td>Pham Tung Lam</td><td>kintoki609@gmail.com</td><td><span class="role-badge role-owner">👑 Owner</span></td><td>—</td></tr></table><div id="member-rows"></div></div>
+        <div class="card"><div class="card-title">Moi thanh vien</div><div style="display:flex;gap:8px;margin-top:10px"><input class="form-input" id="invite-email" type="email" placeholder="email@linkgroup.com" style="flex:1"><select class="form-input" id="invite-role" style="width:130px"><option>Colleague</option><option>Viewer</option><option>Admin</option></select><button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="sendInvite()">Gui</button></div></div>
       </div>
-
-      <!-- NEWS -->
       <div class="page" id="page-news">
-        <div class="page-header" style="background:linear-gradient(135deg,#d97706,#b45309)">
-          <div class="page-tag">Thông báo · Cập nhật</div>
-          <div class="page-title">📢 News & Changelog</div>
-          <div class="page-meta">Thông báo từ Admin — cập nhật tính năng, nội dung mới, thay đổi quan trọng</div>
-        </div>
-
-        <!-- Compose (Admin only) -->
-        <div class="news-compose" id="news-compose" style="display:none">
-          <div class="card-title" style="font-size:14px;font-weight:700;color:var(--orange);margin-bottom:12px">✍️ Đăng thông báo mới</div>
-          <input id="news-title-inp" class="form-input" type="text" placeholder="Tiêu đề thông báo..." style="margin-bottom:10px">
-          <textarea id="news-body-inp" placeholder="Nội dung chi tiết..."></textarea>
-          <div class="news-row">
-            <select class="news-type-sel" id="news-type-sel">
-              <option value="update">🔄 Update</option>
-              <option value="new">✨ Tính năng mới</option>
-              <option value="alert">🔴 Quan trọng</option>
-              <option value="info">💜 Thông tin</option>
-            </select>
-            <label class="news-pin-chk"><input type="checkbox" id="news-pin"> 📌 Ghim lên đầu</label>
-            <button class="news-post-btn" onclick="postNews()">Đăng →</button>
+        <div class="page-header" style="background:linear-gradient(135deg,#d97706,#b45309)"><div class="page-tag">Thong bao</div><div class="page-title">📢 News & Changelog</div></div>
+        <div id="news-compose" style="display:none;background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid var(--orange)">
+          <div class="card-title">Dang thong bao</div>
+          <input id="news-title-inp" class="form-input" type="text" placeholder="Tieu de..." style="margin-bottom:10px">
+          <textarea id="news-body-inp" class="form-input" rows="3" placeholder="Noi dung..." style="resize:none"></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+            <select class="form-input" id="news-type-sel" style="width:140px"><option value="update">Update</option><option value="new">Moi</option><option value="alert">Quan trong</option></select>
+            <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="news-pin"> Ghim</label>
+            <button class="btn btn-primary" style="width:auto;padding:0 16px;margin-left:auto" onclick="postNews()">Dang</button>
           </div>
         </div>
-
-        <!-- News list -->
         <div id="news-list"></div>
       </div>
-
-      <!-- MODULE MANAGER -->
-      <div class="page" id="page-modules">
-        <div class="page-header" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
-          <div class="page-tag">Admin & Owner only</div>
-          <div class="page-title">🗂️ Quản lý Modules</div>
-          <div class="page-meta">Đổi tên, thêm module, nhóm module — chỉ Admin mới chỉnh sửa</div>
-        </div>
-        <div class="highlight" style="margin-bottom:18px">💡 Kéo thả ☰ để sắp xếp thứ tự. Bấm ✏️ để đổi tên. Thay đổi áp dụng ngay cho tất cả người dùng.</div>
-        <div id="module-groups-container"></div>
-
-        <!-- Add new group -->
-        <div class="card" style="border-top-color:#0891b2">
-          <div class="card-title">➕ Tạo nhóm module mới</div>
-          <div class="new-group-row">
-            <select class="icon-sel" id="new-group-icon">
-              <option>📂</option><option>🔷</option><option>🔧</option>
-              <option>🛡️</option><option>🤖</option><option>⚡</option>
-              <option>📊</option><option>🎬</option><option>🔬</option>
-              <option>🏭</option><option>📋</option><option>🌐</option>
-            </select>
-            <input class="mod-add-inp" id="new-group-name" type="text" placeholder="Tên nhóm mới (VD: Safety Standards)">
-            <button class="mod-add-btn" onclick="addGroup()">+ Tạo nhóm</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- SETTINGS -->
       <div class="page" id="page-settings">
-        <div class="page-header" style="background:linear-gradient(135deg,#374151,#1f2937)">
-          <div class="page-tag">Admin & Owner only</div>
-          <div class="page-title">⚙️ Cài đặt Platform</div>
-          <div class="page-meta">Chỉnh sửa tính năng, cấu trúc — Colleague không có quyền truy cập</div>
-        </div>
-        <div class="card">
-          <div class="card-title">🏷️ Thông tin Platform</div>
-          <table>
-            <tr><td style="color:#888;width:160px">Tên platform</td><td><strong>LINK Knowledge Library</strong></td></tr>
-            <tr><td style="color:#888">Phiên bản</td><td><strong>v1.0.0</strong></td></tr>
-            <tr><td style="color:#888">Owner</td><td><strong>Pham Tung Lam</strong></td></tr>
-            <tr><td style="color:#888">Email Admin</td><td><strong>kintoki609@gmail.com</strong></td></tr>
-          </table>
-        </div>
-        <div class="card">
-          <div class="card-title">🔔 Thông báo Admin</div>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px"><input type="checkbox" checked> Nhận email khi có yêu cầu đăng ký mới</label>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px"><input type="checkbox" checked> Nhận email khi có yêu cầu nâng cấp Admin</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox"> Tóm tắt hoạt động hàng tuần</label>
-          <button class="btn-sm" style="background:var(--blue);color:#fff;padding:7px 16px;border-radius:6px;border:none;cursor:pointer;margin-top:12px" onclick="showToast('✅ Đã lưu cài đặt','success')">💾 Lưu</button>
-        </div>
-        <div class="danger-box">⚠️ Trang này chỉ Admin & Owner mới truy cập được. Colleague bị chặn hoàn toàn.</div>
+        <div class="page-header" style="background:linear-gradient(135deg,#374151,#1f2937)"><div class="page-tag">Admin only</div><div class="page-title">⚙️ Cai dat</div></div>
+        <div class="card"><div class="card-title">Thong tin Platform</div><table><tr><td style="color:#888">Ten</td><td><strong>LINK Knowledge Library</strong></td></tr><tr><td style="color:#888">Phien ban</td><td><strong>v1.0.0</strong></td></tr><tr><td style="color:#888">Owner</td><td><strong>Pham Tung Lam</strong></td></tr></table></div>
       </div>
-
     </main>
   </div>
 </div>
 
 <div id="toast"></div>
-
-<script>
-// ============================================================
-// DATA
-// ============================================================
-const USERS = {
-  'owner@bmw.com':  { password:'owner123',  name:'Pham Tung Lam', role:'owner' },
-  'admin@bmw.com':  { password:'admin123',  name:'Tran Thi B',    role:'admin' },
-  'editor@bmw.com': { password:'editor123', name:'Le Van C',       role:'colleague' },
-};
-
-const ROLE_CFG = {
-  owner:     { label:'👑 Owner',     cls:'role-owner',     color:'#fbbf24', desc:'Toàn quyền tuyệt đối trên platform' },
-  admin:     { label:'🔑 Admin',     cls:'role-admin',     color:'#3b82f6', desc:'Quản lý thành viên, phân quyền, cập nhật tính năng' },
-  colleague: { label:'👥 Colleague', cls:'role-colleague', color:'#22c55e', desc:'Xem, upload, chỉnh sửa nội dung — không thay đổi platform' },
-  viewer:    { label:'👁️ Viewer',    cls:'role-viewer',    color:'#6b7280', desc:'Chỉ xem những trang Admin chỉ định công khai' },
-};
-
-// Pending registrations list (in-memory)
-let pendingRegs = [];
-let currentUser = null;
-let loginAttempts = 0;
-const MAX_ATTEMPTS = 3;
-let lockUntil = 0;
-
-// ============================================================
-// AUTH TABS
-// ============================================================
-function switchTab(tab) {
-  ['login','register'].forEach(t => {
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
-    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
-  });
-}
-
-// ============================================================
-// LOGIN
-// ============================================================
-function doLogin() {
-  const emailEl = document.getElementById('login-email');
-  const passEl  = document.getElementById('login-pass');
-  const loginBtn = document.getElementById('login-btn');
-  const err     = document.getElementById('login-error');
-  err.style.display = 'none';
-
-  // Check lockout
-  if (lockUntil > 0 && Date.now() < lockUntil) {
-    const secs = Math.ceil((lockUntil - Date.now()) / 1000);
-    showAlert(err, '🔒 Tài khoản tạm khóa. Thử lại sau ' + secs + ' giây.');
-    return;
-  }
-
-  const email = emailEl.value.trim().toLowerCase();
-  const pass  = passEl.value;
-
-  if (!email || !pass) {
-    showAlert(err, '⚠️ Vui lòng nhập đầy đủ email và mật khẩu');
-    if (!email) emailEl.focus(); else passEl.focus();
-    return;
-  }
-
-  const u = USERS[email];
-  if (!u || u.password !== pass) {
-    loginAttempts++;
-    passEl.value = '';
-    passEl.style.borderColor = '#ef4444';
-    setTimeout(function(){ passEl.style.borderColor = ''; }, 1500);
-
-    const left = MAX_ATTEMPTS - loginAttempts;
-    if (loginAttempts >= MAX_ATTEMPTS) {
-      lockUntil = Date.now() + 30000;
-      loginAttempts = 0;
-      if (loginBtn) loginBtn.disabled = true;
-      let t = 30;
-      const iv = setInterval(function() {
-        t--;
-        if (loginBtn) loginBtn.textContent = 'Thử lại sau ' + t + 's';
-        if (t <= 0) {
-          clearInterval(iv);
-          lockUntil = 0;
-          if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = 'Đăng nhập →'; }
-          err.style.display = 'none';
-        }
-      }, 1000);
-      showAlert(err, '🔒 Sai ' + MAX_ATTEMPTS + ' lần liên tiếp — bị khóa 30 giây.');
-    } else {
-      showAlert(err, '❌ Mật khẩu không đúng. Còn ' + left + ' lần thử.');
-    }
-    passEl.focus();
-    return;
-  }
-
-  loginAttempts = 0;
-  lockUntil = 0;
-  passEl.style.borderColor = '';
-  currentUser = { email: email, name: u.name, role: u.role };
-  launchApp();
-}
-
-function viewerAccess() {
-  currentUser = { email:null, name:'Khách', role:'viewer' };
-  launchApp();
-}
-
-function doLogout() {
-  currentUser = null;
-  loginAttempts = 0;
-  lockUntil = 0;
-  const btn = document.getElementById('login-btn');
-  if (btn) { btn.disabled = false; btn.textContent = 'Đăng nhập →'; }
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-email').value = '';
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-error').style.display = 'none';
-  switchTab('login');
-}
-
-document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-
-// ============================================================
-// REGISTER
-// ============================================================
-function doRegister() {
-  const name   = document.getElementById('reg-name').value.trim();
-  const email  = document.getElementById('reg-email').value.trim();
-  const dept   = document.getElementById('reg-dept').value.trim();
-  const reason = document.getElementById('reg-reason').value.trim();
-  const err    = document.getElementById('reg-error');
-  const ok     = document.getElementById('reg-success');
-  err.style.display='none'; ok.style.display='none';
-
-  if (!name||!email||!dept) { showAlert(err,'Vui lòng điền đầy đủ Họ tên, Email và Bộ phận'); return; }
-  if (!email.includes('@')) { showAlert(err,'Email không hợp lệ'); return; }
-
-  // Add to pending list
-  const reg = { id: Date.now(), name, email, dept, reason, time: new Date().toLocaleString('vi-VN') };
-  pendingRegs.push(reg);
-
-  // Show success
-  ok.textContent = `✅ Đã gửi yêu cầu! Admin sẽ xem xét và phản hồi qua email ${email}.`;
-  ok.style.display = 'block';
-
-  // Clear form
-  ['reg-name','reg-email','reg-dept','reg-reason'].forEach(id => document.getElementById(id).value='');
-
-  // Update admin badge if already logged in as admin
-  updateRegBadge();
-}
-
-function updateRegBadge() {
-  const n = pendingRegs.length;
-  const badge = document.getElementById('reg-count-badge');
-  const navBadge = document.getElementById('pending-badge');
-  if (badge) { badge.textContent = n; badge.style.display = n>0?'inline':'none'; }
-  if (navBadge) { navBadge.textContent = n; navBadge.style.display = n>0?'inline':'none'; }
-  renderRegRequests();
-}
-
-function renderRegRequests() {
-  const list = document.getElementById('reg-requests-list');
-  if (!list) return;
-  if (pendingRegs.length===0) {
-    list.innerHTML = '<p style="color:#aaa;font-style:italic;font-size:13px">Chưa có yêu cầu đăng ký nào.</p>';
-    return;
-  }
-  list.innerHTML = pendingRegs.map(r => `
-    <div class="reg-item" id="reg-${r.id}">
-      <div class="reg-name">👤 ${r.name}</div>
-      <div class="reg-detail">📧 ${r.email}</div>
-      <div class="reg-detail">🏢 ${r.dept}</div>
-      ${r.reason ? `<div class="reg-detail">💬 ${r.reason}</div>` : ''}
-      <div class="reg-detail">🕐 ${r.time}</div>
-      <div class="reg-actions">
-        <span style="font-size:12px;color:#555;font-weight:600">Phân quyền:</span>
-        <select class="assign-select" id="role-sel-${r.id}">
-          <option value="colleague">👥 Colleague</option>
-          <option value="viewer">👁️ Viewer</option>
-          <option value="admin">🔑 Admin (cần duyệt thêm)</option>
-        </select>
-        <button class="btn-sm approve-btn" onclick="acceptReg(${r.id})">✓ Chấp nhận</button>
-        <button class="btn-sm reject-btn" onclick="rejectReg(${r.id})">✕ Từ chối</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function acceptReg(id) {
-  const reg = pendingRegs.find(r=>r.id===id);
-  if (!reg) return;
-  const roleSel = document.getElementById('role-sel-'+id);
-  const chosenRole = roleSel ? roleSel.value : 'colleague';
-
-  if (chosenRole==='admin') {
-    // Goes to admin approval list
-    showToast(`⏳ ${reg.name} được đề xuất làm Admin — chờ Admin khác duyệt`, 'warning');
-    const approvalList = document.getElementById('admin-approval-list');
-    approvalList.innerHTML = '<div class="reg-item" style="border-left-color:#4f46e5"><div class="reg-name">Admin: ' + reg.name + '</div><div class="reg-detail">' + reg.email + '</div><div class="reg-actions"><button class="btn-sm approve-btn" onclick="finalApproveAdmin(this.closest(&quot;.reg-item&quot;))">Duyet Admin</button><button class="btn-sm reject-btn" onclick="this.closest(&quot;.reg-item&quot;).remove();showToast(&quot;Da tu choi&quot;,&quot;error&quot;)">Tu choi</button></div></div>';
-
-  updateRegBadge();
-}
-
-function updateRegBadge() {
-  const n = pendingRegs.length;
-  const badge = document.getElementById('reg-count-badge');
-  const navBadge = document.getElementById('pending-badge');
-  if (badge) { badge.textContent = n; badge.style.display = n>0?'inline':'none'; }
-  if (navBadge) { navBadge.textContent = n; navBadge.style.display = n>0?'inline':'none'; }
-  renderRegRequests();
-}
-
-function renderRegRequests() {
-  const list = document.getElementById('reg-requests-list');
-  if (!list) return;
-  if (pendingRegs.length===0) {
-    list.innerHTML = '<p style="color:#aaa;font-style:italic;font-size:13px">Chưa có yêu cầu đăng ký nào.</p>';
-    return;
-  }
-  list.innerHTML = pendingRegs.map(r => `
-    <div class="reg-item" id="reg-${r.id}">
-      <div class="reg-name">👤 ${r.name}</div>
-      <div class="reg-detail">📧 ${r.email}</div>
-      <div class="reg-detail">🏢 ${r.dept}</div>
-      ${r.reason ? `<div class="reg-detail">💬 ${r.reason}</div>` : ''}
-      <div class="reg-detail">🕐 ${r.time}</div>
-      <div class="reg-actions">
-        <span style="font-size:12px;color:#555;font-weight:600">Phân quyền:</span>
-        <select class="assign-select" id="role-sel-${r.id}">
-          <option value="colleague">👥 Colleague</option>
-          <option value="viewer">👁️ Viewer</option>
-          <option value="admin">🔑 Admin (cần duyệt thêm)</option>
-        </select>
-        <button class="btn-sm approve-btn" onclick="acceptReg(${r.id})">✓ Chấp nhận</button>
-        <button class="btn-sm reject-btn" onclick="rejectReg(${r.id})">✕ Từ chối</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function acceptReg(id) {
-  const reg = pendingRegs.find(r=>r.id===id);
-  if (!reg) return;
-  const roleSel = document.getElementById('role-sel-'+id);
-  const chosenRole = roleSel ? roleSel.value : 'colleague';
-  if (chosenRole==='admin') {
-    showToast('⏳ ' + reg.name + ' được đề xuất Admin — chờ Admin khác duyệt', 'warning');
-    const approvalList = document.getElementById('admin-approval-list');
-    if (approvalList) approvalList.innerHTML = '<div class="reg-item"><b>' + reg.name + '</b> &rarr; Admin<br>' + reg.email + '<br><button class="btn-sm approve-btn" onclick="this.closest(\'.reg-item\').remove();showToast(\'Admin duoc duyet\',\'success\')" >Duyet</button></div>';
-  } else {
-    addMemberRow(reg.name, reg.email, chosenRole);
-    showToast('✅ Đã cấp quyền cho ' + reg.name, 'success');
-  }
-  pendingRegs = pendingRegs.filter(r=>r.id!==id);
-  updateRegBadge();
-}
-
-function rejectReg(id) {
-  const reg = pendingRegs.find(r=>r.id===id);
-  pendingRegs = pendingRegs.filter(r=>r.id!==id);
-  showToast('❌ Đã từ chối yêu cầu của ' + (reg ? reg.name : ''), 'error');
-  updateRegBadge();
-}
-
-function launchApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  const role = currentUser.role;
-  const cfg = ROLE_CFG[role];
-  const isAdmin = ['owner','admin'].includes(role);
-  const isColleague = ['owner','admin','colleague'].includes(role);
-
-  const av = document.getElementById('user-avatar');
-  av.textContent = currentUser.name.charAt(0).toUpperCase();
-  av.style.background = cfg.color;
-  document.getElementById('user-name-display').textContent = currentUser.name;
-  const rb = document.getElementById('role-badge-display');
-  rb.textContent = cfg.label; rb.className = 'role-badge '+cfg.cls;
-
-  document.getElementById('welcome-name').textContent = currentUser.name;
-  document.getElementById('welcome-desc').textContent = cfg.desc;
-
-  const perms = {
-    owner:     ['✅ Xem tất cả nội dung','✅ Chỉnh sửa & upload','✅ Quản lý thành viên','✅ Cấp quyền & cài đặt platform'],
-    admin:     ['✅ Xem tất cả nội dung','✅ Chỉnh sửa & upload','✅ Quản lý thành viên','⏳ Cấp quyền Admin → cần Admin khác xác nhận'],
-    colleague: ['✅ Xem tất cả nội dung','✅ Chỉnh sửa & upload tài liệu','✅ File cá nhân riêng','❌ Quản lý thành viên'],
-    viewer:    ['✅ Xem trang Admin chỉ định','❌ Nội dung chi tiết','❌ Upload / chỉnh sửa','❌ Mọi chức năng quản trị'],
-  };
-  const ul = document.createElement('ul');
-  ul.style.cssText='padding-left:18px;';
-  (perms[role]||[]).forEach(function(p){ const li=document.createElement('li'); li.textContent=p; li.style.cssText='margin-bottom:5px;font-size:13px;'; ul.appendChild(li); });
-  const pl = document.getElementById('permission-list');
-  if (pl) pl.appendChild(ul);
-
-  const ok  = '<span class="tag tag-green">✅ Đầy đủ</span>';
-  const no  = '<span class="tag" style="background:#fee2e2;color:#991b1b">🔒 Giới hạn</span>';
-  ['acc-standards','acc-equipment','acc-videos'].forEach(function(id){ const el=document.getElementById(id); if(el) el.innerHTML=isColleague?ok:no; });
-  const am = document.getElementById('acc-myfiles');
-  if (am) am.innerHTML = isColleague ? ok+' (riêng tư)' : no;
-
-  if (isAdmin) {
-    document.getElementById('nav-admin').style.display='flex';
-    document.getElementById('nav-modules').style.display='flex';
-    updateRegBadge();
-    renderModuleGroups();
-  }
-  updateSidebarFromModules();
-
-  if (!isAdmin) {
-    const sNav = document.getElementById('nav-settings');
-    if (sNav) { sNav.querySelector('.nav-lock').textContent='🔒'; sNav.onclick = function(){ showToast('⛔ Chỉ Admin & Owner mới có thể vào Cài đặt','warning'); }; }
-  }
-  if (role==='viewer') { const vn=document.getElementById('viewer-notice'); if(vn) vn.style.display='block'; }
-
-  if (isColleague) {
-    ['std-colleague','eq-colleague','vid-colleague','myfiles-colleague'].forEach(function(id){ const el=document.getElementById(id); if(el) el.style.display='block'; });
-  } else {
-    ['std-viewer','myfiles-viewer'].forEach(function(id){ const el=document.getElementById(id); if(el) el.style.display='block'; });
-  }
-
-  if (isAdmin) { document.getElementById('news-compose').style.display='block'; }
-  updateNewsDot();
-  renderNews();
-}
-
-function showPage(id, el) {
-  const role = currentUser ? currentUser.role : 'viewer';
-  const isAdmin = ['owner','admin'].includes(role);
-  if ((id==='admin'||id==='settings'||id==='modules') && !isAdmin) {
-    showToast('⛔ Chỉ Admin & Owner mới có thể vào trang này','warning'); return;
-  }
-  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
-  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
-  const pg = document.getElementById('page-'+id);
-  if (pg) pg.classList.add('active');
-  if (el) el.classList.add('active');
-  document.querySelector('main').scrollTop=0;
-  if (id==='news') markNewsRead();
-}
-
-function addMemberRow(name, email, role) {
-  const cfg = ROLE_CFG[role]||ROLE_CFG.colleague;
-  const container = document.getElementById('member-rows');
-  if (!container) return;
-  const tr = document.createElement('tr');
-  tr.innerHTML='<td>'+name+'</td><td>'+email+'</td><td><span class="role-badge '+cfg.cls+'">'+cfg.label+'</span></td><td><span class="status-dot dot-active"></span>Active</td><td><button class="btn-sm reject-btn" onclick="this.closest(\'tr\').remove();showToast(\'Đã xóa thành viên\',\'error\')">✕ Xóa</button></td>';
-  container.appendChild(tr);
-}
-
-function sendInvite() {
-  const email = document.getElementById('invite-email').value.trim();
-  const role  = document.getElementById('invite-role').value;
-  if (!email) { showToast('⚠️ Vui lòng nhập email','warning'); return; }
-  showToast('✅ Đã gửi lời mời ' + role + ' tới ' + email, 'success');
-  document.getElementById('invite-email').value='';
-}
-
-function showAlert(el, msg) { el.textContent=msg; el.style.display='block'; }
-
-function showToast(msg, type) {
-  type = type || 'success';
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show ' + type;
-  clearTimeout(window._tt);
-  window._tt = setTimeout(function(){ t.className = ''; }, 3500);
-}
-
-function showAlert(el, msg) {
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-
-function addMemberRow(name, email, role) {
-  const cfg = ROLE_CFG[role] || ROLE_CFG.colleague;
-  const container = document.getElementById('member-rows');
-  if (!container) return;
-  const tr = document.createElement('tr');
-  tr.innerHTML = '<td>' + name + '</td><td>' + email + '</td><td>' + cfg.label + '</td><td>Active</td><td><button onclick="this.closest(\"tr\").remove()">X</button></td>';
-  container.appendChild(tr);
-}
-
-function sendInvite() {
-  const email = document.getElementById('invite-email').value.trim();
-  const role = document.getElementById('invite-role').value;
-  if (!email) { showToast('Vui long nhap email', 'warning'); return; }
-  showToast('Da gui loi moi ' + role + ' toi ' + email, 'success');
-  document.getElementById('invite-email').value = '';
-}
-</script>
+<script src="app.js"></script>
 </body>
 </html>
