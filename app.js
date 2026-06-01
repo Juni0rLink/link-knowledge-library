@@ -592,7 +592,7 @@ function syncSidebarModules() {
   if (!c) return;
   c.innerHTML = moduleGroups.map(function(g) {
     var isCollapsed = collapsedGroups[g.id];
-    return '<div onclick="toggleGroup(' + g.id + ')" style="display:flex;align-items:center;padding:8px 16px 4px;color:#888;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;user-select:none;transition:color .2s" onmouseover="this.style.color='#ccc'" onmouseout="this.style.color='#888'">' +
+    return '<div onclick="toggleGroup(' + g.id + ')" style="display:flex;align-items:center;padding:8px 16px 4px;color:#888;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;user-select:none;transition:color .2s" onmouseover="this.style.color=\'#ccc\'" onmouseout="this.style.color=\'#888\'">' +
       '<span style="flex:1">' + g.icon + ' ' + g.name + '</span>' +
       '<span style="font-size:10px;transition:transform .2s;transform:rotate(' + (isCollapsed ? '-90' : '0') + 'deg)">▾</span>' +
       '</div>' +
@@ -884,9 +884,6 @@ function createRoom() {
     var colors = ['#22c55e','#3b82f6','#8b5cf6','#f59e0b','#ef4444','#0891b2','#ec4899'];
     rooms.push({id:Date.now(),name:name,icon:icon||'📂',color:colors[Math.floor(Math.random()*colors.length)],status:'draft',content:'<h2>'+name+'</h2><p>Bắt đầu soạn thảo nội dung...</p>',comments:[],versions:['v1.0 - '+(currentUser?currentUser.name:'User')+' - '+new Date().toLocaleDateString('vi-VN')]});
     renderRoomSidebar();
-    showToast('Đã tạo Room: '+name,'success');
-  }, btn);
-  renderRoomSidebar();
   showToast('Đã tạo Room: '+name,'success');
   }, btn);
 }
