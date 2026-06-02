@@ -1246,10 +1246,10 @@ function publishItem(type, idx) {
   var item, pubItem;
   if (type === 'doc') {
     item = personalDocs[idx];
-    pubItem = { id: Date.now(), type:'doc', name: item.name, icon:'Ὅd', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), content: item.content, comments: [] };
+    pubItem = { id: Date.now(), type:'doc', name: item.name, icon:'📝', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), content: item.content, comments: [] };
   } else if (type === 'sheet') {
     item = personalSheets[idx];
-    pubItem = { id: Date.now(), type:'sheet', name: item.name, icon:'Ὄa', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), comments: [] };
+    pubItem = { id: Date.now(), type:'sheet', name: item.name, icon:'📊', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), comments: [] };
   } else if (type === 'file') {
     item = personalFiles[idx];
     var ico = item.type.startsWith('video/')?'Ἲc':item.type.startsWith('image/')?'Ὓc️':'Ὄ1';
