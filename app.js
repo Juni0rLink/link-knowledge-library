@@ -264,8 +264,9 @@ function launchApp() {
 function showPage(id, el) {
   var role = currentUser ? currentUser.role : 'viewer';
   var isAdmin = ['owner', 'admin'].includes(role);
-  if ((id === 'admin' || id === 'settings') && !isAdmin) {
-    showToast('Chỉ Admin mới vào được trang này', 'warning');
+  var adminOnly = ['admin', 'settings', 'modules', 'trash'];
+  if (adminOnly.includes(id) && !isAdmin) {
+    showToast('Chỉ Admin & Owner mới vào được trang này', 'warning');
     return;
   }
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
@@ -273,8 +274,14 @@ function showPage(id, el) {
   var pg = document.getElementById('page-' + id);
   if (pg) pg.classList.add('active');
   if (el) el.classList.add('active');
-  document.querySelector('main').scrollTop = 0;
+  if (document.querySelector('main')) document.querySelector('main').scrollTop = 0;
+  // Page init calls
   if (id === 'news') markNewsRead();
+  if (id === 'modules') { renderModuleGroups(); syncSidebarModules(); }
+  if (id === 'trash') { renderTrash(); renderStorageWidget(); }
+  if (id === 'files') { renderSharedDocs(); renderSharedSheets(); renderSharedFileList(); }
+  if (id === 'myfiles') { renderPersonalDocs(); renderPersonalSheets(); renderPersonalFiles(); }
+  if (id === 'admin') { renderRegRequests(); }
 }
 
 // ============================================================
