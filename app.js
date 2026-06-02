@@ -1,3 +1,7 @@
+https://raw.githubusercontent.com/Juni0rLink/link-knowledge-library/main/app.js
+→ https://raw.githubusercontent.com/Juni0rLink/link-knowledge-library/main/app.js
+Content-Type: text/plain; charset=utf-8
+
 // ============================================================
 // DATA
 // ============================================================
@@ -508,14 +512,14 @@ function renderModuleGroups() {
       '<span style="font-size:18px;cursor:pointer;border-radius:6px;padding:2px" title="Bấm để đổi icon" onclick="pickGroupIcon('+g.id+',this)">' + g.icon + '</span>' +
       '<span style="font-weight:700;font-size:14px;flex:1" id="gname-' + g.id + '">' + g.name + '</span>' +
       '<button class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;cursor:pointer" onclick="editGroupName(' + g.id + ')">✏️ Đổi tên nhóm</button>' +
-      '<button class="btn-sm reject-btn" style="margin-left:6px" onclick="deleteGroup(' + g.id + ')">Ὕ1️ Xóa</button>' +
+      '<button class="btn-sm reject-btn" style="margin-left:6px" onclick="deleteGroup(' + g.id + ')">🗑️ Xóa</button>' +
       '</div>' +
       g.modules.map(function(m) {
         return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0">' +
           '<span style="cursor:pointer;border-radius:4px;padding:1px" title="Bấm để đổi icon" onclick="pickModuleIcon('+g.id+','+m.id+',this)">' + m.icon + '</span>' +
           '<span style="flex:1;font-size:13px" id="mname-' + m.id + '">' + m.name + '</span>' +
           '<button class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;cursor:pointer" onclick="editModuleName(' + g.id + ',' + m.id + ')">✏️</button>' +
-          '<button class="btn-sm reject-btn" style="margin-left:4px" onclick="deleteModule(' + g.id + ',' + m.id + ')">Ὕ1️</button>' +
+          '<button class="btn-sm reject-btn" style="margin-left:4px" onclick="deleteModule(' + g.id + ',' + m.id + ')">🗑️</button>' +
           '</div>';
       }).join('') +
       '<div style="display:flex;gap:8px;padding:10px 16px;background:#fafafa">' +
@@ -991,7 +995,7 @@ function renderTrash() {
         '<div style="font-size:11px;color:#aaa;margin-top:2px">Xóa bởi: '+item.deletedBy+' · '+item.deletedAt+'</div>' +
       '</div>' +
       '<button onclick="restoreItem('+i+')" class="btn-sm approve-btn">↩️ Khôi phục</button>' +
-      '<button onclick="deletePermanent('+i+')" class="btn-sm reject-btn" style="margin-left:6px">Ὕ1️ Xóa vĩnh viễn</button>' +
+      '<button onclick="deletePermanent('+i+')" class="btn-sm reject-btn" style="margin-left:6px">🗑️ Xóa vĩnh viễn</button>' +
     '</div>';
   }).join('');
 }
@@ -1045,7 +1049,7 @@ function renderStorageWidget() {
     '</div>' +
     '<div style="font-size:10px;color:#aaa;margin-top:4px">'+pct+'% đã sử dụng · '+(25-storageUsedMB/1024).toFixed(2)+' GB còn lại</div>' +
     (pct > 80 ? '<div style="margin-top:6px;padding:6px 8px;background:#fee2e2;border-radius:6px;font-size:11px;color:#991b1b">⚠️ Sắp đầy! Hãy xóa file không cần thiết.</div>' : '') +
-    '<button onclick="emptyTrash()" style="margin-top:8px;width:100%;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;border-radius:6px;padding:5px;font-size:11px;font-weight:700;cursor:pointer">Ὕ1️ Làm trống Thùng rác ('+trash.length+' mục)</button>';
+    '<button onclick="emptyTrash()" style="margin-top:8px;width:100%;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;border-radius:6px;padding:5px;font-size:11px;font-weight:700;cursor:pointer">🗑️ Làm trống Thùng rác ('+trash.length+' mục)</button>';
 }
 
 // ============================================================
@@ -1097,7 +1101,7 @@ function renderPersonalDocs() {
         '<button onclick="editPersonalDoc('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Sửa</button>' +
         '<button onclick="publishItem(\'doc\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">὎4 Public</button>' +
         '<button onclick="exportDocPDF('+i+')" class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer;margin-left:4px">Ὄ4 PDF</button>' +
-        '<button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>' +
+        '<button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>' +
       '</div>' +
       '<div id="doc-editor-'+i+'" style="display:none;border-top:1px solid #eee">' +
         '<div style="background:#f8f9fb;padding:6px 12px;display:flex;gap:4px;border-bottom:1px solid #eee">' +
@@ -1152,7 +1156,7 @@ function renderPersonalSheets() {
       '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+sheet.name+'</div><div style="font-size:11px;color:#888">'+sheet.date+'</div></div>' +
       '<button onclick="openPersonalSheet('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Mở</button>' +
       '<button onclick="publishItem(\'sheet\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">὎4 Public</button>' +
-      '<button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>' +
+      '<button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>' +
     '</div>';
   }).join('');
 }
@@ -1230,7 +1234,7 @@ function renderPersonalFiles() {
       '<div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.date+'</div></div>' +
       '<a href="'+f.url+'" download="'+f.name+'" class="btn-sm" style="background:#f3f4f6;border:none;text-decoration:none;color:#333;cursor:pointer">⬇️</a>' +
       '<button onclick="publishItem(\'file\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">὎4 Public</button>' +
-      '<button onclick="personalFiles.splice('+i+',1);renderPersonalFiles()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>' +
+      '<button onclick="personalFiles.splice('+i+',1);renderPersonalFiles()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>' +
     '</div>';
   }).join('');
 }
@@ -1246,10 +1250,10 @@ function publishItem(type, idx) {
   var item, pubItem;
   if (type === 'doc') {
     item = personalDocs[idx];
-    pubItem = { id: Date.now(), type:'doc', name: item.name, icon:'📝', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), content: item.content, comments: [] };
+    pubItem = { id: Date.now(), type:'doc', name: item.name, icon:'Ὅd', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), content: item.content, comments: [] };
   } else if (type === 'sheet') {
     item = personalSheets[idx];
-    pubItem = { id: Date.now(), type:'sheet', name: item.name, icon:'📊', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), comments: [] };
+    pubItem = { id: Date.now(), type:'sheet', name: item.name, icon:'Ὄa', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), comments: [] };
   } else if (type === 'file') {
     item = personalFiles[idx];
     var ico = item.type.startsWith('video/')?'Ἲc':item.type.startsWith('image/')?'Ὓc️':'Ὄ1';
@@ -1278,7 +1282,7 @@ function renderPublicFiles(filter) {
         '<div style="flex:1"><div style="font-weight:700;font-size:14px">'+f.name+'</div>' +
         '<div style="font-size:11px;color:#888;margin-top:2px">὆4 '+f.author+' · Ὄ5 '+f.date+(f.size?' · '+f.size:'')+'</div></div>' +
         (f.url?'<a href="'+f.url+'" download="'+f.name+'" class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;text-decoration:none;cursor:pointer">⬇️ Tải về</a>':'') +
-        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="publicFiles.splice('+i+',1);renderPublicFiles(\'all\')" class="btn-sm reject-btn" style="margin-left:6px">Ὕ1️ Gỡ</button>':'') +
+        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="publicFiles.splice('+i+',1);renderPublicFiles(\'all\')" class="btn-sm reject-btn" style="margin-left:6px">🗑️ Gỡ</button>':'') +
       '</div>' +
       (f.type==='doc'?'<div style="border-top:1px solid #eee;padding:12px 16px;font-size:13px;color:#555;line-height:1.6;max-height:120px;overflow:hidden">'+f.content.replace(/<[^>]+>/g,' ').substring(0,200)+'...</div>':'') +
       '<div style="border-top:1px solid #eee;padding:12px 16px;background:#fafafa">' +
@@ -1351,7 +1355,7 @@ function renderSharedDocs() {
         '<button onclick="toggleSharedDocEditor('+i+')" class="btn-sm" style="background:#e0f2fe;color:#0891b2;border:none;cursor:pointer">✏️ Sửa</button>' +
         '<button onclick="moveDocToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">὎5 Cá nhân</button>' +
         '<button onclick="exportSharedDocPDF('+i+')" class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer;margin-left:4px">Ὄ4 PDF</button>' +
-        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedDocs.splice('+i+',1);renderSharedDocs()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>':'') +
+        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedDocs.splice('+i+',1);renderSharedDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>':'') +
       '</div>' +
       '<div id="sdoc-editor-'+i+'" style="display:none;border-top:1px solid #eee">' +
         '<div style="background:#f8f9fb;padding:6px 12px;display:flex;gap:4px;border-bottom:1px solid #eee">' +
@@ -1414,114 +1418,11 @@ function renderSharedSheets() {
       '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.author+' · '+s.date+'</div></div>' +
       '<button onclick="openSharedSheet('+i+')" class="btn-sm" style="background:#e0f2fe;color:#0891b2;border:none;cursor:pointer">✏️ Mở</button>' +
       '<button onclick="moveSheetToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">὎5 Cá nhân</button>' +
-      (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedSheets.splice('+i+',1);renderSharedSheets()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>':'') +
+      (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedSheets.splice('+i+',1);renderSharedSheets()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>':'') +
     '</div>';
   }).join('');
 }
 function openSharedSheet(i) {
   var s=sharedSheets[i]; var editor=document.getElementById('shared-sheet-editor'); if(!editor) return;
   editor.style.display='block';
-  editor.innerHTML='<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:18px">Ὄa</span><div style="font-weight:700;font-size:15px">'+s.name+'</div><button onclick="document.getElementById(\'shared-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button></div><div style="overflow:auto"><table id="ss'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><div style="display:flex;gap:8px;margin-top:8px"><button onclick="exportSSCSV('+i+')" style="background:#217346;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">⬇️ CSV</button><button onclick="moveSheetToPersonal('+i+')" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">὎5 Sao chép về Cá nhân</button></div></div>';
-  buildSSTable(i);
-}
-function buildSSTable(si) {
-  var t=document.getElementById('ss'+si); if(!t) return;
-  var R=8,C=6,h='<tr><th style="background:#f1f3f5;border:1px solid #d1d5db;width:30px;height:22px;font-size:10px;position:sticky;left:0"></th>';
-  for(var c=0;c<C;c++) h+='<th style="background:#f1f3f5;border:1px solid #d1d5db;width:80px;height:22px;text-align:center;font-size:10px;font-weight:700;color:#6b7280">'+colL(c)+'</th>';
-  h+='</tr>';
-  var data=sharedSheets[si]?sharedSheets[si].data:{};
-  for(var r=0;r<R;r++){
-    h+='<tr><td style="background:#f1f3f5;border:1px solid #d1d5db;text-align:center;font-size:10px;color:#6b7280;font-weight:700;position:sticky;left:0;min-width:28px;padding:0 3px">'+(r+1)+'</td>';
-    for(var c=0;c<C;c++){var id=sCellId(r,c);h+='<td style="border:1px solid #e5e7eb;padding:0;min-width:80px;height:24px"><input id="ss'+si+'-'+id+'" value="'+(data[id]||'')+'" style="width:100%;height:100%;border:none;outline:none;padding:0 3px;font-size:12px;background:transparent" onblur="ssRecalc('+si+')" onchange="sharedSheets['+si+'].data[\''+id+'\']=this.value"></td>';}
-    h+='</tr>';
-  }
-  t.innerHTML=h; ssRecalc(si);
-}
-function ssRecalc(si) {
-  var data=sharedSheets[si]?sharedSheets[si].data:{};
-  for(var id in data){
-    var el=document.getElementById('ss'+si+'-'+id); if(!el) continue;
-    if((data[id]||'').startsWith('=')){
-      try{var expr=data[id].substring(1).toUpperCase();expr=expr.replace(/SUM\(([^)]+)\)/g,function(m,r){return sExpand(r).map(function(c){return parseFloat(data[c])||0;}).reduce(function(a,b){return a+b;},0);});expr=expr.replace(/AVG\(([^)]+)\)/g,function(m,r){var a=sExpand(r).map(function(c){return parseFloat(data[c])||0;});return a.reduce(function(s,v){return s+v;},0)/a.length;});expr=expr.replace(/([A-Z]\d+)/g,function(c){return parseFloat(data[c])||0;});el.value=Math.round(eval(expr)*1000)/1000;el.style.color='#0891b2';}catch(e){el.value='#ERR';el.style.color='#ef4444';}
-    }
-  }
-}
-function exportSSCSV(si) {
-  var data=sharedSheets[si]?sharedSheets[si].data:{};
-  var rows=[];for(var r=0;r<8;r++){var row=[];for(var c=0;c<6;c++){var id=sCellId(r,c);row.push(data[id]||'');}rows.push(row.join(','));}
-  var blob=new Blob([rows.join('\n')],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(sharedSheets[si].name||'sheet')+'.csv';a.click();
-  showToast('Đã xuất CSV!','success');
-}
-function moveSheetToPersonal(i) {
-  var s=sharedSheets[i]; if(!s) return;
-  personalSheets.push({id:Date.now(),name:s.name+' (copy)',date:new Date().toLocaleDateString('vi-VN'),data:Object.assign({},s.data)});
-  showToast('Đã sao chép bảng tính về File cá nhân!','success');
-}
-
-// --- SHARED FILE UPLOAD ---
-function uploadSharedFile(input) {
-  var files=Array.from(input.files);
-  var progress=document.getElementById('shared-upload-progress');
-  if(progress) {progress.style.display='block';progress.textContent='Đang upload...';}
-  files.forEach(function(f) {
-    if(f.size > 100*1024*1024) { showToast('File '+f.name+' quá 100MB — dùng YouTube cho video lớn','warning'); return; }
-    var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';
-    sharedFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',url:URL.createObjectURL(f),comments:[]});
-  });
-  renderSharedFileList(); if(progress) progress.style.display='none';
-  showToast('Đã upload '+files.length+' file lên thư viện chung','success'); input.value='';
-}
-function renderSharedFileList() {
-  var list=document.getElementById('shared-files-list'); if(!list) return;
-  if(!sharedFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có file nào.</p>';return;}
-  list.innerHTML=sharedFiles.map(function(f,i){
-    var ico=f.type.startsWith('video/')?'Ἲc':f.type.startsWith('image/')?'Ὓc️':f.name.endsWith('.pdf')?'Ὄ4':f.name.endsWith('.xlsx')||f.name.endsWith('.csv')?'Ὄa':'Ὄ1';
-    var cmts=(f.comments||[]).map(function(c){return '<div style="background:#f0f9ff;border-left:3px solid #0891b2;padding:5px 10px;border-radius:0 6px 6px 0;font-size:11px;margin-bottom:4px"><strong>'+c.author+':</strong> '+c.text+'</div>';}).join('');
-    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:12px">' +
-      '<div style="padding:12px 16px;display:flex;align-items:center;gap:10px">' +
-        '<span style="font-size:22px">'+ico+'</span>' +
-        '<div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.author+' · '+f.date+'</div></div>' +
-        '<a href="'+f.url+'" download="'+f.name+'" class="btn-sm" style="background:#e0f2fe;color:#0891b2;border:none;text-decoration:none;cursor:pointer">⬇️ Tải</a>' +
-        '<button onclick="moveFileToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">὎5 Cá nhân</button>' +
-        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedFiles.splice('+i+',1);renderSharedFileList()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>':'') +
-      '</div>' +
-      (f.type.startsWith('image/')?'<img src="'+f.url+'" style="width:100%;max-height:200px;object-fit:cover;border-top:1px solid #eee">':'')+
-      '<div style="border-top:1px solid #eee;padding:10px 16px;background:#fafafa">' +
-        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">Ὂc COMMENTS ('+(f.comments||[]).length+')</div>' +
-        cmts +
-        '<div style="display:flex;gap:8px"><input id="sf-cmt-'+i+'" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;outline:none" placeholder="Comment về file này..."><button onclick="addSharedFileComment('+i+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Gửi</button></div>' +
-      '</div></div>';
-  }).join('');
-}
-function addSharedFileComment(i) {
-  var inp=document.getElementById('sf-cmt-'+i); if(!inp||!inp.value.trim()) return;
-  if(!sharedFiles[i].comments) sharedFiles[i].comments=[];
-  sharedFiles[i].comments.push({author:currentUser?currentUser.name:'?',text:inp.value.trim()});
-  renderSharedFileList(); showToast('Đã gửi comment!','success');
-}
-function moveFileToPersonal(i) {
-  var f=sharedFiles[i]; if(!f) return;
-  personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:f.size,date:new Date().toLocaleDateString('vi-VN'),url:f.url});
-  showToast('Đã sao chép "'+f.name+'" về File cá nhân!','success');
-}
-
-// --- SHARED NOTES ---
-function saveSharedNote() {
-  var el=document.getElementById('shared-note-area'); if(el) {sharedNote=el.value; showToast('Đã lưu ghi chú chung!','success');}
-}
-function moveNoteToPersonal() {
-  var el=document.getElementById('shared-note-area');
-  if(el&&el.value.trim()) {
-    personalNote=el.value;
-    var pn=document.getElementById('personal-note'); if(pn) pn.value=personalNote;
-    showToast('Đã sao chép ghi chú về File cá nhân!','success');
-  }
-}
-
-// Also update personal to shared functions
-function movePersonalDocToShared(i) {
-  var doc=personalDocs[i]; if(!doc) return;
-  sharedDocs.push({id:Date.now(),name:doc.name,content:doc.content,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',comments:[]});
-  showToast('Đã chuyển "'+doc.name+'" lên Quản lý File!','success');
-  renderSharedDocs();
-}
+  editor.innerHTML='<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:18px">Ὄa</span><div style="font-weight:700;font-size:15px">'+s.name+'</div><button onclick="document.getElementById(\'shared-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button></div><div style="overflow:auto"><table id="ss'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><div style="display:flex;gap:8px;margin-top:8px"><button onclick="exportSSCSV('+i+')" style="background:#217346;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">⬇️ CSV</button><button onclick="moveSheetToPersonal('+i+')" style="back
