@@ -8,10 +8,10 @@ const USERS = {
 };
 
 const ROLE_CFG = {
-  owner:     { label: 'ὅ1 Owner',     cls: 'role-owner',     color: '#fbbf24', desc: 'Toàn quyền tuyệt đối trên platform' },
-  admin:     { label: 'ὑ1 Admin',     cls: 'role-admin',     color: '#3b82f6', desc: 'Quản lý thành viên, phân quyền, cập nhật tính năng' },
-  colleague: { label: '὆5 Colleague', cls: 'role-colleague', color: '#22c55e', desc: 'Xem, upload, chỉnh sửa nội dung' },
-  viewer:    { label: 'ὄ1️ Viewer',    cls: 'role-viewer',    color: '#6b7280', desc: 'Chỉ xem trang Admin chỉ định công khai' },
+  owner:     { label: '👑 Owner',     cls: 'role-owner',     color: '#fbbf24', desc: 'Toàn quyền tuyệt đối trên platform' },
+  admin:     { label: '🔑 Admin',     cls: 'role-admin',     color: '#3b82f6', desc: 'Quản lý thành viên, phân quyền, cập nhật tính năng' },
+  colleague: { label: '👥 Colleague', cls: 'role-colleague', color: '#22c55e', desc: 'Xem, upload, chỉnh sửa nội dung' },
+  viewer:    { label: '👁️ Viewer',    cls: 'role-viewer',    color: '#6b7280', desc: 'Chỉ xem trang Admin chỉ định công khai' },
 };
 
 let currentUser = null;
@@ -480,26 +480,25 @@ function deleteFile(id) {
 // MODULE MANAGER
 // ============================================================
 var moduleGroups = [
-  { id:1, icon:'Ὅa', name:'BMW Standards', modules:[
-    { id:101, icon:'ὓ7', name:'GSC – Group Standard Controls' },
-    { id:102, icon:'Ἶd', name:'TKB – Body Shop' },
-    { id:103, icon:'ὒ7', name:'TMO – Assembly' },
+  { id:1, icon:'📚', name:'BMW Standards', modules:[
+    { id:101, icon:'🔷', name:'GSC – Group Standard Controls' },
+    { id:102, icon:'🏭', name:'TKB – Body Shop' },
+    { id:103, icon:'🔧', name:'TMO – Assembly' },
   ]},
-  { id:2, icon:'Ὦ1️', name:'Safety & Compliance', modules:[
-    { id:201, icon:'Ὦ1️', name:'Safety General' },
+  { id:2, icon:'🛡️', name:'Safety & Compliance', modules:[
+    { id:201, icon:'🛡️', name:'Safety General' },
     { id:202, icon:'⚡', name:'E-STOP & Zone Concept' },
   ]},
   { id:3, icon:'⚙️', name:'Tools & Software', modules:[
     { id:301, icon:'⚙️', name:'SAS – System Architecture' },
-    { id:302, icon:'Ὃb', name:'TIA Portal V18' },
+    { id:302, icon:'💻', name:'TIA Portal V18' },
   ]},
-  { id:4, icon:'ὒc', name:'Advanced Modules', modules:[
-    { id:401, icon:'ὐ4', name:'Phase Concept & Resequencing' },
-    { id:402, icon:'Ὄa', name:'User Sequence' },
-    { id:403, icon:'὜2️', name:'Type Management' },
+  { id:4, icon:'🔬', name:'Advanced Modules', modules:[
+    { id:401, icon:'🔄', name:'Phase Concept & Resequencing' },
+    { id:402, icon:'📊', name:'User Sequence' },
+    { id:403, icon:'🗂️', name:'Type Management' },
   ]},
 ];
-
 function renderModuleGroups() {
   var c = document.getElementById('module-groups-container');
   if (!c) return;
