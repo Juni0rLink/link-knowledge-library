@@ -235,6 +235,89 @@
           <div id="trash-list"></div>
         </div>
       </div>
+
+      <!-- ADMIN -->
+      <div class="page" id="page-admin">
+        <div class="page-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
+          <div class="page-tag">Admin & Owner only</div>
+          <div class="page-title">🔐 Admin Panel</div>
+          <div class="page-meta">Duyệt đăng ký mới, quản lý thành viên, phân quyền</div>
+        </div>
+        <div class="card" style="border-top-color:var(--orange)">
+          <div class="card-title">📥 Yêu cầu đăng ký <span id="reg-count-badge" class="pending-badge" style="display:none"></span></div>
+          <div id="reg-requests-list"><p style="color:#aaa;font-style:italic">Chưa có yêu cầu.</p></div>
+        </div>
+        <div class="card">
+          <div class="card-title">👥 Thành viên</div>
+          <table><tr><th>Tên</th><th>Email</th><th>Vai trò</th><th>Thao tác</th></tr>
+          <tr><td><strong>Nguyễn Tuấn Phong</strong></td><td>kintoki609@gmail.com</td><td><span class="role-badge role-owner">👑 Owner</span></td><td>—</td></tr>
+          </table>
+          <div id="member-rows"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">✉️ Mời thành viên</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input class="form-input" id="invite-email" type="email" placeholder="email@linkgroup.com" style="flex:1">
+            <select class="form-input" id="invite-role" style="width:130px"><option>Colleague</option><option>Viewer</option><option>Admin</option></select>
+            <button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="sendInvite()">Gửi</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEWS -->
+      <div class="page" id="page-news">
+        <div class="page-header" style="background:linear-gradient(135deg,#d97706,#b45309)">
+          <div class="page-tag">Thông báo</div>
+          <div class="page-title">📢 News & Changelog</div>
+          <div class="page-meta">Thông báo từ Admin — cập nhật tính năng, nội dung mới</div>
+        </div>
+        <div id="news-compose" style="display:none;background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid var(--orange)">
+          <div class="card-title">✍️ Đăng thông báo</div>
+          <input id="news-title-inp" class="form-input" type="text" placeholder="Tiêu đề..." style="margin-bottom:10px">
+          <textarea id="news-body-inp" class="form-input" rows="3" placeholder="Nội dung..." style="resize:none"></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+            <select class="form-input" id="news-type-sel" style="width:140px"><option value="update">Update</option><option value="new">Tính năng mới</option><option value="alert">Quan trọng</option></select>
+            <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="news-pin"> Ghim</label>
+            <button class="btn btn-primary" style="width:auto;padding:0 16px;margin-left:auto" onclick="postNews()">Đăng</button>
+          </div>
+        </div>
+        <div id="news-list"></div>
+      </div>
+
+      <!-- MODULES -->
+      <div class="page" id="page-modules">
+        <div class="page-header" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
+          <div class="page-tag">Chỉ Admin & Owner</div>
+          <div class="page-title">🗂️ Quản lý Modules</div>
+          <div class="page-meta">Đổi tên, thêm module, nhóm module — bấm vào icon để đổi</div>
+        </div>
+        <div id="module-groups-container"></div>
+        <div class="card" style="border-top-color:#0891b2">
+          <div class="card-title">➕ Tạo nhóm mới</div>
+          <div style="display:flex;gap:8px">
+            <input class="form-input" id="new-group-name" placeholder="Tên nhóm mới..." style="flex:1">
+            <button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="addGroup()">+ Tạo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="page-header" style="background:linear-gradient(135deg,#374151,#1f2937)">
+          <div class="page-tag">Admin & Owner only</div>
+          <div class="page-title">⚙️ Cài đặt Platform</div>
+          <div class="page-meta">Chỉ Admin & Owner mới truy cập được</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🏷️ Thông tin Platform</div>
+          <table>
+            <tr><td style="color:#888;width:160px">Tên platform</td><td><strong>LINK Knowledge Library</strong></td></tr>
+            <tr><td style="color:#888">Phiên bản</td><td><strong>v1.0.0</strong></td></tr>
+            <tr><td style="color:#888">Owner</td><td><strong>Nguyễn Tuấn Phong</strong></td></tr>
+          </table>
+        </div>
+        <div class="warning-box">⚠️ Trang này chỉ Admin & Owner mới truy cập được.</div>
+      </div>
     </main>
   </div>
 </div>
