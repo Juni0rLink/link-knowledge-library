@@ -8,10 +8,10 @@ const USERS = {
 };
 
 const ROLE_CFG = {
-  owner:     { label: '👑 Owner',     cls: 'role-owner',     color: '#fbbf24', desc: 'Toàn quyền tuyệt đối trên platform' },
-  admin:     { label: '🔑 Admin',     cls: 'role-admin',     color: '#3b82f6', desc: 'Quản lý thành viên, phân quyền, cập nhật tính năng' },
-  colleague: { label: '👥 Colleague', cls: 'role-colleague', color: '#22c55e', desc: 'Xem, upload, chỉnh sửa nội dung' },
-  viewer:    { label: '👁️ Viewer',    cls: 'role-viewer',    color: '#6b7280', desc: 'Chỉ xem trang Admin chỉ định công khai' },
+  owner:     { label: 'ὅ1 Owner',     cls: 'role-owner',     color: '#fbbf24', desc: 'Toàn quyền tuyệt đối trên platform' },
+  admin:     { label: 'ὑ1 Admin',     cls: 'role-admin',     color: '#3b82f6', desc: 'Quản lý thành viên, phân quyền, cập nhật tính năng' },
+  colleague: { label: '὆5 Colleague', cls: 'role-colleague', color: '#22c55e', desc: 'Xem, upload, chỉnh sửa nội dung' },
+  viewer:    { label: 'ὄ1️ Viewer',    cls: 'role-viewer',    color: '#6b7280', desc: 'Chỉ xem trang Admin chỉ định công khai' },
 };
 
 let currentUser = null;
@@ -369,7 +369,7 @@ function renderNews() {
   list.innerHTML = sorted.map(function(n) {
     return '<div class="news-item ' + (n.pinned ? 'pinned' : '') + '">' +
       '<div class="news-header">' +
-      (n.pinned ? '<span>📌</span>' : '') +
+      (n.pinned ? '<span>Ὄc</span>' : '') +
       '<div class="news-title">' + n.title + '</div>' +
       (n.isNew ? '<span class="tag tag-green" style="font-size:10px">MOI</span>' : '') +
       '</div>' +
@@ -442,12 +442,12 @@ function renderFiles() {
 }
 
 function getFileIcon(type) {
-  if (type.includes('pdf')) return '📄';
-  if (type.includes('image')) return '🖼️';
-  if (type.includes('video')) return '🎬';
-  if (type.includes('sheet') || type.includes('excel')) return '📊';
-  if (type.includes('presentation') || type.includes('powerpoint')) return '📑';
-  return '📁';
+  if (type.includes('pdf')) return 'Ὄ4';
+  if (type.includes('image')) return 'Ὓc️';
+  if (type.includes('video')) return 'Ἲc';
+  if (type.includes('sheet') || type.includes('excel')) return 'Ὄa';
+  if (type.includes('presentation') || type.includes('powerpoint')) return 'Ὅ1';
+  return 'Ὄ1';
 }
 
 function handleFileUpload(input) {
@@ -480,23 +480,23 @@ function deleteFile(id) {
 // MODULE MANAGER
 // ============================================================
 var moduleGroups = [
-  { id:1, icon:'📚', name:'BMW Standards', modules:[
-    { id:101, icon:'🔷', name:'GSC – Group Standard Controls' },
-    { id:102, icon:'🏭', name:'TKB – Body Shop' },
-    { id:103, icon:'🔧', name:'TMO – Assembly' },
+  { id:1, icon:'Ὅa', name:'BMW Standards', modules:[
+    { id:101, icon:'ὓ7', name:'GSC – Group Standard Controls' },
+    { id:102, icon:'Ἶd', name:'TKB – Body Shop' },
+    { id:103, icon:'ὒ7', name:'TMO – Assembly' },
   ]},
-  { id:2, icon:'🛡️', name:'Safety & Compliance', modules:[
-    { id:201, icon:'🛡️', name:'Safety General' },
+  { id:2, icon:'Ὦ1️', name:'Safety & Compliance', modules:[
+    { id:201, icon:'Ὦ1️', name:'Safety General' },
     { id:202, icon:'⚡', name:'E-STOP & Zone Concept' },
   ]},
   { id:3, icon:'⚙️', name:'Tools & Software', modules:[
     { id:301, icon:'⚙️', name:'SAS – System Architecture' },
-    { id:302, icon:'💻', name:'TIA Portal V18' },
+    { id:302, icon:'Ὃb', name:'TIA Portal V18' },
   ]},
-  { id:4, icon:'🔬', name:'Advanced Modules', modules:[
-    { id:401, icon:'🔄', name:'Phase Concept & Resequencing' },
-    { id:402, icon:'📊', name:'User Sequence' },
-    { id:403, icon:'🗂️', name:'Type Management' },
+  { id:4, icon:'ὒc', name:'Advanced Modules', modules:[
+    { id:401, icon:'ὐ4', name:'Phase Concept & Resequencing' },
+    { id:402, icon:'Ὄa', name:'User Sequence' },
+    { id:403, icon:'὜2️', name:'Type Management' },
   ]},
 ];
 
@@ -509,14 +509,14 @@ function renderModuleGroups() {
       '<span style="font-size:18px;cursor:pointer;border-radius:6px;padding:2px" title="Bấm để đổi icon" onclick="pickGroupIcon('+g.id+',this)">' + g.icon + '</span>' +
       '<span style="font-weight:700;font-size:14px;flex:1" id="gname-' + g.id + '">' + g.name + '</span>' +
       '<button class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;cursor:pointer" onclick="editGroupName(' + g.id + ')">✏️ Đổi tên nhóm</button>' +
-      '<button class="btn-sm reject-btn" style="margin-left:6px" onclick="deleteGroup(' + g.id + ')">🗑️ Xóa</button>' +
+      '<button class="btn-sm reject-btn" style="margin-left:6px" onclick="deleteGroup(' + g.id + ')">Ὕ1️ Xóa</button>' +
       '</div>' +
       g.modules.map(function(m) {
         return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0">' +
           '<span style="cursor:pointer;border-radius:4px;padding:1px" title="Bấm để đổi icon" onclick="pickModuleIcon('+g.id+','+m.id+',this)">' + m.icon + '</span>' +
           '<span style="flex:1;font-size:13px" id="mname-' + m.id + '">' + m.name + '</span>' +
           '<button class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;cursor:pointer" onclick="editModuleName(' + g.id + ',' + m.id + ')">✏️</button>' +
-          '<button class="btn-sm reject-btn" style="margin-left:4px" onclick="deleteModule(' + g.id + ',' + m.id + ')">🗑️</button>' +
+          '<button class="btn-sm reject-btn" style="margin-left:4px" onclick="deleteModule(' + g.id + ',' + m.id + ')">Ὕ1️</button>' +
           '</div>';
       }).join('') +
       '<div style="display:flex;gap:8px;padding:10px 16px;background:#fafafa">' +
@@ -561,7 +561,7 @@ function addModule(gid) {
   var inp = document.getElementById('mod-inp-' + gid);
   if (!inp || !inp.value.trim()) { showToast('Nhập tên module', 'warning'); return; }
   var g = moduleGroups.find(function(g){return g.id===gid;});
-  g.modules.push({ id: Date.now(), icon: '📋', name: inp.value.trim() });
+  g.modules.push({ id: Date.now(), icon: 'Ὄb', name: inp.value.trim() });
   renderModuleGroups(); syncSidebarModules();
   showToast('Đã thêm module: ' + inp.value.trim(), 'success');
 }
@@ -586,7 +586,7 @@ function deleteGroup(gid) {
 function addGroup() {
   var inp = document.getElementById('new-group-name');
   if (!inp || !inp.value.trim()) { showToast('Nhập tên nhóm', 'warning'); return; }
-  moduleGroups.push({ id: Date.now(), icon: '📂', name: inp.value.trim(), modules: [] });
+  moduleGroups.push({ id: Date.now(), icon: 'Ὄ2', name: inp.value.trim(), modules: [] });
   inp.value = '';
   renderModuleGroups(); syncSidebarModules();
   showToast('Đã tạo nhóm mới', 'success');
@@ -614,7 +614,7 @@ function toggleGroup(gid) {
   syncSidebarModules();
 }
 
-function showModulePage(id, name, el) {
+function showModulePage(id, name, groupId, el) {
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var pid = 'page-mod-' + id;
@@ -624,7 +624,7 @@ function showModulePage(id, name, el) {
     pg.className = 'page'; pg.id = pid;
     pg.innerHTML = '<div class="page-header"><div class="page-tag">Module</div><div class="page-title">' + name + '</div><div class="page-meta">Nội dung module — click + Thêm để đóng góp</div></div>' +
       '<div class="card"><div class="card-title">Nội dung</div><p style="color:#aaa;font-style:italic">Chưa có nội dung. Bấm nút bên dưới để thêm tài liệu.</p><br><button class="btn btn-primary" style="width:auto;padding:8px 20px" onclick="showToast(\'Tính năng upload sắp ra mắt!\',\'warning\')">+ Thêm tài liệu</button></div>';
-    document.querySelector('main').appendChild(pg);
+    var mainEl = document.querySelector('main'); if(mainEl) mainEl.appendChild(pg);
   }
   pg.classList.add('active');
   if(el) el.classList.add('active');
@@ -756,7 +756,7 @@ function renderVideos() {
       '<div style="display:flex;align-items:flex-start;gap:10px">' +
       '<div style="flex:1">' +
       '<div style="font-weight:700;font-size:15px;margin-bottom:3px">' + v.title + '</div>' +
-      '<div style="font-size:11px;color:#888">📂 ' + v.module + ' · 👤 ' + v.author + ' · 📅 ' + v.date + '</div>' +
+      '<div style="font-size:11px;color:#888">Ὄ2 ' + v.module + ' · ὆4 ' + v.author + ' · Ὄ5 ' + v.date + '</div>' +
       '</div>' +
       (canDelete ? '<button onclick="removeVideo(' + i + ')" style="background:#fee2e2;color:#ef4444;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:11px">Xóa</button>' : '') +
       '</div>' + embed + '</div>';
@@ -791,7 +791,7 @@ function openRoom(id) {
   activeRoom = rooms.find(function(r){return r.id===id;});
   if (!activeRoom) return;
   renderRoomSidebar();
-  var statusMap = {draft:'🟡 Bản nháp', review:'🔄 Chờ review', approved:'✅ Đã duyệt', revision:'✏️ Cần sửa'};
+  var statusMap = {draft:'὾1 Bản nháp', review:'ὐ4 Chờ review', approved:'✅ Đã duyệt', revision:'✏️ Cần sửa'};
   var content = document.getElementById('room-content');
   content.innerHTML = '<div class="card" style="padding:0;overflow:hidden">' +
     '<div style="padding:14px 18px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:12px">' +
@@ -804,8 +804,8 @@ function openRoom(id) {
     '<div style="flex:1">' +
     '<div style="display:flex;gap:0;padding:0 16px;background:#f8f9fb">' +
     '<div class="etab2 active" onclick="switchRoomTab(\'edit\',this)" style="padding:9px 14px;cursor:pointer;font-size:12px;font-weight:700;color:#0891b2;border-bottom:2px solid #0891b2;margin-bottom:-1px">✍️ Soạn thảo</div>' +
-    '<div class="etab2" onclick="switchRoomTab(\'diff\',this)" style="padding:9px 14px;cursor:pointer;font-size:12px;font-weight:700;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px">🔍 So sánh</div>' +
-    '<div class="etab2" onclick="switchRoomTab(\'history\',this)" style="padding:9px 14px;cursor:pointer;font-size:12px;font-weight:700;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px">📋 Lịch sử</div>' +
+    '<div class="etab2" onclick="switchRoomTab(\'diff\',this)" style="padding:9px 14px;cursor:pointer;font-size:12px;font-weight:700;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px">ὐd So sánh</div>' +
+    '<div class="etab2" onclick="switchRoomTab(\'history\',this)" style="padding:9px 14px;cursor:pointer;font-size:12px;font-weight:700;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px">Ὄb Lịch sử</div>' +
     '</div>' +
     '<div id="room-tab-edit" style="padding:0">' +
     '<div style="background:#f8f9fb;border-bottom:1px solid #eee;padding:6px 12px;display:flex;gap:4px;flex-wrap:wrap">' +
@@ -814,9 +814,9 @@ function openRoom(id) {
     '<button class="btn-sm" onclick="rf(\'insertUnorderedList\')">• List</button>' +
     '<button class="btn-sm" onclick="rf(\'insertOrderedList\')">1. List</button>' +
     '<div style="flex:1"></div>' +
-    '<button onclick="saveRoomVersion()" class="btn-sm approve-btn">💾 Lưu phiên bản</button>' +
-    '<button onclick="exportRoomPDF()" class="btn-sm reject-btn" style="margin-left:4px">📄 PDF</button>' +
-    '<button onclick="exportRoomWord()" class="btn-sm" style="background:#2b5797;color:#fff;border:none;margin-left:4px">📝 Word</button>' +
+    '<button onclick="saveRoomVersion()" class="btn-sm approve-btn">Ὃe Lưu phiên bản</button>' +
+    '<button onclick="exportRoomPDF()" class="btn-sm reject-btn" style="margin-left:4px">Ὄ4 PDF</button>' +
+    '<button onclick="exportRoomWord()" class="btn-sm" style="background:#2b5797;color:#fff;border:none;margin-left:4px">Ὅd Word</button>' +
     '</div>' +
     '<div id="room-editor" contenteditable="true" style="min-height:280px;padding:20px;outline:none;font-size:14px;line-height:1.9">'+activeRoom.content+'</div>' +
     '</div>' +
@@ -824,7 +824,7 @@ function openRoom(id) {
     '<div id="room-tab-history" style="display:none;padding:16px"><div style="font-size:13px">'+activeRoom.versions.map(function(v,i){return '<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between"><span>'+v+'</span><button class="btn-sm" onclick="showToast(\'Đang xem phiên bản này\',\'success\')">Xem</button></div>';}).join('')+'</div></div>' +
     '</div>' +
     '<div style="width:280px;border-left:1px solid #eee;display:flex;flex-direction:column">' +
-    '<div style="padding:10px 14px;font-size:12px;font-weight:700;border-bottom:1px solid #eee">💬 Comments</div>' +
+    '<div style="padding:10px 14px;font-size:12px;font-weight:700;border-bottom:1px solid #eee">Ὂc Comments</div>' +
     '<div id="room-comments" style="flex:1;overflow-y:auto;padding:10px">'+activeRoom.comments.map(function(c){return '<div style="background:#f0f5ff;border-left:3px solid #1c69d4;padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:12px"><div style="font-weight:700;color:#0653b6;margin-bottom:3px">'+c.author+'</div>'+c.text+'<div style="color:#aaa;font-size:10px;margin-top:4px">'+c.time+'</div></div>';}).join('')+'</div>' +
     '<div style="padding:10px;border-top:1px solid #eee"><textarea id="room-cmt-input" rows="2" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:7px;font-size:12px;outline:none;resize:none"></textarea><button onclick="addRoomComment()" style="width:100%;background:#1c69d4;color:#fff;border:none;padding:6px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px">Gửi comment</button></div>' +
     '</div></div></div>';
@@ -889,7 +889,7 @@ function createRoom() {
   var btn = document.querySelector('[onclick="createRoom()"]');
   openEmojiPicker(function(icon) {
     var colors = ['#22c55e','#3b82f6','#8b5cf6','#f59e0b','#ef4444','#0891b2','#ec4899'];
-    rooms.push({id:Date.now(),name:name,icon:icon||'📂',color:colors[Math.floor(Math.random()*colors.length)],status:'draft',content:'<h2>'+name+'</h2><p>Bắt đầu soạn thảo nội dung...</p>',comments:[],versions:['v1.0 - '+(currentUser?currentUser.name:'User')+' - '+new Date().toLocaleDateString('vi-VN')]});
+    rooms.push({id:Date.now(),name:name,icon:icon||'Ὄ2',color:colors[Math.floor(Math.random()*colors.length)],status:'draft',content:'<h2>'+name+'</h2><p>Bắt đầu soạn thảo nội dung...</p>',comments:[],versions:['v1.0 - '+(currentUser?currentUser.name:'User')+' - '+new Date().toLocaleDateString('vi-VN')]});
     renderRoomSidebar();
   showToast('Đã tạo Room: '+name,'success');
   }, btn);
@@ -983,7 +983,7 @@ function renderTrash() {
     return;
   }
   list.innerHTML = trash.map(function(item, i) {
-    var icon = item.type === 'group' ? '📁' : '📋';
+    var icon = item.type === 'group' ? 'Ὄ1' : 'Ὄb';
     var name = item.type === 'group' ? item.data.name + ' (nhóm + '+item.data.modules.length+' modules)' : item.data.name + ' (trong: '+item.groupName+')';
     return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #f0f0f0;background:#fff">' +
       '<span style="font-size:20px">'+icon+'</span>' +
@@ -992,7 +992,7 @@ function renderTrash() {
         '<div style="font-size:11px;color:#aaa;margin-top:2px">Xóa bởi: '+item.deletedBy+' · '+item.deletedAt+'</div>' +
       '</div>' +
       '<button onclick="restoreItem('+i+')" class="btn-sm approve-btn">↩️ Khôi phục</button>' +
-      '<button onclick="deletePermanent('+i+')" class="btn-sm reject-btn" style="margin-left:6px">🗑️ Xóa vĩnh viễn</button>' +
+      '<button onclick="deletePermanent('+i+')" class="btn-sm reject-btn" style="margin-left:6px">Ὕ1️ Xóa vĩnh viễn</button>' +
     '</div>';
   }).join('');
 }
@@ -1046,7 +1046,7 @@ function renderStorageWidget() {
     '</div>' +
     '<div style="font-size:10px;color:#aaa;margin-top:4px">'+pct+'% đã sử dụng · '+(25-storageUsedMB/1024).toFixed(2)+' GB còn lại</div>' +
     (pct > 80 ? '<div style="margin-top:6px;padding:6px 8px;background:#fee2e2;border-radius:6px;font-size:11px;color:#991b1b">⚠️ Sắp đầy! Hãy xóa file không cần thiết.</div>' : '') +
-    '<button onclick="emptyTrash()" style="margin-top:8px;width:100%;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;border-radius:6px;padding:5px;font-size:11px;font-weight:700;cursor:pointer">🗑️ Làm trống Thùng rác ('+trash.length+' mục)</button>';
+    '<button onclick="emptyTrash()" style="margin-top:8px;width:100%;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;border-radius:6px;padding:5px;font-size:11px;font-weight:700;cursor:pointer">Ὕ1️ Làm trống Thùng rác ('+trash.length+' mục)</button>';
 }
 
 // ============================================================
@@ -1093,12 +1093,12 @@ function renderPersonalDocs() {
   list.innerHTML = personalDocs.map(function(doc, i) {
     return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:12px">' +
       '<div style="padding:14px 16px;display:flex;align-items:center;gap:10px">' +
-        '<span style="font-size:20px">📝</span>' +
+        '<span style="font-size:20px">Ὅd</span>' +
         '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.date+'</div></div>' +
         '<button onclick="editPersonalDoc('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Sửa</button>' +
-        '<button onclick="publishItem(\'doc\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">📤 Public</button>' +
-        '<button onclick="exportDocPDF('+i+')" class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer;margin-left:4px">📄 PDF</button>' +
-        '<button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>' +
+        '<button onclick="publishItem(\'doc\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">὎4 Public</button>' +
+        '<button onclick="exportDocPDF('+i+')" class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer;margin-left:4px">Ὄ4 PDF</button>' +
+        '<button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>' +
       '</div>' +
       '<div id="doc-editor-'+i+'" style="display:none;border-top:1px solid #eee">' +
         '<div style="background:#f8f9fb;padding:6px 12px;display:flex;gap:4px;border-bottom:1px solid #eee">' +
@@ -1108,7 +1108,7 @@ function renderPersonalDocs() {
           '<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value)"><option value="p">Đoạn</option><option value="h2">H2</option><option value="h3">H3</option></select>' +
           '<button class="btn-sm" onclick="document.execCommand(\'insertUnorderedList\')">• List</button>' +
           '<div style="flex:1"></div>' +
-          '<button onclick="savePersonalDoc('+i+')" class="btn-sm approve-btn">💾 Lưu</button>' +
+          '<button onclick="savePersonalDoc('+i+')" class="btn-sm approve-btn">Ὃe Lưu</button>' +
         '</div>' +
         '<div id="doc-content-'+i+'" contenteditable="true" style="min-height:200px;padding:16px;outline:none;font-size:14px;line-height:1.8">'+doc.content+'</div>' +
       '</div>' +
@@ -1149,11 +1149,11 @@ function renderPersonalSheets() {
   if (!personalSheets.length) { list.innerHTML = '<p style="color:#aaa;font-style:italic;padding:20px;text-align:center">Chưa có bảng tính. Bấm "+ Bảng tính mới".</p>'; return; }
   list.innerHTML = personalSheets.map(function(sheet, i) {
     return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:14px 16px;display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
-      '<span style="font-size:20px">📊</span>' +
+      '<span style="font-size:20px">Ὄa</span>' +
       '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+sheet.name+'</div><div style="font-size:11px;color:#888">'+sheet.date+'</div></div>' +
       '<button onclick="openPersonalSheet('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Mở</button>' +
-      '<button onclick="publishItem(\'sheet\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">📤 Public</button>' +
-      '<button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>' +
+      '<button onclick="publishItem(\'sheet\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">὎4 Public</button>' +
+      '<button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>' +
     '</div>';
   }).join('');
 }
@@ -1163,7 +1163,7 @@ function openPersonalSheet(i) {
   var editor = document.getElementById('personal-sheet-editor');
   if (!editor) return;
   editor.style.display = 'block';
-  editor.innerHTML = '<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:18px">📊</span><div style="font-weight:700;font-size:15px">'+sheet.name+'</div><button onclick="document.getElementById(\'personal-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕ Đóng</button></div><p style="font-size:12px;color:#888;margin-bottom:10px">Bảng tính mini — nhập công thức =SUM, =AVG, =IF...</p><div style="overflow:auto"><table id="psheet-'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><button onclick="exportPSheetCSV('+i+')" style="margin-top:10px;background:#217346;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">⬇️ Xuất CSV/Excel</button></div>';
+  editor.innerHTML = '<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:18px">Ὄa</span><div style="font-weight:700;font-size:15px">'+sheet.name+'</div><button onclick="document.getElementById(\'personal-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕ Đóng</button></div><p style="font-size:12px;color:#888;margin-bottom:10px">Bảng tính mini — nhập công thức =SUM, =AVG, =IF...</p><div style="overflow:auto"><table id="psheet-'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><button onclick="exportPSheetCSV('+i+')" style="margin-top:10px;background:#217346;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">⬇️ Xuất CSV/Excel</button></div>';
   buildPSheet(i);
 }
 
@@ -1225,13 +1225,13 @@ function renderPersonalFiles() {
   if (!list) return;
   if (!personalFiles.length) { list.innerHTML = '<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có file nào.</p>'; return; }
   list.innerHTML = personalFiles.map(function(f,i){
-    var ico = f.type.startsWith('video/')?'🎬':f.type.startsWith('image/')?'🖼️':f.name.endsWith('.pdf')?'📄':f.name.endsWith('.xlsx')||f.name.endsWith('.csv')?'📊':'📁';
+    var ico = f.type.startsWith('video/')?'Ἲc':f.type.startsWith('image/')?'Ὓc️':f.name.endsWith('.pdf')?'Ὄ4':f.name.endsWith('.xlsx')||f.name.endsWith('.csv')?'Ὄa':'Ὄ1';
     return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px">' +
       '<span style="font-size:22px">'+ico+'</span>' +
       '<div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.date+'</div></div>' +
       '<a href="'+f.url+'" download="'+f.name+'" class="btn-sm" style="background:#f3f4f6;border:none;text-decoration:none;color:#333;cursor:pointer">⬇️</a>' +
-      '<button onclick="publishItem(\'file\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">📤 Public</button>' +
-      '<button onclick="personalFiles.splice('+i+',1);renderPersonalFiles()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>' +
+      '<button onclick="publishItem(\'file\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">὎4 Public</button>' +
+      '<button onclick="personalFiles.splice('+i+',1);renderPersonalFiles()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>' +
     '</div>';
   }).join('');
 }
@@ -1247,13 +1247,13 @@ function publishItem(type, idx) {
   var item, pubItem;
   if (type === 'doc') {
     item = personalDocs[idx];
-    pubItem = { id: Date.now(), type:'doc', name: item.name, icon:'📝', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), content: item.content, comments: [] };
+    pubItem = { id: Date.now(), type:'doc', name: item.name, icon:'Ὅd', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), content: item.content, comments: [] };
   } else if (type === 'sheet') {
     item = personalSheets[idx];
-    pubItem = { id: Date.now(), type:'sheet', name: item.name, icon:'📊', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), comments: [] };
+    pubItem = { id: Date.now(), type:'sheet', name: item.name, icon:'Ὄa', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), comments: [] };
   } else if (type === 'file') {
     item = personalFiles[idx];
-    var ico = item.type.startsWith('video/')?'🎬':item.type.startsWith('image/')?'🖼️':'📁';
+    var ico = item.type.startsWith('video/')?'Ἲc':item.type.startsWith('image/')?'Ὓc️':'Ὄ1';
     pubItem = { id: Date.now(), type:'file', name: item.name, icon: ico, author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), url: item.url, size: item.size, comments: [] };
   }
   if (!pubItem) return;
@@ -1268,7 +1268,7 @@ function renderPublicFiles(filter) {
   if (!list) return;
   var filtered = filter==='all' ? publicFiles : publicFiles.filter(function(f){return f.type===filter;});
   if (!filtered.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:48px;margin-bottom:12px">📂</div><p>Chưa có file nào được chia sẻ.</p><p style="font-size:12px;margin-top:8px">Vào <strong>File cá nhân</strong> → bấm <strong>📤 Public</strong> để chia sẻ.</p></div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:48px;margin-bottom:12px">Ὄ2</div><p>Chưa có file nào được chia sẻ.</p><p style="font-size:12px;margin-top:8px">Vào <strong>File cá nhân</strong> → bấm <strong>὎4 Public</strong> để chia sẻ.</p></div>';
     return;
   }
   list.innerHTML = filtered.map(function(f,i) {
@@ -1277,13 +1277,13 @@ function renderPublicFiles(filter) {
       '<div style="padding:14px 16px;display:flex;align-items:center;gap:12px">' +
         '<span style="font-size:24px">'+f.icon+'</span>' +
         '<div style="flex:1"><div style="font-weight:700;font-size:14px">'+f.name+'</div>' +
-        '<div style="font-size:11px;color:#888;margin-top:2px">👤 '+f.author+' · 📅 '+f.date+(f.size?' · '+f.size:'')+'</div></div>' +
+        '<div style="font-size:11px;color:#888;margin-top:2px">὆4 '+f.author+' · Ὄ5 '+f.date+(f.size?' · '+f.size:'')+'</div></div>' +
         (f.url?'<a href="'+f.url+'" download="'+f.name+'" class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;text-decoration:none;cursor:pointer">⬇️ Tải về</a>':'') +
-        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="publicFiles.splice('+i+',1);renderPublicFiles(\'all\')" class="btn-sm reject-btn" style="margin-left:6px">🗑️ Gỡ</button>':'') +
+        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="publicFiles.splice('+i+',1);renderPublicFiles(\'all\')" class="btn-sm reject-btn" style="margin-left:6px">Ὕ1️ Gỡ</button>':'') +
       '</div>' +
       (f.type==='doc'?'<div style="border-top:1px solid #eee;padding:12px 16px;font-size:13px;color:#555;line-height:1.6;max-height:120px;overflow:hidden">'+f.content.replace(/<[^>]+>/g,' ').substring(0,200)+'...</div>':'') +
       '<div style="border-top:1px solid #eee;padding:12px 16px;background:#fafafa">' +
-        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px">💬 COMMENTS ('+(f.comments||[]).length+')</div>' +
+        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px">Ὂc COMMENTS ('+(f.comments||[]).length+')</div>' +
         cmts +
         '<div style="display:flex;gap:8px"><input id="pub-cmt-'+i+'" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;outline:none" placeholder="Thêm comment..."><button onclick="addPublicComment('+i+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Gửi</button></div>' +
       '</div></div>';
@@ -1347,12 +1347,12 @@ function renderSharedDocs() {
     var cmts = (doc.comments||[]).map(function(c){return '<div style="background:#f0f9ff;border-left:3px solid #0891b2;padding:6px 10px;border-radius:0 6px 6px 0;font-size:12px;margin-bottom:5px"><strong>'+c.author+':</strong> '+c.text+'</div>';}).join('');
     return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:14px">' +
       '<div style="padding:12px 16px;display:flex;align-items:center;gap:10px">' +
-        '<span style="font-size:20px">📝</span>' +
+        '<span style="font-size:20px">Ὅd</span>' +
         '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">Tạo bởi: '+doc.author+' · '+doc.date+'</div></div>' +
         '<button onclick="toggleSharedDocEditor('+i+')" class="btn-sm" style="background:#e0f2fe;color:#0891b2;border:none;cursor:pointer">✏️ Sửa</button>' +
-        '<button onclick="moveDocToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">📥 Cá nhân</button>' +
-        '<button onclick="exportSharedDocPDF('+i+')" class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer;margin-left:4px">📄 PDF</button>' +
-        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedDocs.splice('+i+',1);renderSharedDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>':'') +
+        '<button onclick="moveDocToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">὎5 Cá nhân</button>' +
+        '<button onclick="exportSharedDocPDF('+i+')" class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer;margin-left:4px">Ὄ4 PDF</button>' +
+        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedDocs.splice('+i+',1);renderSharedDocs()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>':'') +
       '</div>' +
       '<div id="sdoc-editor-'+i+'" style="display:none;border-top:1px solid #eee">' +
         '<div style="background:#f8f9fb;padding:6px 12px;display:flex;gap:4px;border-bottom:1px solid #eee">' +
@@ -1362,12 +1362,12 @@ function renderSharedDocs() {
           '<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value)"><option value="p">Đoạn</option><option value="h2">H2</option><option value="h3">H3</option></select>' +
           '<button class="btn-sm" onclick="document.execCommand(\'insertUnorderedList\')">• List</button>' +
           '<div style="flex:1"></div>' +
-          '<button onclick="saveSharedDoc('+i+')" class="btn-sm approve-btn">💾 Lưu</button>' +
+          '<button onclick="saveSharedDoc('+i+')" class="btn-sm approve-btn">Ὃe Lưu</button>' +
         '</div>' +
         '<div id="sdoc-content-'+i+'" contenteditable="true" style="min-height:180px;padding:16px;outline:none;font-size:14px;line-height:1.8">'+doc.content+'</div>' +
       '</div>' +
       '<div style="border-top:1px solid #eee;padding:10px 16px;background:#fafafa">' +
-        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">💬 COMMENTS ('+(doc.comments||[]).length+')</div>' +
+        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">Ὂc COMMENTS ('+(doc.comments||[]).length+')</div>' +
         cmts +
         '<div style="display:flex;gap:8px"><input id="sdoc-cmt-'+i+'" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;outline:none" placeholder="Thêm comment..."><button onclick="addSharedDocComment('+i+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Gửi</button></div>' +
       '</div></div>';
@@ -1411,18 +1411,18 @@ function renderSharedSheets() {
   if(!sharedSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}
   list.innerHTML=sharedSheets.map(function(s,i){
     return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
-      '<span style="font-size:20px">📊</span>' +
+      '<span style="font-size:20px">Ὄa</span>' +
       '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.author+' · '+s.date+'</div></div>' +
       '<button onclick="openSharedSheet('+i+')" class="btn-sm" style="background:#e0f2fe;color:#0891b2;border:none;cursor:pointer">✏️ Mở</button>' +
-      '<button onclick="moveSheetToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">📥 Cá nhân</button>' +
-      (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedSheets.splice('+i+',1);renderSharedSheets()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>':'') +
+      '<button onclick="moveSheetToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">὎5 Cá nhân</button>' +
+      (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedSheets.splice('+i+',1);renderSharedSheets()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>':'') +
     '</div>';
   }).join('');
 }
 function openSharedSheet(i) {
   var s=sharedSheets[i]; var editor=document.getElementById('shared-sheet-editor'); if(!editor) return;
   editor.style.display='block';
-  editor.innerHTML='<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:18px">📊</span><div style="font-weight:700;font-size:15px">'+s.name+'</div><button onclick="document.getElementById(\'shared-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button></div><div style="overflow:auto"><table id="ss'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><div style="display:flex;gap:8px;margin-top:8px"><button onclick="exportSSCSV('+i+')" style="background:#217346;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">⬇️ CSV</button><button onclick="moveSheetToPersonal('+i+')" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">📥 Sao chép về Cá nhân</button></div></div>';
+  editor.innerHTML='<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:18px">Ὄa</span><div style="font-weight:700;font-size:15px">'+s.name+'</div><button onclick="document.getElementById(\'shared-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button></div><div style="overflow:auto"><table id="ss'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><div style="display:flex;gap:8px;margin-top:8px"><button onclick="exportSSCSV('+i+')" style="background:#217346;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">⬇️ CSV</button><button onclick="moveSheetToPersonal('+i+')" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">὎5 Sao chép về Cá nhân</button></div></div>';
   buildSSTable(i);
 }
 function buildSSTable(si) {
@@ -1476,19 +1476,19 @@ function renderSharedFileList() {
   var list=document.getElementById('shared-files-list'); if(!list) return;
   if(!sharedFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có file nào.</p>';return;}
   list.innerHTML=sharedFiles.map(function(f,i){
-    var ico=f.type.startsWith('video/')?'🎬':f.type.startsWith('image/')?'🖼️':f.name.endsWith('.pdf')?'📄':f.name.endsWith('.xlsx')||f.name.endsWith('.csv')?'📊':'📁';
+    var ico=f.type.startsWith('video/')?'Ἲc':f.type.startsWith('image/')?'Ὓc️':f.name.endsWith('.pdf')?'Ὄ4':f.name.endsWith('.xlsx')||f.name.endsWith('.csv')?'Ὄa':'Ὄ1';
     var cmts=(f.comments||[]).map(function(c){return '<div style="background:#f0f9ff;border-left:3px solid #0891b2;padding:5px 10px;border-radius:0 6px 6px 0;font-size:11px;margin-bottom:4px"><strong>'+c.author+':</strong> '+c.text+'</div>';}).join('');
     return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:12px">' +
       '<div style="padding:12px 16px;display:flex;align-items:center;gap:10px">' +
         '<span style="font-size:22px">'+ico+'</span>' +
         '<div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.author+' · '+f.date+'</div></div>' +
         '<a href="'+f.url+'" download="'+f.name+'" class="btn-sm" style="background:#e0f2fe;color:#0891b2;border:none;text-decoration:none;cursor:pointer">⬇️ Tải</a>' +
-        '<button onclick="moveFileToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">📥 Cá nhân</button>' +
-        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedFiles.splice('+i+',1);renderSharedFileList()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>':'') +
+        '<button onclick="moveFileToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">὎5 Cá nhân</button>' +
+        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedFiles.splice('+i+',1);renderSharedFileList()" class="btn-sm reject-btn" style="margin-left:4px">Ὕ1️</button>':'') +
       '</div>' +
       (f.type.startsWith('image/')?'<img src="'+f.url+'" style="width:100%;max-height:200px;object-fit:cover;border-top:1px solid #eee">':'')+
       '<div style="border-top:1px solid #eee;padding:10px 16px;background:#fafafa">' +
-        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">💬 COMMENTS ('+(f.comments||[]).length+')</div>' +
+        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">Ὂc COMMENTS ('+(f.comments||[]).length+')</div>' +
         cmts +
         '<div style="display:flex;gap:8px"><input id="sf-cmt-'+i+'" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;outline:none" placeholder="Comment về file này..."><button onclick="addSharedFileComment('+i+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Gửi</button></div>' +
       '</div></div>';
