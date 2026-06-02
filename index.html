@@ -485,7 +485,7 @@ function openEmojiPicker(callback, anchorEl) {
 function renderEmojiCategories() {
   var el = document.getElementById('emoji-categories');
   el.innerHTML = Object.keys(EMOJIS).map(function(cat) {
-    return '<button onclick="renderEmojiGrid(''+cat+'')" style="padding:3px 8px;border-radius:12px;border:1px solid '+(cat===currentCategory?'#1c69d4':'#ddd')+';background:'+(cat===currentCategory?'#dbeafe':'#fff')+';font-size:10px;font-weight:700;cursor:pointer;color:'+(cat===currentCategory?'#1c69d4':'#555')+'">'+cat+'</button>';
+    return '<button data-cat="'+cat+'" onclick="renderEmojiGrid(this.getAttribute(\'data-cat\'))" style="padding:3px 8px;border-radius:12px;border:1px solid '+(cat===currentCategory?'#1c69d4':'#ddd')+';background:'+(cat===currentCategory?'#dbeafe':'#fff')+';font-size:10px;font-weight:700;cursor:pointer;color:'+(cat===currentCategory?'#1c69d4':'#555')+'">'+cat+'</button>';
   }).join('');
 }
 
@@ -494,7 +494,7 @@ function renderEmojiGrid(cat) {
   renderEmojiCategories();
   var emojis = EMOJIS[cat] || [];
   document.getElementById('emoji-grid').innerHTML = emojis.map(function(e) {
-    return '<button onclick="selectEmoji(''+e+'')" style="font-size:20px;padding:4px;border:none;background:transparent;cursor:pointer;border-radius:6px;transition:background .1s" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">'+e+'</button>';
+    return '<button data-em="'+e+'" onclick="selectEmoji(this.getAttribute(\'data-em\'))" style="font-size:20px;padding:4px;border:none;background:transparent;cursor:pointer;border-radius:6px" onmouseover="this.style.background=\'#f3f4f6\'" onmouseout="this.style.background=\'transparent\'">'+e+'</button>';
   }).join('');
 }
 
@@ -502,7 +502,7 @@ function searchEmoji(q) {
   if (!q) { renderEmojiGrid(currentCategory); return; }
   var all = [].concat.apply([], Object.values(EMOJIS));
   document.getElementById('emoji-grid').innerHTML = all.map(function(e) {
-    return '<button onclick="selectEmoji(''+e+'')" style="font-size:20px;padding:4px;border:none;background:transparent;cursor:pointer;border-radius:6px" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">'+e+'</button>';
+    return '<button data-em="'+e+'" onclick="selectEmoji(this.getAttribute(\'data-em\'))" style="font-size:20px;padding:4px;border:none;background:transparent;cursor:pointer;border-radius:6px" onmouseover="this.style.background=\'#f3f4f6\'" onmouseout="this.style.background=\'transparent\'">'+e+'</button>';
   }).join('');
 }
 
