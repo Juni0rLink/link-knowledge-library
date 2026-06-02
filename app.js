@@ -499,14 +499,14 @@ function renderModuleGroups() {
   c.innerHTML = moduleGroups.map(function(g) {
     return '<div style="background:#fff;border-radius:10px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);overflow:hidden">' +
       '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f8f9fb;border-bottom:1px solid #eee">' +
-      '<span class="emoji-trigger" onclick="openEmojiPicker(function(e){var gr=moduleGroups.find(function(x){return x.id==='+g.id+';});if(gr){gr.icon=e;renderModuleGroups();syncSidebarModules();}},this)" style="font-size:18px;cursor:pointer;border-radius:6px;padding:2px" title="Bấm để đổi icon">' + g.icon + '</span>' +
+      '<span style="font-size:18px;cursor:pointer;border-radius:6px;padding:2px" title="Bấm để đổi icon" onclick="pickGroupIcon('+g.id+',this)">' + g.icon + '</span>' +
       '<span style="font-weight:700;font-size:14px;flex:1" id="gname-' + g.id + '">' + g.name + '</span>' +
       '<button class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;cursor:pointer" onclick="editGroupName(' + g.id + ')">✏️ Đổi tên nhóm</button>' +
       '<button class="btn-sm reject-btn" style="margin-left:6px" onclick="deleteGroup(' + g.id + ')">🗑️ Xóa</button>' +
       '</div>' +
       g.modules.map(function(m) {
         return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0">' +
-          '<span class="emoji-trigger" onclick="openEmojiPicker(function(e){var gr=moduleGroups.find(function(x){return x.id==='+g.id+';});var md=gr&&gr.modules.find(function(x){return x.id==='+m.id+';});if(md){md.icon=e;renderModuleGroups();syncSidebarModules();}},this)" style="cursor:pointer;border-radius:4px;padding:1px" title="Bấm để đổi icon">' + m.icon + '</span>' +
+          '<span style="cursor:pointer;border-radius:4px;padding:1px" title="Bấm để đổi icon" onclick="pickModuleIcon('+g.id+','+m.id+',this)">' + m.icon + '</span>' +
           '<span style="flex:1;font-size:13px" id="mname-' + m.id + '">' + m.name + '</span>' +
           '<button class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;cursor:pointer" onclick="editModuleName(' + g.id + ',' + m.id + ')">✏️</button>' +
           '<button class="btn-sm reject-btn" style="margin-left:4px" onclick="deleteModule(' + g.id + ',' + m.id + ')">🗑️</button>' +
@@ -1291,4 +1291,231 @@ function addPublicComment(i) {
   publicFiles[i].comments.push({ author: currentUser?currentUser.name:'Khách', text: txt });
   renderPublicFiles('all');
   showToast('Đã gửi comment!','success');
+}
+
+function pickGroupIcon(gid, el) {
+  openEmojiPicker(function(e) {
+    var g = moduleGroups.find(function(x){return x.id===gid;});
+    if (g) { g.icon = e; renderModuleGroups(); syncSidebarModules(); }
+  }, el);
+}
+function pickModuleIcon(gid, mid, el) {
+  openEmojiPicker(function(e) {
+    var g = moduleGroups.find(function(x){return x.id===gid;});
+    var m = g && g.modules.find(function(x){return x.id===mid;});
+    if (m) { m.icon = e; renderModuleGroups(); syncSidebarModules(); }
+  }, el);
+}
+
+// ============================================================
+// SHARED FILE MANAGER (Public workspace)
+// ============================================================
+var sharedDocs = [];
+var sharedSheets = [];
+var sharedFiles = [];
+var sharedNote = '';
+
+function switchFilesTab(tab, el) {
+  document.querySelectorAll('.files-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
+  el.style.color='#0891b2'; el.style.borderBottomColor='#0891b2';
+  ['docs','sheets','upload','notes'].forEach(function(t){
+    var e=document.getElementById('shared-tab-'+t); if(e) e.style.display=t===tab?'block':'none';
+  });
+}
+
+// --- SHARED DOCS ---
+function createSharedDoc() {
+  var name = prompt('Tên tài liệu chung:');
+  if (!name) return;
+  sharedDocs.push({ id:Date.now(), name:name, content:'<p>Bắt đầu soạn thảo...</p>', date:new Date().toLocaleDateString('vi-VN'), author:currentUser?currentUser.name:'', comments:[] });
+  renderSharedDocs();
+  showToast('Đã tạo tài liệu chung: '+name,'success');
+}
+
+function renderSharedDocs() {
+  var list = document.getElementById('shared-docs-list');
+  if (!list) return;
+  if (!sharedDocs.length) { list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>'; return; }
+  list.innerHTML = sharedDocs.map(function(doc,i) {
+    var cmts = (doc.comments||[]).map(function(c){return '<div style="background:#f0f9ff;border-left:3px solid #0891b2;padding:6px 10px;border-radius:0 6px 6px 0;font-size:12px;margin-bottom:5px"><strong>'+c.author+':</strong> '+c.text+'</div>';}).join('');
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:14px">' +
+      '<div style="padding:12px 16px;display:flex;align-items:center;gap:10px">' +
+        '<span style="font-size:20px">📝</span>' +
+        '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">Tạo bởi: '+doc.author+' · '+doc.date+'</div></div>' +
+        '<button onclick="toggleSharedDocEditor('+i+')" class="btn-sm" style="background:#e0f2fe;color:#0891b2;border:none;cursor:pointer">✏️ Sửa</button>' +
+        '<button onclick="moveDocToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">📥 Cá nhân</button>' +
+        '<button onclick="exportSharedDocPDF('+i+')" class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer;margin-left:4px">📄 PDF</button>' +
+        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedDocs.splice('+i+',1);renderSharedDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>':'') +
+      '</div>' +
+      '<div id="sdoc-editor-'+i+'" style="display:none;border-top:1px solid #eee">' +
+        '<div style="background:#f8f9fb;padding:6px 12px;display:flex;gap:4px;border-bottom:1px solid #eee">' +
+          '<button class="btn-sm" onclick="document.execCommand(\'bold\')"><b>B</b></button>' +
+          '<button class="btn-sm" onclick="document.execCommand(\'italic\')"><i>I</i></button>' +
+          '<button class="btn-sm" onclick="document.execCommand(\'underline\')"><u>U</u></button>' +
+          '<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value)"><option value="p">Đoạn</option><option value="h2">H2</option><option value="h3">H3</option></select>' +
+          '<button class="btn-sm" onclick="document.execCommand(\'insertUnorderedList\')">• List</button>' +
+          '<div style="flex:1"></div>' +
+          '<button onclick="saveSharedDoc('+i+')" class="btn-sm approve-btn">💾 Lưu</button>' +
+        '</div>' +
+        '<div id="sdoc-content-'+i+'" contenteditable="true" style="min-height:180px;padding:16px;outline:none;font-size:14px;line-height:1.8">'+doc.content+'</div>' +
+      '</div>' +
+      '<div style="border-top:1px solid #eee;padding:10px 16px;background:#fafafa">' +
+        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">💬 COMMENTS ('+(doc.comments||[]).length+')</div>' +
+        cmts +
+        '<div style="display:flex;gap:8px"><input id="sdoc-cmt-'+i+'" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;outline:none" placeholder="Thêm comment..."><button onclick="addSharedDocComment('+i+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Gửi</button></div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function toggleSharedDocEditor(i) {
+  var el = document.getElementById('sdoc-editor-'+i);
+  if (el) el.style.display = el.style.display==='none'?'block':'none';
+}
+function saveSharedDoc(i) {
+  var c = document.getElementById('sdoc-content-'+i);
+  if (c && sharedDocs[i]) { sharedDocs[i].content=c.innerHTML; showToast('Đã lưu!','success'); }
+}
+function addSharedDocComment(i) {
+  var inp = document.getElementById('sdoc-cmt-'+i);
+  if (!inp||!inp.value.trim()) return;
+  if (!sharedDocs[i].comments) sharedDocs[i].comments=[];
+  sharedDocs[i].comments.push({author:currentUser?currentUser.name:'?', text:inp.value.trim()});
+  renderSharedDocs();
+  showToast('Đã gửi comment!','success');
+}
+function exportSharedDocPDF(i) {
+  var doc=sharedDocs[i]; if(!doc) return;
+  var w=window.open(''); w.document.write('<html><head><style>body{font-family:Arial;padding:40px;line-height:1.8;}@media print{button{display:none}}</style></head><body><button onclick="window.print()" style="position:fixed;top:10px;right:10px;background:#ef4444;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer">In/PDF</button><h2>'+doc.name+'</h2>'+doc.content+'</body></html>'); w.document.close();
+}
+function moveDocToPersonal(i) {
+  var doc=sharedDocs[i]; if(!doc) return;
+  personalDocs.push({id:Date.now(),name:doc.name+' (copy)',content:doc.content,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:''});
+  showToast('Đã sao chép "'+doc.name+'" về File cá nhân!','success');
+}
+
+// --- SHARED SHEETS ---
+function createSharedSheet() {
+  var name=prompt('Tên bảng tính chung:'); if(!name) return;
+  sharedSheets.push({id:Date.now(),name:name,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:{}});
+  renderSharedSheets(); showToast('Đã tạo bảng tính: '+name,'success');
+}
+function renderSharedSheets() {
+  var list=document.getElementById('shared-sheets-list'); if(!list) return;
+  if(!sharedSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}
+  list.innerHTML=sharedSheets.map(function(s,i){
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+      '<span style="font-size:20px">📊</span>' +
+      '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.author+' · '+s.date+'</div></div>' +
+      '<button onclick="openSharedSheet('+i+')" class="btn-sm" style="background:#e0f2fe;color:#0891b2;border:none;cursor:pointer">✏️ Mở</button>' +
+      '<button onclick="moveSheetToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">📥 Cá nhân</button>' +
+      (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedSheets.splice('+i+',1);renderSharedSheets()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>':'') +
+    '</div>';
+  }).join('');
+}
+function openSharedSheet(i) {
+  var s=sharedSheets[i]; var editor=document.getElementById('shared-sheet-editor'); if(!editor) return;
+  editor.style.display='block';
+  editor.innerHTML='<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:18px">📊</span><div style="font-weight:700;font-size:15px">'+s.name+'</div><button onclick="document.getElementById(\'shared-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button></div><div style="overflow:auto"><table id="ss'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><div style="display:flex;gap:8px;margin-top:8px"><button onclick="exportSSCSV('+i+')" style="background:#217346;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">⬇️ CSV</button><button onclick="moveSheetToPersonal('+i+')" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">📥 Sao chép về Cá nhân</button></div></div>';
+  buildSSTable(i);
+}
+function buildSSTable(si) {
+  var t=document.getElementById('ss'+si); if(!t) return;
+  var R=8,C=6,h='<tr><th style="background:#f1f3f5;border:1px solid #d1d5db;width:30px;height:22px;font-size:10px;position:sticky;left:0"></th>';
+  for(var c=0;c<C;c++) h+='<th style="background:#f1f3f5;border:1px solid #d1d5db;width:80px;height:22px;text-align:center;font-size:10px;font-weight:700;color:#6b7280">'+colL(c)+'</th>';
+  h+='</tr>';
+  var data=sharedSheets[si]?sharedSheets[si].data:{};
+  for(var r=0;r<R;r++){
+    h+='<tr><td style="background:#f1f3f5;border:1px solid #d1d5db;text-align:center;font-size:10px;color:#6b7280;font-weight:700;position:sticky;left:0;min-width:28px;padding:0 3px">'+(r+1)+'</td>';
+    for(var c=0;c<C;c++){var id=sCellId(r,c);h+='<td style="border:1px solid #e5e7eb;padding:0;min-width:80px;height:24px"><input id="ss'+si+'-'+id+'" value="'+(data[id]||'')+'" style="width:100%;height:100%;border:none;outline:none;padding:0 3px;font-size:12px;background:transparent" onblur="ssRecalc('+si+')" onchange="sharedSheets['+si+'].data[\''+id+'\']=this.value"></td>';}
+    h+='</tr>';
+  }
+  t.innerHTML=h; ssRecalc(si);
+}
+function ssRecalc(si) {
+  var data=sharedSheets[si]?sharedSheets[si].data:{};
+  for(var id in data){
+    var el=document.getElementById('ss'+si+'-'+id); if(!el) continue;
+    if((data[id]||'').startsWith('=')){
+      try{var expr=data[id].substring(1).toUpperCase();expr=expr.replace(/SUM\(([^)]+)\)/g,function(m,r){return sExpand(r).map(function(c){return parseFloat(data[c])||0;}).reduce(function(a,b){return a+b;},0);});expr=expr.replace(/AVG\(([^)]+)\)/g,function(m,r){var a=sExpand(r).map(function(c){return parseFloat(data[c])||0;});return a.reduce(function(s,v){return s+v;},0)/a.length;});expr=expr.replace(/([A-Z]\d+)/g,function(c){return parseFloat(data[c])||0;});el.value=Math.round(eval(expr)*1000)/1000;el.style.color='#0891b2';}catch(e){el.value='#ERR';el.style.color='#ef4444';}
+    }
+  }
+}
+function exportSSCSV(si) {
+  var data=sharedSheets[si]?sharedSheets[si].data:{};
+  var rows=[];for(var r=0;r<8;r++){var row=[];for(var c=0;c<6;c++){var id=sCellId(r,c);row.push(data[id]||'');}rows.push(row.join(','));}
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(sharedSheets[si].name||'sheet')+'.csv';a.click();
+  showToast('Đã xuất CSV!','success');
+}
+function moveSheetToPersonal(i) {
+  var s=sharedSheets[i]; if(!s) return;
+  personalSheets.push({id:Date.now(),name:s.name+' (copy)',date:new Date().toLocaleDateString('vi-VN'),data:Object.assign({},s.data)});
+  showToast('Đã sao chép bảng tính về File cá nhân!','success');
+}
+
+// --- SHARED FILE UPLOAD ---
+function uploadSharedFile(input) {
+  var files=Array.from(input.files);
+  var progress=document.getElementById('shared-upload-progress');
+  if(progress) {progress.style.display='block';progress.textContent='Đang upload...';}
+  files.forEach(function(f) {
+    if(f.size > 100*1024*1024) { showToast('File '+f.name+' quá 100MB — dùng YouTube cho video lớn','warning'); return; }
+    var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';
+    sharedFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',url:URL.createObjectURL(f),comments:[]});
+  });
+  renderSharedFileList(); if(progress) progress.style.display='none';
+  showToast('Đã upload '+files.length+' file lên thư viện chung','success'); input.value='';
+}
+function renderSharedFileList() {
+  var list=document.getElementById('shared-files-list'); if(!list) return;
+  if(!sharedFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có file nào.</p>';return;}
+  list.innerHTML=sharedFiles.map(function(f,i){
+    var ico=f.type.startsWith('video/')?'🎬':f.type.startsWith('image/')?'🖼️':f.name.endsWith('.pdf')?'📄':f.name.endsWith('.xlsx')||f.name.endsWith('.csv')?'📊':'📁';
+    var cmts=(f.comments||[]).map(function(c){return '<div style="background:#f0f9ff;border-left:3px solid #0891b2;padding:5px 10px;border-radius:0 6px 6px 0;font-size:11px;margin-bottom:4px"><strong>'+c.author+':</strong> '+c.text+'</div>';}).join('');
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:12px">' +
+      '<div style="padding:12px 16px;display:flex;align-items:center;gap:10px">' +
+        '<span style="font-size:22px">'+ico+'</span>' +
+        '<div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.author+' · '+f.date+'</div></div>' +
+        '<a href="'+f.url+'" download="'+f.name+'" class="btn-sm" style="background:#e0f2fe;color:#0891b2;border:none;text-decoration:none;cursor:pointer">⬇️ Tải</a>' +
+        '<button onclick="moveFileToPersonal('+i+')" class="btn-sm" style="background:#ede9fe;color:#7c3aed;border:none;cursor:pointer;margin-left:4px">📥 Cá nhân</button>' +
+        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="sharedFiles.splice('+i+',1);renderSharedFileList()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>':'') +
+      '</div>' +
+      (f.type.startsWith('image/')?'<img src="'+f.url+'" style="width:100%;max-height:200px;object-fit:cover;border-top:1px solid #eee">':'')+
+      '<div style="border-top:1px solid #eee;padding:10px 16px;background:#fafafa">' +
+        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">💬 COMMENTS ('+(f.comments||[]).length+')</div>' +
+        cmts +
+        '<div style="display:flex;gap:8px"><input id="sf-cmt-'+i+'" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;outline:none" placeholder="Comment về file này..."><button onclick="addSharedFileComment('+i+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Gửi</button></div>' +
+      '</div></div>';
+  }).join('');
+}
+function addSharedFileComment(i) {
+  var inp=document.getElementById('sf-cmt-'+i); if(!inp||!inp.value.trim()) return;
+  if(!sharedFiles[i].comments) sharedFiles[i].comments=[];
+  sharedFiles[i].comments.push({author:currentUser?currentUser.name:'?',text:inp.value.trim()});
+  renderSharedFileList(); showToast('Đã gửi comment!','success');
+}
+function moveFileToPersonal(i) {
+  var f=sharedFiles[i]; if(!f) return;
+  personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:f.size,date:new Date().toLocaleDateString('vi-VN'),url:f.url});
+  showToast('Đã sao chép "'+f.name+'" về File cá nhân!','success');
+}
+
+// --- SHARED NOTES ---
+function saveSharedNote() {
+  var el=document.getElementById('shared-note-area'); if(el) {sharedNote=el.value; showToast('Đã lưu ghi chú chung!','success');}
+}
+function moveNoteToPersonal() {
+  var el=document.getElementById('shared-note-area');
+  if(el&&el.value.trim()) {
+    personalNote=el.value;
+    var pn=document.getElementById('personal-note'); if(pn) pn.value=personalNote;
+    showToast('Đã sao chép ghi chú về File cá nhân!','success');
+  }
+}
+
+// Also update personal to shared functions
+function movePersonalDocToShared(i) {
+  var doc=personalDocs[i]; if(!doc) return;
+  sharedDocs.push({id:Date.now(),name:doc.name,content:doc.content,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',comments:[]});
+  showToast('Đã chuyển "'+doc.name+'" lên Quản lý File!','success');
+  renderSharedDocs();
 }

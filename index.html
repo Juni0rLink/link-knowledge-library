@@ -105,72 +105,112 @@
         <div id="vid-colleague" style="display:none"><div class="card"><div class="card-title">Upload video</div><button class="btn-sm" style="background:#7c3aed;color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer">+ Them video</button></div></div>
       </div>
       <div class="page" id="page-myfiles">
-        <div class="page-header"><div class="page-tag">Ca nhan</div><div class="page-title">👤 File của tôi</div></div>
-        <div id="myfiles-viewer" style="display:none"><div class="warning-box">Cần tài khoản để sử dụng.</div></div>
-        <div id="myfiles-colleague" style="display:none">
-          <div class="card"><div class="card-title">Ghi chú nhanh</div><textarea style="width:100%;height:90px;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;resize:vertical"></textarea><br><button class="btn-sm" style="background:var(--blue);color:#fff;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;margin-top:8px" onclick="showToast('Da luu','success')">Lưu</button></div>
+        <div class="page-header" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">
+          <div class="page-tag">Không gian riêng tư</div>
+          <div class="page-title">👤 File cá nhân</div>
+          <div class="page-meta">Chỉ bạn mới thấy — Tài liệu, bảng tính, ghi chú, files. Bấm 📤 Public để chia sẻ.</div>
         </div>
-      </div>
-      <div class="page" id="page-admin">
-        <div class="page-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)"><div class="page-tag">Chỉ Admin</div><div class="page-title">🔐 Admin Panel</div></div>
-        <div class="card" style="border-top-color:var(--orange)"><div class="card-title">Yêu cầu đăng ký <span id="reg-count-badge" class="pending-badge" style="display:none"></span></div><div id="reg-requests-list"><p style="color:#aaa;font-style:italic">Chưa có yêu cầu.</p></div></div>
-        <div class="card"><div class="card-title">Thành viên</div><table><tr><th>Tên</th><th>Email</th><th>Vai trò</th><th>Thao tác</th></tr><tr><td><strong>Nguyễn Tuấn Phong</strong></td><td>kintoki609@gmail.com</td><td><span class="role-badge role-owner">👑 Owner</span></td><td>—</td></tr></table><div id="member-rows"></div></div>
-        <div class="card"><div class="card-title">Mời thành viên</div><div style="display:flex;gap:8px;margin-top:10px"><input class="form-input" id="invite-email" type="email" placeholder="email@linkgroup.com" style="flex:1"><select class="form-input" id="invite-role" style="width:130px"><option>Colleague</option><option>Viewer</option><option>Admin</option></select><button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="sendInvite()">Gui</button></div></div>
-      </div>
-      <div class="page" id="page-news">
-        <div class="page-header" style="background:linear-gradient(135deg,#d97706,#b45309)"><div class="page-tag">Thong bao</div><div class="page-title">📢 News & Changelog</div></div>
-        <div id="news-compose" style="display:none;background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid var(--orange)">
-          <div class="card-title">Đăng thông báo</div>
-          <input id="news-title-inp" class="form-input" type="text" placeholder="Tiêu đề..." style="margin-bottom:10px">
-          <textarea id="news-body-inp" class="form-input" rows="3" placeholder="Nội dung..." style="resize:none"></textarea>
-          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-            <select class="form-input" id="news-type-sel" style="width:140px"><option value="update">Update</option><option value="new">Moi</option><option value="alert">Quan trong</option></select>
-            <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="news-pin"> Ghim</label>
-            <button class="btn btn-primary" style="width:auto;padding:0 16px;margin-left:auto" onclick="postNews()">Đăng</button>
+        <div id="myfiles-viewer" style="display:none">
+          <div class="warning-box">⚠️ Cần tài khoản để sử dụng không gian cá nhân.</div>
+        </div>
+        <div id="myfiles-colleague" style="display:none">
+          <div style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:16px;background:#fff;border-radius:10px 10px 0 0;overflow:hidden">
+            <div class="personal-tab active" onclick="switchPersonalTab('docs',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#7c3aed;border-bottom:3px solid #7c3aed;margin-bottom:-2px">📝 Tài liệu</div>
+            <div class="personal-tab" onclick="switchPersonalTab('sheets',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">📊 Bảng tính</div>
+            <div class="personal-tab" onclick="switchPersonalTab('files',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">📁 Files</div>
+            <div class="personal-tab" onclick="switchPersonalTab('notes',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">💬 Ghi chú</div>
+          </div>
+          <div id="personal-tab-docs">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-size:13px;font-weight:700;color:#555">Tài liệu của tôi</div>
+              <button onclick="createPersonalDoc()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">+ Tài liệu mới</button>
+            </div>
+            <div id="personal-docs-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p></div>
+          </div>
+          <div id="personal-tab-sheets" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-size:13px;font-weight:700;color:#555">Bảng tính của tôi</div>
+              <button onclick="createPersonalSheet()" style="background:#217346;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">+ Bảng tính mới</button>
+            </div>
+            <div id="personal-sheets-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p></div>
+            <div id="personal-sheet-editor" style="display:none"></div>
+          </div>
+          <div id="personal-tab-files" style="display:none">
+            <div style="border:2px dashed #c4b5fd;border-radius:10px;padding:20px;text-align:center;background:#faf5ff;cursor:pointer;margin-bottom:16px" onclick="document.getElementById('personal-file-input').click()">
+              <div style="font-size:32px;margin-bottom:8px">📁</div>
+              <p style="font-weight:700;color:#7c3aed;margin-bottom:4px">Upload file riêng tư</p>
+              <p style="font-size:12px;color:#888">Chỉ bạn mới thấy — bấm 📤 Public để chia sẻ</p>
+            </div>
+            <input type="file" id="personal-file-input" multiple style="display:none" onchange="uploadPersonalFile(this)">
+            <div id="personal-files-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p></div>
+          </div>
+          <div id="personal-tab-notes" style="display:none">
+            <div class="card">
+              <div class="card-title">💬 Ghi chú nhanh</div>
+              <textarea id="personal-note" style="width:100%;height:200px;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;resize:vertical;line-height:1.7" placeholder="Ghi chú tự do — chỉ bạn mới thấy..."></textarea>
+              <button onclick="savePersonalNote()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px">💾 Lưu ghi chú</button>
+            </div>
           </div>
         </div>
-        <div id="news-list"></div>
-      </div>
-      <div class="page" id="page-settings">
-        <div class="page-header" style="background:linear-gradient(135deg,#374151,#1f2937)"><div class="page-tag">Chỉ Admin</div><div class="page-title">⚙️ Cài đặt</div></div>
-        <div class="card"><div class="card-title">Thông tin Platform</div><table><tr><td style="color:#888">Ten</td><td><strong>LINK Knowledge Library</strong></td></tr><tr><td style="color:#888">Phiên bản</td><td><strong>v1.0.0</strong></td></tr><tr><td style="color:#888">Owner</td><td><strong>Pham Tung Lam</strong></td></tr></table></div>
       </div>
 
       <div class="page" id="page-files">
-        <div class="page-header"><div class="page-tag">File Manager</div><div class="page-title">📁 Quản lý File</div><div class="page-meta">Upload, xem và quản lý tài liệu của bạn</div></div>
-        <div class="card">
-          <div class="card-title">⬆️ Upload File</div>
-          <div style="border:2px dashed #1c69d4;border-radius:10px;padding:24px;text-align:center;background:#f0f5ff;">
-            <div style="font-size:32px;margin-bottom:8px">📂</div>
-            <p style="color:#555;margin-bottom:12px">Kéo thả file vào đây hoặc bấm để chọn</p>
-            <input type="file" id="file-upload-input" multiple style="display:none" onchange="uploadToCloudinary(this)">
-            <button class="btn btn-primary" style="width:auto;padding:8px 24px" onclick="document.getElementById('file-upload-input').click()">Chọn file</button>
-          </div>
-          <p id="upload-progress" style="display:none;color:#1c69d4;font-size:12px;margin-top:8px;font-weight:600"></p><p style="font-size:11px;color:#aaa;margin-top:4px">Hỗ trợ: PDF, Word, Excel, PowerPoint, hình ảnh, video</p>
-        </div>
-        <div class="card">
-          <div class="card-title">📋 Danh sách file</div>
-          <div id="file-list"><p style="color:#aaa;font-style:italic">Chưa có file nào.</p></div>
-        </div>
-      </div>
-
-      <div class="page" id="page-modules">
         <div class="page-header" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
-          <div class="page-tag">Chỉ Admin & Owner</div>
-          <div class="page-title">🗂️ Quản lý Modules</div>
-          <div class="page-meta">Đổi tên, thêm module, nhóm module — thay đổi áp dụng ngay</div>
+          <div class="page-tag">Thư viện chung — Mọi người cùng xem & chỉnh sửa</div>
+          <div class="page-title">📁 Quản lý File</div>
+          <div class="page-meta">Không gian công khai — Tạo tài liệu, bảng tính, upload file. Chuyển sang cá nhân bất cứ lúc nào.</div>
         </div>
-        <div id="module-groups-container"></div>
-        <div class="card" style="border-top-color:#0891b2">
-          <div class="card-title">➕ Tạo nhóm mới</div>
-          <div style="display:flex;gap:8px">
-            <input class="form-input" id="new-group-name" placeholder="Tên nhóm mới..." style="flex:1">
-            <button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="addGroup()">+ Tạo nhóm</button>
+        <div style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:16px;background:#fff;border-radius:10px 10px 0 0;overflow:hidden">
+          <div class="files-tab active" onclick="switchFilesTab('docs',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#0891b2;border-bottom:3px solid #0891b2;margin-bottom:-2px">📝 Tài liệu</div>
+          <div class="files-tab" onclick="switchFilesTab('sheets',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">📊 Bảng tính</div>
+          <div class="files-tab" onclick="switchFilesTab('upload',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">📁 Files</div>
+          <div class="files-tab" onclick="switchFilesTab('notes',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">💬 Ghi chú</div>
+        </div>
+
+        <!-- DOCS -->
+        <div id="shared-tab-docs">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:700;color:#555">Tài liệu chung — mọi người đều chỉnh sửa được</div>
+            <button onclick="createSharedDoc()" style="background:#0891b2;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">+ Tài liệu mới</button>
+          </div>
+          <div id="shared-docs-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p></div>
+        </div>
+
+        <!-- SHEETS -->
+        <div id="shared-tab-sheets" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:700;color:#555">Bảng tính chung</div>
+            <button onclick="createSharedSheet()" style="background:#217346;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">+ Bảng tính mới</button>
+          </div>
+          <div id="shared-sheets-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p></div>
+          <div id="shared-sheet-editor" style="display:none"></div>
+        </div>
+
+        <!-- UPLOAD FILES -->
+        <div id="shared-tab-upload" style="display:none">
+          <div style="border:2px dashed #a5f3fc;border-radius:10px;padding:20px;text-align:center;background:#f0f9ff;cursor:pointer;margin-bottom:16px" onclick="document.getElementById('shared-file-input').click()">
+            <div style="font-size:32px;margin-bottom:8px">📁</div>
+            <p style="font-weight:700;color:#0891b2;margin-bottom:4px">Upload file lên thư viện chung</p>
+            <p style="font-size:12px;color:#888">Mọi người trong team đều thấy và tải được</p>
+          </div>
+          <input type="file" id="shared-file-input" multiple style="display:none" onchange="uploadSharedFile(this)">
+          <p id="shared-upload-progress" style="display:none;color:#0891b2;font-size:12px;font-weight:600;margin-bottom:8px"></p>
+          <div id="shared-files-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p></div>
+        </div>
+
+        <!-- NOTES -->
+        <div id="shared-tab-notes" style="display:none">
+          <div class="card">
+            <div class="card-title">💬 Ghi chú chung — mọi người đều đọc & chỉnh được</div>
+            <textarea id="shared-note-area" style="width:100%;height:200px;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;resize:vertical;line-height:1.7" placeholder="Ghi chú nhóm — ai cũng có thể đọc và chỉnh sửa..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button onclick="saveSharedNote()" style="background:#0891b2;color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer">💾 Lưu ghi chú</button>
+              <button onclick="moveNoteToPersonal()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer">📥 Sao chép về Cá nhân</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- DOCUMENT ROOMS -->
       <div class="page" id="page-rooms">
         <div class="page-header" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
           <div class="page-tag">Cộng tác tài liệu</div>
