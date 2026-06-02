@@ -71,8 +71,7 @@
       <div class="nav-item active" onclick="showPage('home',this)">🏠 Trang chủ</div>
       <div id="sidebar-modules"></div>
       <div class="nav-item" onclick="showPage('myfiles',this)">👤 File cá nhân</div>
-      <div class="nav-item" onclick="showPage('rooms',this)">📂 Document Rooms</div>
-      <div class="nav-item" onclick="showPage('spreadsheet',this)">📊 Bảng tính</div>
+
       <div class="nav-item" onclick="showPage('files',this)">📁 Quản lý File</div>
       <div class="sidebar-section">Hệ thống</div>
       <div class="nav-item" id="nav-modules" style="display:none" onclick="showPage('modules',this)">🗂️ Quản lý Modules</div>
@@ -211,70 +210,6 @@
         </div>
       </div>
 
-      <div class="page" id="page-rooms">
-        <div class="page-header" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
-          <div class="page-tag">Cộng tác tài liệu</div>
-          <div class="page-title">📂 Document Rooms</div>
-          <div class="page-meta">Soạn thảo, review, comment và so sánh thay đổi — cộng tác real-time</div>
-        </div>
-        <div style="display:grid;grid-template-columns:200px 1fr;gap:16px">
-          <!-- Room list -->
-          <div>
-            <div class="card" style="padding:14px">
-              <div class="card-title" style="margin-bottom:10px">Rooms</div>
-              <div id="room-list-sidebar"></div>
-              <button onclick="createRoom()" class="btn btn-primary" style="width:100%;padding:8px;margin-top:10px;font-size:12px">+ Tạo Room mới</button>
-            </div>
-          </div>
-          <!-- Room content -->
-          <div id="room-content">
-            <div class="card" style="text-align:center;padding:40px;color:#aaa">
-              <div style="font-size:48px;margin-bottom:12px">📂</div>
-              <p>Chọn một Room hoặc tạo mới để bắt đầu</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SPREADSHEET -->
-      <div class="page" id="page-spreadsheet">
-        <div class="page-header" style="background:linear-gradient(135deg,#217346,#1a5c38)">
-          <div class="page-tag">Bảng tính</div>
-          <div class="page-title">📊 Spreadsheet với công thức</div>
-          <div class="page-meta">Nhập công thức =SUM, =AVG, =IF, =MAX, =MIN — Xuất CSV/PDF</div>
-        </div>
-        <div class="card" style="padding:0;overflow:hidden">
-          <div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-            <button class="btn-sm" style="background:#217346;color:#fff;border:none" onclick="insertF('SUM')">Σ SUM</button>
-            <button class="btn-sm" style="background:#1a5c38;color:#fff;border:none" onclick="insertF('AVG')">⌀ AVG</button>
-            <button class="btn-sm approve-btn" onclick="insertF('MAX')">↑ MAX</button>
-            <button class="btn-sm approve-btn" onclick="insertF('MIN')">↓ MIN</button>
-            <button class="btn-sm approve-btn" onclick="insertF('COUNT')">🔢 COUNT</button>
-            <button class="btn-sm approve-btn" onclick="insertF('IF')">❓ IF</button>
-            <div style="width:1px;height:20px;background:#e5e7eb;margin:0 4px"></div>
-            <button class="btn-sm" onclick="addSheetRow()">+ Hàng</button>
-            <button class="btn-sm" onclick="addSheetCol()">+ Cột</button>
-            <div style="flex:1"></div>
-            <button class="btn-sm" style="background:#217346;color:#fff;border:none" onclick="exportSheetCSV()">⬇️ Xuất Excel/CSV</button>
-            <button class="btn-sm reject-btn" onclick="window.print()">⬇️ Xuất PDF</button>
-          </div>
-          <div style="background:#f1f3f5;border-bottom:1px solid #e5e7eb;padding:5px 12px;display:flex;gap:10px;align-items:center;font-size:13px">
-            <span style="background:#1c69d4;color:#fff;padding:2px 10px;border-radius:5px;font-size:12px;font-weight:700;min-width:40px;text-align:center" id="sheet-cell-ref">A1</span>
-            <span style="color:#888">fx</span>
-            <input id="sheet-fbar" style="flex:1;border:none;outline:none;font-size:13px;font-family:monospace;background:transparent" placeholder="Nhập công thức hoặc giá trị..." onkeydown="if(event.key==='Enter')applySheetFormula()">
-          </div>
-          <div style="overflow:auto;max-height:400px">
-            <table id="main-sheet" style="border-collapse:collapse;min-width:100%"></table>
-          </div>
-        </div>
-        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px">
-          <div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e5e7eb"><b>=SUM(B2:B6)</b><br><span style="color:#888">Tổng dải ô</span></div>
-          <div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e5e7eb"><b>=AVG(C2:C6)</b><br><span style="color:#888">Trung bình cộng</span></div>
-          <div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e5e7eb"><b>=IF(A1>10,"Cao","Thấp")</b><br><span style="color:#888">Điều kiện</span></div>
-        </div>
-      </div>
-
-      <!-- TRASH & STORAGE -->
       <div class="page" id="page-trash">
         <div class="page-header" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">
           <div class="page-tag">Chỉ Admin & Owner</div>
