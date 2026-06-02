@@ -1041,3 +1041,254 @@ function renderStorageWidget() {
     (pct > 80 ? '<div style="margin-top:6px;padding:6px 8px;background:#fee2e2;border-radius:6px;font-size:11px;color:#991b1b">⚠️ Sắp đầy! Hãy xóa file không cần thiết.</div>' : '') +
     '<button onclick="emptyTrash()" style="margin-top:8px;width:100%;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;border-radius:6px;padding:5px;font-size:11px;font-weight:700;cursor:pointer">🗑️ Làm trống Thùng rác ('+trash.length+' mục)</button>';
 }
+
+// ============================================================
+// PERSONAL FILES (Private workspace)
+// ============================================================
+var personalDocs = [];
+var personalSheets = [];
+var personalFiles = [];
+var personalNote = '';
+var publicFiles = []; // files published to shared space
+
+function switchPersonalTab(tab, el) {
+  document.querySelectorAll('.personal-tab').forEach(function(t) {
+    t.style.color = '#888'; t.style.borderBottomColor = 'transparent';
+  });
+  el.style.color = '#7c3aed'; el.style.borderBottomColor = '#7c3aed';
+  ['docs','sheets','files','notes'].forEach(function(t) {
+    var el = document.getElementById('personal-tab-' + t);
+    if (el) el.style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+function switchFilesTab(tab, el) {
+  document.querySelectorAll('.files-tab').forEach(function(t) {
+    t.style.color = '#888'; t.style.borderBottomColor = 'transparent';
+  });
+  el.style.color = '#0891b2'; el.style.borderBottomColor = '#0891b2';
+  renderPublicFiles(tab);
+}
+
+// Personal Docs
+function createPersonalDoc() {
+  var name = prompt('Tên tài liệu:');
+  if (!name) return;
+  personalDocs.push({ id: Date.now(), name: name, content: '<p>Bắt đầu soạn thảo...</p>', date: new Date().toLocaleDateString('vi-VN'), author: currentUser ? currentUser.name : '' });
+  renderPersonalDocs();
+  showToast('Đã tạo tài liệu: ' + name, 'success');
+}
+
+function renderPersonalDocs() {
+  var list = document.getElementById('personal-docs-list');
+  if (!list) return;
+  if (!personalDocs.length) { list.innerHTML = '<p style="color:#aaa;font-style:italic;padding:20px;text-align:center">Chưa có tài liệu nào. Bấm "+ Tài liệu mới" để bắt đầu.</p>'; return; }
+  list.innerHTML = personalDocs.map(function(doc, i) {
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:12px">' +
+      '<div style="padding:14px 16px;display:flex;align-items:center;gap:10px">' +
+        '<span style="font-size:20px">📝</span>' +
+        '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.date+'</div></div>' +
+        '<button onclick="editPersonalDoc('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Sửa</button>' +
+        '<button onclick="publishItem(\'doc\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">📤 Public</button>' +
+        '<button onclick="exportDocPDF('+i+')" class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer;margin-left:4px">📄 PDF</button>' +
+        '<button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>' +
+      '</div>' +
+      '<div id="doc-editor-'+i+'" style="display:none;border-top:1px solid #eee">' +
+        '<div style="background:#f8f9fb;padding:6px 12px;display:flex;gap:4px;border-bottom:1px solid #eee">' +
+          '<button class="btn-sm" onclick="document.execCommand(\'bold\')"><b>B</b></button>' +
+          '<button class="btn-sm" onclick="document.execCommand(\'italic\')"><i>I</i></button>' +
+          '<button class="btn-sm" onclick="document.execCommand(\'underline\')"><u>U</u></button>' +
+          '<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value)"><option value="p">Đoạn</option><option value="h2">H2</option><option value="h3">H3</option></select>' +
+          '<button class="btn-sm" onclick="document.execCommand(\'insertUnorderedList\')">• List</button>' +
+          '<div style="flex:1"></div>' +
+          '<button onclick="savePersonalDoc('+i+')" class="btn-sm approve-btn">💾 Lưu</button>' +
+        '</div>' +
+        '<div id="doc-content-'+i+'" contenteditable="true" style="min-height:200px;padding:16px;outline:none;font-size:14px;line-height:1.8">'+doc.content+'</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function editPersonalDoc(i) {
+  var el = document.getElementById('doc-editor-' + i);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function savePersonalDoc(i) {
+  var content = document.getElementById('doc-content-' + i);
+  if (content && personalDocs[i]) { personalDocs[i].content = content.innerHTML; showToast('Đã lưu tài liệu!', 'success'); }
+}
+
+function exportDocPDF(i) {
+  var doc = personalDocs[i];
+  if (!doc) return;
+  var w = window.open('');
+  w.document.write('<html><head><style>body{font-family:Arial;padding:40px;line-height:1.8;}@media print{button{display:none}}</style></head><body><button onclick="window.print()" style="position:fixed;top:10px;right:10px;background:#ef4444;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer">In/PDF</button><h2>'+doc.name+'</h2>'+doc.content+'</body></html>');
+  w.document.close();
+}
+
+// Personal Sheets
+function createPersonalSheet() {
+  var name = prompt('Tên bảng tính:');
+  if (!name) return;
+  personalSheets.push({ id: Date.now(), name: name, date: new Date().toLocaleDateString('vi-VN'), data: {} });
+  renderPersonalSheets();
+  showToast('Đã tạo bảng tính: ' + name, 'success');
+}
+
+function renderPersonalSheets() {
+  var list = document.getElementById('personal-sheets-list');
+  if (!list) return;
+  if (!personalSheets.length) { list.innerHTML = '<p style="color:#aaa;font-style:italic;padding:20px;text-align:center">Chưa có bảng tính. Bấm "+ Bảng tính mới".</p>'; return; }
+  list.innerHTML = personalSheets.map(function(sheet, i) {
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:14px 16px;display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+      '<span style="font-size:20px">📊</span>' +
+      '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+sheet.name+'</div><div style="font-size:11px;color:#888">'+sheet.date+'</div></div>' +
+      '<button onclick="openPersonalSheet('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Mở</button>' +
+      '<button onclick="publishItem(\'sheet\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">📤 Public</button>' +
+      '<button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>' +
+    '</div>';
+  }).join('');
+}
+
+function openPersonalSheet(i) {
+  var sheet = personalSheets[i];
+  var editor = document.getElementById('personal-sheet-editor');
+  if (!editor) return;
+  editor.style.display = 'block';
+  editor.innerHTML = '<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:18px">📊</span><div style="font-weight:700;font-size:15px">'+sheet.name+'</div><button onclick="document.getElementById(\'personal-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕ Đóng</button></div><p style="font-size:12px;color:#888;margin-bottom:10px">Bảng tính mini — nhập công thức =SUM, =AVG, =IF...</p><div style="overflow:auto"><table id="psheet-'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><button onclick="exportPSheetCSV('+i+')" style="margin-top:10px;background:#217346;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">⬇️ Xuất CSV/Excel</button></div>';
+  buildPSheet(i);
+}
+
+function buildPSheet(si) {
+  var t = document.getElementById('psheet-' + si);
+  if (!t) return;
+  var R=8,C=6,h='<tr><th style="background:#f1f3f5;border:1px solid #d1d5db;width:36px;height:22px;font-size:10px;position:sticky;top:0;left:0;z-index:3"></th>';
+  for(var c=0;c<C;c++) h+='<th style="background:#f1f3f5;border:1px solid #d1d5db;width:80px;height:22px;text-align:center;font-size:10px;font-weight:700;color:#6b7280;position:sticky;top:0">'+colL(c)+'</th>';
+  h+='</tr>';
+  for(var r=0;r<R;r++){
+    h+='<tr><td style="background:#f1f3f5;border:1px solid #d1d5db;text-align:center;font-size:10px;color:#6b7280;font-weight:700;position:sticky;left:0;min-width:30px;padding:0 4px">'+(r+1)+'</td>';
+    for(var c=0;c<C;c++){var id=sCellId(r,c);h+='<td style="border:1px solid #e5e7eb;padding:0;min-width:80px;height:24px"><input id="ps'+si+'-sc-'+id+'" style="width:100%;height:100%;border:none;outline:none;padding:0 3px;font-size:12px;background:transparent" onblur="psRecalc('+si+')" onchange="personalSheets['+si+'].data[\''+id+'\']=this.value;psRecalc('+si+')"></td>';}
+    h+='</tr>';
+  }
+  t.innerHTML=h;
+}
+
+function psRecalc(si) {
+  var data = personalSheets[si] ? personalSheets[si].data : {};
+  for (var id in data) {
+    var el = document.getElementById('ps'+si+'-sc-'+id);
+    if (!el) continue;
+    if ((data[id]||'').startsWith('=')) {
+      try {
+        var expr = data[id].substring(1).toUpperCase();
+        expr = expr.replace(/SUM\(([^)]+)\)/g, function(m,r){return sExpand(r).map(function(c){return parseFloat(data[c])||0;}).reduce(function(a,b){return a+b;},0);});
+        expr = expr.replace(/AVG\(([^)]+)\)/g, function(m,r){var a=sExpand(r).map(function(c){return parseFloat(data[c])||0;});return a.reduce(function(s,v){return s+v;},0)/a.length;});
+        expr = expr.replace(/([A-Z]\d+)/g, function(c){return parseFloat(data[c])||0;});
+        el.value = Math.round(eval(expr)*1000)/1000;
+        el.style.color = '#0653b6';
+      } catch(e) { el.value = '#ERR'; el.style.color = '#ef4444'; }
+    }
+  }
+}
+
+function exportPSheetCSV(si) {
+  var data = personalSheets[si] ? personalSheets[si].data : {};
+  var rows = [];
+  for (var r=0;r<8;r++){var row=[];for(var c=0;c<6;c++){var id=sCellId(r,c);row.push(data[id]||'');}rows.push(row.join(','));}
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(personalSheets[si].name||'sheet')+'.csv';a.click();
+  showToast('Đã xuất CSV!','success');
+}
+
+// Personal Files upload
+function uploadPersonalFile(input) {
+  var files = Array.from(input.files);
+  files.forEach(function(f) {
+    var sz = f.size > 1048576 ? (f.size/1048576).toFixed(1)+'MB' : (f.size/1024).toFixed(0)+'KB';
+    personalFiles.push({ id: Date.now(), name: f.name, type: f.type, size: sz, date: new Date().toLocaleDateString('vi-VN'), url: URL.createObjectURL(f) });
+  });
+  renderPersonalFiles();
+  showToast('Đã upload '+files.length+' file (riêng tư)','success');
+  input.value = '';
+}
+
+function renderPersonalFiles() {
+  var list = document.getElementById('personal-files-list');
+  if (!list) return;
+  if (!personalFiles.length) { list.innerHTML = '<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có file nào.</p>'; return; }
+  list.innerHTML = personalFiles.map(function(f,i){
+    var ico = f.type.startsWith('video/')?'🎬':f.type.startsWith('image/')?'🖼️':f.name.endsWith('.pdf')?'📄':f.name.endsWith('.xlsx')||f.name.endsWith('.csv')?'📊':'📁';
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px">' +
+      '<span style="font-size:22px">'+ico+'</span>' +
+      '<div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.date+'</div></div>' +
+      '<a href="'+f.url+'" download="'+f.name+'" class="btn-sm" style="background:#f3f4f6;border:none;text-decoration:none;color:#333;cursor:pointer">⬇️</a>' +
+      '<button onclick="publishItem(\'file\','+i+')" class="btn-sm" style="background:#dcfce7;color:#166534;border:none;cursor:pointer;margin-left:4px">📤 Public</button>' +
+      '<button onclick="personalFiles.splice('+i+',1);renderPersonalFiles()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>' +
+    '</div>';
+  }).join('');
+}
+
+// Notes
+function savePersonalNote() {
+  var el = document.getElementById('personal-note');
+  if (el) { personalNote = el.value; showToast('Đã lưu ghi chú!','success'); }
+}
+
+// PUBLISH to shared space
+function publishItem(type, idx) {
+  var item, pubItem;
+  if (type === 'doc') {
+    item = personalDocs[idx];
+    pubItem = { id: Date.now(), type:'doc', name: item.name, icon:'📝', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), content: item.content, comments: [] };
+  } else if (type === 'sheet') {
+    item = personalSheets[idx];
+    pubItem = { id: Date.now(), type:'sheet', name: item.name, icon:'📊', author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), comments: [] };
+  } else if (type === 'file') {
+    item = personalFiles[idx];
+    var ico = item.type.startsWith('video/')?'🎬':item.type.startsWith('image/')?'🖼️':'📁';
+    pubItem = { id: Date.now(), type:'file', name: item.name, icon: ico, author: currentUser?currentUser.name:'', date: new Date().toLocaleDateString('vi-VN'), url: item.url, size: item.size, comments: [] };
+  }
+  if (!pubItem) return;
+  publicFiles.unshift(pubItem);
+  showToast('✅ Đã public "'+pubItem.name+'" — mọi người có thể thấy trong Quản lý File!','success');
+  renderPublicFiles('all');
+}
+
+// PUBLIC FILES (shared space)
+function renderPublicFiles(filter) {
+  var list = document.getElementById('public-files-list');
+  if (!list) return;
+  var filtered = filter==='all' ? publicFiles : publicFiles.filter(function(f){return f.type===filter;});
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:48px;margin-bottom:12px">📂</div><p>Chưa có file nào được chia sẻ.</p><p style="font-size:12px;margin-top:8px">Vào <strong>File cá nhân</strong> → bấm <strong>📤 Public</strong> để chia sẻ.</p></div>';
+    return;
+  }
+  list.innerHTML = filtered.map(function(f,i) {
+    var cmts = (f.comments||[]).map(function(c){return '<div style="background:#f0f5ff;border-left:3px solid #1c69d4;padding:6px 10px;border-radius:0 6px 6px 0;font-size:12px;margin-bottom:6px"><strong>'+c.author+':</strong> '+c.text+'</div>';}).join('');
+    return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:14px">' +
+      '<div style="padding:14px 16px;display:flex;align-items:center;gap:12px">' +
+        '<span style="font-size:24px">'+f.icon+'</span>' +
+        '<div style="flex:1"><div style="font-weight:700;font-size:14px">'+f.name+'</div>' +
+        '<div style="font-size:11px;color:#888;margin-top:2px">👤 '+f.author+' · 📅 '+f.date+(f.size?' · '+f.size:'')+'</div></div>' +
+        (f.url?'<a href="'+f.url+'" download="'+f.name+'" class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;text-decoration:none;cursor:pointer">⬇️ Tải về</a>':'') +
+        (currentUser&&['owner','admin'].includes(currentUser.role)?'<button onclick="publicFiles.splice('+i+',1);renderPublicFiles(\'all\')" class="btn-sm reject-btn" style="margin-left:6px">🗑️ Gỡ</button>':'') +
+      '</div>' +
+      (f.type==='doc'?'<div style="border-top:1px solid #eee;padding:12px 16px;font-size:13px;color:#555;line-height:1.6;max-height:120px;overflow:hidden">'+f.content.replace(/<[^>]+>/g,' ').substring(0,200)+'...</div>':'') +
+      '<div style="border-top:1px solid #eee;padding:12px 16px;background:#fafafa">' +
+        '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px">💬 COMMENTS ('+(f.comments||[]).length+')</div>' +
+        cmts +
+        '<div style="display:flex;gap:8px"><input id="pub-cmt-'+i+'" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:12px;outline:none" placeholder="Thêm comment..."><button onclick="addPublicComment('+i+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Gửi</button></div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function addPublicComment(i) {
+  var inp = document.getElementById('pub-cmt-'+i);
+  var txt = inp ? inp.value.trim() : '';
+  if (!txt) return;
+  if (!publicFiles[i].comments) publicFiles[i].comments = [];
+  publicFiles[i].comments.push({ author: currentUser?currentUser.name:'Khách', text: txt });
+  renderPublicFiles('all');
+  showToast('Đã gửi comment!','success');
+}
