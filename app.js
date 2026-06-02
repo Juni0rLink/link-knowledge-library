@@ -614,7 +614,7 @@ function toggleGroup(gid) {
   syncSidebarModules();
 }
 
-function showModulePage(id, name, el) {
+function showModulePage(id, name, groupId, el) {
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var pid = 'page-mod-' + id;
@@ -624,7 +624,7 @@ function showModulePage(id, name, el) {
     pg.className = 'page'; pg.id = pid;
     pg.innerHTML = '<div class="page-header"><div class="page-tag">Module</div><div class="page-title">' + name + '</div><div class="page-meta">Nội dung module — click + Thêm để đóng góp</div></div>' +
       '<div class="card"><div class="card-title">Nội dung</div><p style="color:#aaa;font-style:italic">Chưa có nội dung. Bấm nút bên dưới để thêm tài liệu.</p><br><button class="btn btn-primary" style="width:auto;padding:8px 20px" onclick="showToast(\'Tính năng upload sắp ra mắt!\',\'warning\')">+ Thêm tài liệu</button></div>';
-    document.querySelector('main').appendChild(pg);
+    var mainEl = document.querySelector('main'); if(mainEl) mainEl.appendChild(pg);
   }
   pg.classList.add('active');
   if(el) el.classList.add('active');
