@@ -3,6 +3,33 @@
 // FIREBASE CONFIG
 // ============================================================
 var FB_URL = 'https://link-knowledge-library-default-rtdb.asia-southeast1.firebasedatabase.app';
+var FB_API_KEY = 'AIzaSyBiRVWULX1TO_S3E31KAy5wK6k7aZdmhv0';
+var FB_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
+
+// ── AUTH REST API ──
+function fbSignIn(email, password, cb) {
+  fetch(FB_AUTH_URL + ':signInWithPassword?key=' + FB_API_KEY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: password, returnSecureToken: true })
+  }).then(function(r){ return r.json(); }).then(function(d){ cb(null, d); }).catch(function(e){ cb(e, null); });
+}
+
+function fbSignUp(email, password, cb) {
+  fetch(FB_AUTH_URL + ':signUp?key=' + FB_API_KEY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: password, returnSecureToken: true })
+  }).then(function(r){ return r.json(); }).then(function(d){ cb(null, d); }).catch(function(e){ cb(e, null); });
+}
+
+function fbResetPassword(email, cb) {
+  fetch(FB_AUTH_URL + ':sendOobCode?key=' + FB_API_KEY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: email })
+  }).then(function(r){ return r.json(); }).then(function(d){ cb(null, d); }).catch(function(e){ cb(e, null); });
+}
 
 function fbGet(path, cb) {
   fetch(FB_URL + path + '.json')
@@ -108,63 +135,73 @@ function doLogin() {
   var passEl  = document.getElementById('login-pass');
   var btn     = document.getElementById('login-btn');
   var err     = document.getElementById('login-error');
-
   err.style.display = 'none';
-
-  if (lockUntil > 0 && Date.now() < lockUntil) {
-    var secs = Math.ceil((lockUntil - Date.now()) / 1000);
-    err.textContent = 'Tài khoản bị khóa. Thử lại sau ' + secs + ' giây.';
-    err.style.display = 'block';
-    return;
-  }
 
   var email = emailEl.value.trim().toLowerCase();
   var pass  = passEl.value;
-
   if (!email || !pass) {
     err.textContent = 'Vui lòng nhập đầy đủ email và mật khẩu';
     err.style.display = 'block';
-    if (!email) emailEl.focus(); else passEl.focus();
     return;
   }
 
+  // Check demo accounts first (fallback)
   var u = USERS[email];
-  if (!u || u.password !== pass) {
-    loginAttempts++;
-    passEl.value = '';
-    passEl.style.borderColor = '#ef4444';
-    setTimeout(function() { passEl.style.borderColor = ''; }, 1500);
-    var left = MAX_ATTEMPTS - loginAttempts;
-    if (loginAttempts >= MAX_ATTEMPTS) {
-      lockUntil = Date.now() + 30000;
-      loginAttempts = 0;
-      btn.disabled = true;
-      var t = 30;
-      var iv = setInterval(function() {
-        t--;
-        btn.textContent = 'Thử lại sau ' + t + 's';
-        if (t <= 0) {
-          clearInterval(iv);
-          lockUntil = 0;
-          btn.disabled = false;
-          btn.textContent = 'Đăng nhập';
-          err.style.display = 'none';
-        }
-      }, 1000);
-      err.textContent = 'Sai ' + MAX_ATTEMPTS + ' lần - bị khóa 30 giây.';
-    } else {
-      err.textContent = 'Mật khẩu không đúng. Còn ' + left + ' lần thử.';
-    }
-    err.style.display = 'block';
-    passEl.focus();
+  if (u && u.password === pass) {
+    currentUser = { email: email, name: u.name, role: u.role };
+    launchApp();
     return;
   }
 
-  loginAttempts = 0;
-  lockUntil = 0;
-  passEl.style.borderColor = '';
-  currentUser = { email: email, name: u.name, role: u.role };
-  launchApp();
+  // Firebase Auth
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang đăng nhập...';
+  fbSignIn(email, pass, function(e, data) {
+    btn.disabled = false;
+    btn.textContent = 'Đăng nhập';
+    if (e || data.error) {
+      var code = data && data.error && data.error.message;
+      if (code === 'EMAIL_NOT_FOUND' || code === 'INVALID_PASSWORD' || code === 'INVALID_LOGIN_CREDENTIALS') {
+        err.textContent = 'Email hoặc mật khẩu không đúng.';
+      } else if (code === 'USER_DISABLED') {
+        err.textContent = 'Tài khoản đã bị vô hiệu hóa. Liên hệ Admin.';
+      } else if (code === 'TOO_MANY_ATTEMPTS_TRY_LATER') {
+        err.textContent = 'Đăng nhập thất bại quá nhiều lần. Thử lại sau.';
+      } else {
+        err.textContent = 'Lỗi đăng nhập. Vui lòng thử lại.';
+      }
+      err.style.display = 'block';
+      passEl.value = '';
+      return;
+    }
+    // Load user profile from Firebase DB
+    var uid = data.localId;
+    fbGet('/users/' + uid, function(e2, profile) {
+      if (profile && profile.role) {
+        currentUser = { email: email, name: profile.name || email, role: profile.role, uid: uid };
+      } else {
+        // New user — pending approval
+        currentUser = { email: email, name: email.split('@')[0], role: 'viewer', uid: uid };
+      }
+      launchApp();
+    });
+  });
+}
+
+function forgotPassword() {
+  var email = document.getElementById('login-email').value.trim();
+  if (!email) {
+    showToast('Nhập email vào ô trên trước', 'warning');
+    document.getElementById('login-email').focus();
+    return;
+  }
+  fbResetPassword(email, function(e, data) {
+    if (e || data.error) {
+      showToast('Không tìm thấy email này', 'error');
+    } else {
+      showToast('✅ Đã gửi email reset password tới ' + email, 'success');
+    }
+  });
 }
 
 function viewerAccess() {
@@ -196,37 +233,52 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================================
 function doRegister() {
   var name   = document.getElementById('reg-name').value.trim();
-  var email  = document.getElementById('reg-email').value.trim();
+  var email  = document.getElementById('reg-email').value.trim().toLowerCase();
   var dept   = document.getElementById('reg-dept').value.trim();
   var reason = document.getElementById('reg-reason').value.trim();
+  var pass   = document.getElementById('reg-pass') ? document.getElementById('reg-pass').value : '';
   var err    = document.getElementById('reg-error');
   var ok     = document.getElementById('reg-success');
+  err.style.display = 'none'; ok.style.display = 'none';
 
-  err.style.display = 'none';
-  ok.style.display = 'none';
-
-  if (!name || !email || !dept) {
-    err.textContent = 'Vui lòng điền đầy đủ Họ tên, Email và Bộ phận';
-    err.style.display = 'block';
-    return;
+  if (!name || !email || !dept || !pass) {
+    err.textContent = 'Vui lòng điền đầy đủ tất cả các trường';
+    err.style.display = 'block'; return;
   }
-  if (!email.includes('@')) {
-    err.textContent = 'Email không hợp lệ';
-    err.style.display = 'block';
-    return;
+  if (pass.length < 6) {
+    err.textContent = 'Mật khẩu tối thiểu 6 ký tự';
+    err.style.display = 'block'; return;
   }
 
-  var reg = { id: Date.now(), name: name, email: email, dept: dept, reason: reason, time: new Date().toLocaleString('vi-VN') };
-  pendingRegs.push(reg);
+  var regBtn = document.getElementById('reg-btn');
+  if (regBtn) { regBtn.disabled = true; regBtn.textContent = '⏳ Đang xử lý...'; }
 
-  ok.textContent = 'Đã gửi yêu cầu! Admin sẽ xem xét và phản hồi qua email ' + email;
-  ok.style.display = 'block';
+  fbSignUp(email, pass, function(e, data) {
+    if (regBtn) { regBtn.disabled = false; regBtn.textContent = 'Gửi yêu cầu'; }
+    if (e || data.error) {
+      var code = data && data.error && data.error.message;
+      if (code === 'EMAIL_EXISTS') {
+        err.textContent = 'Email này đã có tài khoản. Vui lòng đăng nhập.';
+      } else {
+        err.textContent = 'Lỗi đăng ký: ' + (code || 'thử lại sau');
+      }
+      err.style.display = 'block'; return;
+    }
+    var uid = data.localId;
+    // Save profile to DB as pending
+    var profile = { name: name, email: email, dept: dept, reason: reason, role: 'viewer', status: 'pending', time: new Date().toLocaleString('vi-VN') };
+    fbSet('/users/' + uid, profile);
+    // Add to pending registrations list
+    var reg = { id: uid, name: name, email: email, dept: dept, reason: reason, time: new Date().toLocaleString('vi-VN') };
+    pendingRegs.push(reg);
+    fbSet('/shared/pendingRegs', pendingRegs);
+    updateRegBadge();
 
-  ['reg-name', 'reg-email', 'reg-dept', 'reg-reason'].forEach(function(id) {
-    document.getElementById(id).value = '';
+    ok.textContent = '✅ Đăng ký thành công! Admin sẽ phê duyệt và cấp quyền cho ' + email;
+    ok.style.display = 'block';
+    ['reg-name','reg-email','reg-dept','reg-reason'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    if (document.getElementById('reg-pass')) document.getElementById('reg-pass').value = '';
   });
-
-  updateRegBadge();
 }
 
 // ============================================================

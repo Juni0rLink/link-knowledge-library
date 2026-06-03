@@ -30,6 +30,7 @@
       </div>
       <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Đăng nhập</button>
       <div class="login-divider">hoac</div>
+      <div style="text-align:right;margin-top:-8px;margin-bottom:4px"><button onclick="forgotPassword()" style="background:none;border:none;color:#1d4ed8;font-size:12px;cursor:pointer;text-decoration:underline">Quên mật khẩu?</button></div>
       <button class="viewer-btn" onclick="viewerAccess()">Xem với tư cách khách</button>
       <div style="margin-top:14px;padding:10px;background:#f8f9fb;border-radius:8px;border:1px solid #eee;font-size:11px;color:#555;line-height:2">
         <strong>Demo:</strong><br>
@@ -44,8 +45,8 @@
       <div class="form-group"><label class="form-label">Họ và tên *</label><input class="form-input" id="reg-name" type="text"></div>
       <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="reg-email" type="email"></div>
       <div class="form-group"><label class="form-label">Bộ phận *</label><input class="form-input" id="reg-dept" type="text"></div>
-      <div class="form-group"><label class="form-label">Lý do</label><textarea class="form-input" id="reg-reason" rows="2" style="resize:none"></textarea></div>
-      <button class="btn btn-primary" onclick="doRegister()">Gửi yêu cầu</button>
+      <div class="form-group"><label class="form-label">Mật khẩu *</label><input class="form-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự"></div><div class="form-group"><label class="form-label">Lý do</label><textarea class="form-input" id="reg-reason" rows="2" style="resize:none"></textarea></div>
+      <button class="btn btn-primary" id="reg-btn" onclick="doRegister()">Gửi yêu cầu</button>
     </div>
   </div>
 </div>
