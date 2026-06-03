@@ -693,7 +693,7 @@ function showPage(id, el) {
   if (id === 'news') markNewsRead();
   if (id === 'modules') { renderModuleGroups(); syncSidebarModules(); }
   if (id === 'trash') { renderTrash(); renderStorageWidget('home-storage-widget'); }
-  if (id === 'files') { renderSharedDocs(); renderSharedSheets(); renderSharedFileList(); }
+  if (id === 'files') { renderSharedDocs(); renderSharedSheets(); renderSharedFileList(); renderPublicModulesGrid(); }
   if (id === 'myfiles') { renderPersonalDocs(); renderPersonalSheets(); renderPersonalFiles(); }
   if (id === 'admin') { renderRegRequests(); loadFirebaseMembers(); }
   if (id === 'settings') { renderProfileCard(); }
@@ -1587,7 +1587,8 @@ function exportSheetCSV(){var rows=[];for(var r=0;r<sRows;r++){var row=[];for(va
 function switchPersonalTab(tab, el) {
   document.querySelectorAll('.personal-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
   el.style.color='#7c3aed';el.style.borderBottomColor='#7c3aed';
-  ['docs','sheets','files','notes'].forEach(function(t){var d=document.getElementById('personal-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
+  ['modules','docs','sheets','files','notes'].forEach(function(t){var d=document.getElementById('personal-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
+  if(tab==='modules') renderPersonalModulesGrid();
 }
 function createPersonalDoc(){var name=prompt('Tên tài liệu:');if(!name)return;personalDocs.push({id:Date.now(),name:name,content:'<p>Bắt đầu soạn thảo...</p>',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:''});renderPersonalDocs();showToast('Đã tạo: '+name,'success');}
 function renderPersonalDocs(){var list=document.getElementById('personal-docs-list');if(!list)return;if(!personalDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}list.innerHTML=personalDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.date+'</div></div><button onclick="editPersonalDoc('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Sửa</button><button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>'+'<div id="doc-editor-'+i+'" style="display:none;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px"><div contenteditable="true" id="doc-content-'+i+'" style="min-height:120px;padding:12px;outline:none;font-size:13px">'+doc.content+'</div><button onclick="savePersonalDoc('+i+')" style="margin:8px;background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer">💾 Lưu</button></div>';}).join('');}
@@ -1603,8 +1604,9 @@ function savePersonalNote(){var t=document.getElementById('personal-note');if(t)
 function switchFilesTab(tab, el) {
   document.querySelectorAll('.files-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
   el.style.color='#0891b2';el.style.borderBottomColor='#0891b2';
-  ['docs','sheets','upload','notes'].forEach(function(t){var d=document.getElementById('shared-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
+  ['modules','docs','sheets','upload','notes'].forEach(function(t){var d=document.getElementById('shared-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
   if(tab==='upload') renderSharedFileList();
+  if(tab==='modules') renderPublicModulesGrid();
 }
 function createSharedDoc(){var name=prompt('Tên tài liệu chung:');if(!name)return;sharedDocs.push({id:Date.now(),name:name,content:'<p>Bắt đầu soạn thảo...</p>',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',comments:[]});fbSet('/shared/sharedDocs',sharedDocs);fbClearCache();renderSharedDocs();showToast('Đã tạo: '+name,'success');}
 function renderSharedDocs(){var list=document.getElementById('shared-docs-list');if(!list)return;if(!sharedDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}var isAdmin=currentUser&&['owner','admin'].includes(currentUser.role);list.innerHTML=sharedDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.author+' · '+doc.date+'</div></div>'+(isAdmin?'<button onclick="sharedDocs.splice('+i+',1);fbSet(\'/shared/sharedDocs\',sharedDocs);fbClearCache();renderSharedDocs()" class="btn-sm reject-btn">🗑️</button>':'')+'</div>';}).join('');}
@@ -1636,5 +1638,122 @@ function renderSharedFileList(){
   });
   list.innerHTML=html;
 }
-function uploadSharedFile(input){showToast('Tính năng upload đang phát triển','warning');if(input)input.value='';}
+function uploadSharedFile(input){showToast('Upload coming soon','warning');if(input)input.value='';}
 
+function createPersonalModule(){var name=prompt('Ten module ca nhan:'); if(!name) return;
+  var icon = prompt('Icon (emoji):') || '📌';
+  personalModules.push({id:Date.now(), name:name, icon:icon, notes:'', date:new Date().toLocaleDateString('vi-VN')});
+  renderPersonalModulesGrid();
+  showToast('Đã tạo module: '+name,'success');
+}
+
+function renderPersonalModulesGrid() {
+  var grid = document.getElementById('personal-modules-grid');
+  if(!grid) return;
+  if(!personalModules.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#aaa"><p>Chua co module nao.</p></div>';
+    return;
+  }
+  var html = '';
+  personalModules.forEach(function(m,i){
+    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px">'
+      +'<div style="font-size:28px;margin-bottom:8px">'+m.icon+'</div>'
+      +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+m.name+'</div>'
+      +'<div style="font-size:11px;color:#aaa;margin-bottom:10px">'+m.date+'</div>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button onclick="editPersonalModule('+i+')" style="flex:1;background:#f3f4f6;border:none;border-radius:6px;padding:5px;font-size:11px;cursor:pointer">Sua</button>'
+      +'<button onclick="personalModules.splice('+i+',1);renderPersonalModulesGrid()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer">Xoa</button>'
+      +'</div></div>';
+  });
+  grid.innerHTML = html;
+}
+
+function editPersonalModule(i) {
+  var m = personalModules[i]; if(!m) return;
+  var name = prompt('Tên module:', m.name); if(!name) return;
+  m.name = name;
+  m.icon = prompt('Icon:', m.icon) || m.icon;
+  renderPersonalModulesGrid();
+}
+
+// ── PUBLIC MODULES GRID ──
+function renderPublicModulesGrid() {
+  var grid = document.getElementById('public-modules-grid');
+  if(!grid) return;
+  var html = '';
+  moduleGroups.forEach(function(g){
+    html += '<div onclick="showPublicGroupDetail('+g.id+')" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer">'
+      +'<div style="font-size:28px;margin-bottom:8px">'+g.icon+'</div>'
+      +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+g.name+'</div>'
+      +'<div style="font-size:11px;color:#aaa">'+g.modules.length+' modules</div>'
+      +'</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function showPublicGroupDetail(gid) {
+  var g = moduleGroups.find(function(x){return x.id===gid;}); if(!g) return;
+  var grid = document.getElementById('public-modules-grid'); if(!grid) return;
+  var html = '<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-bottom:12px">'
+    +'<button onclick="renderPublicModulesGrid()" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">&larr; Quay lai</button>'
+    +'<strong style="font-size:14px">'+g.icon+' '+g.name+'</strong></div>';
+  g.modules.forEach(function(m){
+    var docs = MODULE_DOCS[m.id]; var fc = docs ? docs.files.length : 0;
+    html += '<div id="pubmod-'+m.id+'" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer">'
+      +'<div style="font-size:24px;margin-bottom:8px">'+m.icon+'</div>'
+      +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+m.name+'</div>'
+      +'<div style="font-size:11px;color:#aaa">'+fc+' tai lieu</div></div>';
+  });
+  grid.innerHTML = html;
+  g.modules.forEach(function(m){
+    var el = document.getElementById('pubmod-'+m.id);
+    if(el) el.addEventListener('click', function(){showModulePage(m.id, m.name, gid, null);});
+  });
+}
+
+function editPersonalModule(i) {
+  var m = personalModules[i]; if(!m) return;
+  var name = prompt('Tên module:', m.name); if(!name) return;
+  m.name = name;
+  m.icon = prompt('Icon:', m.icon) || m.icon;
+  renderPersonalModulesGrid();
+}
+
+// ── PUBLIC MODULES GRID ──
+function renderPublicModulesGrid() {
+  var grid = document.getElementById('public-modules-grid');
+  if(!grid) return;
+  var html = '';
+  moduleGroups.forEach(function(g){
+    html += '<div onclick="showPublicGroupDetail('+g.id+')" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer">'
+      +'<div style="font-size:28px;margin-bottom:8px">'+g.icon+'</div>'
+      +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+g.name+'</div>'
+      +'<div style="font-size:11px;color:#aaa">'+g.modules.length+' modules</div>'
+      +'</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function showPublicGroupDetail(gid) {
+  var g = moduleGroups.find(function(x){return x.id===gid;});
+  if(!g) return;
+  var grid = document.getElementById('public-modules-grid');
+  if(!grid) return;
+  var html = '<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-bottom:12px">'
+    +'<button onclick="renderPublicModulesGrid()" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">&larr; Quay lai</button>'
+    +'<span style="font-weight:700;font-size:14px">'+g.icon+' '+g.name+'</span></div>';
+  g.modules.forEach(function(m){
+    var docs = MODULE_DOCS[m.id];
+    var fc = docs ? docs.files.length : 0;
+    html += '<div onclick="showPage_mod_'+m.id+'" data-mid="'+m.id+'" data-gid="'+gid+'" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer" class="pub-mod-card">'
+    html += '<div class="pub-mod-card2" data-mid="'+m.id+'" data-gid2="'+gid+'" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer">'
+      +'<div style="font-size:24px;margin-bottom:8px">'+m.icon+'</div>'
+      +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+m.name+'</div>'
+      +'<div style="font-size:11px;color:#aaa">'+fc+' tai lieu</div>'
+      +'</div>';
+  });
+  grid.innerHTML = html;
+  grid.querySelectorAll(".pub-mod-card2").forEach(function(el){
+    el.addEventListener("click",function(){var mid2=parseInt(this.dataset.mid),g2=parseInt(this.dataset.gid2);var mod2=g.modules.find(function(x){return x.id===mid2;});if(mod2)showModulePage(mid2,mod2.name,g2,null);});
+  });
+}
