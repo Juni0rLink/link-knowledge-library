@@ -464,27 +464,95 @@ function loadSearchIndex(cb) {
     .catch(function(){ cb([]); });
 }
 
+// ── EXTRACTIVE SUMMARIZATION ──
+function extractSummary(topResults, words) {
+  // Split each result into sentences, score by keyword density
+  var sentences = [];
+  topResults.slice(0, 5).forEach(function(r) {
+    var sents = r.item.text.split(/[.!?]\s+/).filter(function(s){ return s.trim().length > 30; });
+    sents.forEach(function(s) {
+      var sl = s.toLowerCase();
+      var score = 0;
+      words.forEach(function(w){ if(sl.includes(w)) score += 3; });
+      // Bonus for sentences with action words
+      if (/how|cách|bước|step|must|phải|cần|need|use|dùng|create|tạo|configure|cấu hình/i.test(s)) score += 2;
+      if (score > 0) sentences.push({ text: s.trim(), score: score, source: r.item.source, file: r.item.file });
+    });
+  });
+  sentences.sort(function(a,b){ return b.score - a.score; });
+  // Deduplicate similar sentences
+  var seen = [], final = [];
+  sentences.slice(0, 6).forEach(function(s) {
+    var key = s.text.substring(0, 40);
+    if (!seen.includes(key)) { seen.push(key); final.push(s); }
+  });
+  return final.slice(0, 4);
+}
+
 function doKnowledgeSearch() {
   var q = document.getElementById('ks-input').value.trim().toLowerCase();
   var results = document.getElementById('ks-results');
-  if (!q) { results.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px">Nhập từ khóa để tìm kiếm...</p>'; return; }
-  results.innerHTML = '<p style="color:#888;padding:12px">⏳ Đang tìm...</p>';
+  if (!q) { results.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px">Nhập câu hỏi hoặc từ khóa...</p>'; return; }
+  results.innerHTML = '<div style="padding:16px;color:#888;display:flex;align-items:center;gap:8px"><div style="width:16px;height:16px;border:2px solid #1d4ed8;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite"></div> Đang phân tích...</div>';
+
   loadSearchIndex(function(idx) {
     var words = q.split(/\s+/).filter(Boolean);
     var scored = idx.map(function(item) {
       var t = item.text.toLowerCase();
       var s = item.source.toLowerCase();
       var score = 0;
-      words.forEach(function(w){ if(t.includes(w)) score += 2; if(s.includes(w)) score += 1; });
+      words.forEach(function(w){
+        var re = new RegExp(w, 'gi');
+        var matches = (t.match(re)||[]).length;
+        score += matches * 2;
+        if (s.includes(w)) score += 1;
+      });
       return { item: item, score: score };
     }).filter(function(x){ return x.score > 0; })
       .sort(function(a,b){ return b.score - a.score; })
       .slice(0, 15);
+
     if (!scored.length) {
-      results.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa"><div style="font-size:36px;margin-bottom:8px">🔍</div><p>Không tìm thấy kết quả cho <strong>"'+q+'"</strong></p><p style="font-size:12px;margin-top:6px">Thử từ khóa khác: E-STOP, TYPE_DECO, SAS, safety zone...</p></div>';
+      results.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa"><div style="font-size:40px;margin-bottom:10px">🔍</div><p style="font-weight:700;color:#555">Không tìm thấy kết quả</p><p style="font-size:12px;margin-top:6px">Thử: E-STOP, TYPE_DECO_FB, SAS fixture, UV curing, safety zone, RESEQ...</p></div>';
       return;
     }
-    var html = '<div style="font-size:12px;color:#888;margin-bottom:12px">Tìm thấy <strong>'+scored.length+'</strong> kết quả cho "<strong>'+q+'</strong>"</div>';
+
+    var html = '';
+
+    // ── SMART ANSWER BOX ──
+    var summary = extractSummary(scored, words);
+    if (summary.length > 0) {
+      var srcSet = {};
+      summary.forEach(function(s){ srcSet[s.source] = s.file; });
+      var srcLinks = Object.keys(srcSet).map(function(src) {
+        var fUrl = 'https://juni0rlink.github.io/link-knowledge-library/content/' + encodeURIComponent(srcSet[src]);
+        return '<a href="https://view.officeapps.live.com/op/view.aspx?src='+fUrl+'" target="_blank" style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-size:11px;text-decoration:none;font-weight:700">📄 '+src+'</a>';
+      }).join(' ');
+
+      html += '<div style="background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #bfdbfe;border-radius:12px;padding:16px 18px;margin-bottom:16px">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
+          '<div style="background:#1d4ed8;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">💡 Tổng hợp từ tài liệu</div>' +
+          '<div style="font-size:11px;color:#888">Trích xuất tự động · không cần AI</div>' +
+        '</div>' +
+        '<ul style="margin:0 0 10px 18px;padding:0">' +
+        summary.map(function(s) {
+          var highlighted = s.text;
+          words.forEach(function(w){
+            var re = new RegExp('('+w+')', 'gi');
+            highlighted = highlighted.replace(re, '<mark style="background:#fef08a;padding:0 2px;border-radius:2px;font-weight:600">$1</mark>');
+          });
+          return '<li style="font-size:13px;color:#1e3a5f;line-height:1.7;margin-bottom:6px">'+highlighted+'</li>';
+        }).join('') +
+        '</ul>' +
+        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+          '<span style="font-size:11px;color:#888">Nguồn:</span>' + srcLinks +
+        '</div>' +
+      '</div>';
+    }
+
+    // ── SEARCH RESULTS ──
+    html += '<div style="font-size:12px;color:#888;margin-bottom:10px">📋 <strong>'+scored.length+'</strong> đoạn liên quan đến "<strong>'+q+'</strong>"</div>';
+
     scored.forEach(function(r) {
       var item = r.item;
       var fileUrl = 'https://juni0rlink.github.io/link-knowledge-library/content/' + encodeURIComponent(item.file);
@@ -492,20 +560,22 @@ function doKnowledgeSearch() {
       var excerpt = item.text;
       words.forEach(function(w){
         var re = new RegExp('('+w+')', 'gi');
-        excerpt = excerpt.replace(re, '<mark style="background:#fef08a;padding:0 2px;border-radius:2px">$1</mark>');
+        excerpt = excerpt.replace(re, '<mark style="background:#fef08a;padding:0 2px;border-radius:2px;font-weight:600">$1</mark>');
       });
-      excerpt = excerpt.slice(0, 300) + (excerpt.length > 300 ? '...' : '');
-      html += '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:14px 16px;margin-bottom:10px">' +
+      excerpt = excerpt.slice(0, 280) + (item.text.length > 280 ? '...' : '');
+      html += '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
-        '<span style="font-size:11px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px">'+item.source+'</span>' +
-        '<span style="font-size:11px;color:#888">'+item.page+'</span>' +
-        '<div style="margin-left:auto;display:flex;gap:6px">' +
-        '<a href="'+viewUrl+'" target="_blank" style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:3px 8px;border-radius:6px;text-decoration:none;font-weight:700">👁️ Xem</a>' +
-        '<a href="'+fileUrl+'" download style="font-size:11px;background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:6px;text-decoration:none;font-weight:700">⬇️ Tải</a>' +
-        '</div></div>' +
-        '<div style="font-size:13px;color:#333;line-height:1.6">'+excerpt+'</div>' +
-        '</div>';
+          '<span style="font-size:11px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px">'+item.source+'</span>' +
+          '<span style="font-size:11px;color:#aaa">'+item.page+'</span>' +
+          '<div style="margin-left:auto;display:flex;gap:5px">' +
+            '<a href="'+viewUrl+'" target="_blank" style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:3px 8px;border-radius:6px;text-decoration:none;font-weight:700">👁️ Xem</a>' +
+            '<a href="'+fileUrl+'" download style="font-size:11px;background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:6px;text-decoration:none;font-weight:700">⬇️ Tải</a>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:13px;color:#374151;line-height:1.65">'+excerpt+'</div>' +
+      '</div>';
     });
+
     results.innerHTML = html;
   });
 }
