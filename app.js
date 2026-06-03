@@ -1,5 +1,67 @@
 
 // ============================================================
+// FIREBASE CONFIG
+// ============================================================
+var FB_URL = 'https://link-knowledge-library-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+function fbGet(path, cb) {
+  fetch(FB_URL + path + '.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ cb(null, d); })
+    .catch(function(e){ cb(e, null); });
+}
+
+function fbSet(path, data, cb) {
+  fetch(FB_URL + path + '.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(function(r){ return r.json(); })
+    .then(function(d){ if(cb) cb(null, d); })
+    .catch(function(e){ if(cb) cb(e, null); });
+}
+
+function fbPush(path, data, cb) {
+  fetch(FB_URL + path + '.json', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(function(r){ return r.json(); })
+    .then(function(d){ if(cb) cb(null, d); })
+    .catch(function(e){ if(cb) cb(e, null); });
+}
+
+function fbDelete(path, cb) {
+  fetch(FB_URL + path + '.json', { method: 'DELETE' })
+    .then(function(){ if(cb) cb(null); })
+    .catch(function(e){ if(cb) cb(e); });
+}
+
+// Load all shared data from Firebase
+function fbLoadAll(onDone) {
+  fbGet('/shared', function(err, data) {
+    if (err || !data) { if(onDone) onDone(); return; }
+    if (data.news && Array.isArray(data.news)) newsItems = data.news;
+    if (data.sharedDocs && Array.isArray(data.sharedDocs)) sharedDocs = data.sharedDocs;
+    if (data.sharedSheets && Array.isArray(data.sharedSheets)) sharedSheets = data.sharedSheets;
+    if (data.sharedFiles && Array.isArray(data.sharedFiles)) { sharedFiles = data.sharedFiles; }
+    if (data.sharedNote) sharedNote = data.sharedNote;
+    if (data.moduleGroups && Array.isArray(data.moduleGroups)) moduleGroups = data.moduleGroups;
+    if (data.publicFiles && Array.isArray(data.publicFiles)) publicFiles = data.publicFiles;
+    if(onDone) onDone();
+  });
+}
+
+// Save shared data to Firebase
+function fbSaveNews()         { fbSet('/shared/news', news); }
+function fbSaveSharedDocs()   { fbSet('/shared/sharedDocs', sharedDocs); }
+function fbSaveSharedSheets() { fbSet('/shared/sharedSheets', sharedSheets); }
+function fbSaveSharedFiles()  { fbSet('/shared/sharedFiles', sharedFiles); }
+function fbSaveSharedNote()   { fbSet('/shared/sharedNote', sharedNote); }
+function fbSaveModules()      { fbSet('/shared/moduleGroups', moduleGroups); }
+function fbSavePublicFiles()  { fbSet('/shared/publicFiles', publicFiles); }
+
+// ============================================================
 // DATA
 // ============================================================
 const USERS = {
@@ -237,6 +299,15 @@ function launchApp() {
     if (vn) vn.style.display = 'block';
   }
 
+  // Load shared data from Firebase then render
+  fbLoadAll(function() {
+    renderNews();
+    renderSharedDocs();
+    renderSharedSheets();
+    renderSharedFiles();
+    if (isAdmin) { renderModuleGroups(); syncSidebarModules(); }
+  });
+
   renderVideos();
   if (isColleague) {
     ['std-colleague', 'eq-colleague', 'vid-colleague', 'myfiles-colleague'].forEach(function(id) {
@@ -454,6 +525,7 @@ function postNews() {
   document.getElementById('news-title-inp').value = '';
   document.getElementById('news-body-inp').value = '';
   document.getElementById('news-pin').checked = false;
+  fbSet('/shared/news', newsItems);
   renderNews();
   updateNewsDot();
   showToast('Đã đăng thông báo', 'success');
@@ -737,8 +809,9 @@ function deleteGroup(gid) {
 function addGroup() {
   var inp = document.getElementById('new-group-name');
   if (!inp || !inp.value.trim()) { showToast('Nhập tên nhóm', 'warning'); return; }
-  moduleGroups.push({ id: Date.now(), icon: 'Ὄ2', name: inp.value.trim(), modules: [] });
+  moduleGroups.push({ id: Date.now(), icon: '📂', name: inp.value.trim(), modules: [] });
   inp.value = '';
+  fbSet('/shared/moduleGroups', moduleGroups);
   renderModuleGroups(); syncSidebarModules();
   showToast('Đã tạo nhóm mới', 'success');
 }
@@ -1594,6 +1667,7 @@ function createSharedDoc() {
   var name = prompt('Tên tài liệu chung:');
   if (!name) return;
   sharedDocs.push({ id:Date.now(), name:name, content:'<p>Bắt đầu soạn thảo...</p>', date:new Date().toLocaleDateString('vi-VN'), author:currentUser?currentUser.name:'', comments:[] });
+  fbSet('/shared/sharedDocs', sharedDocs);
   renderSharedDocs();
   showToast('Đã tạo tài liệu chung: '+name,'success');
 }
@@ -1639,13 +1713,18 @@ function toggleSharedDocEditor(i) {
 }
 function saveSharedDoc(i) {
   var c = document.getElementById('sdoc-content-'+i);
-  if (c && sharedDocs[i]) { sharedDocs[i].content=c.innerHTML; showToast('Đã lưu!','success'); }
+  if (c && sharedDocs[i]) {
+    sharedDocs[i].content = c.innerHTML;
+    fbSet('/shared/sharedDocs', sharedDocs);
+    showToast('Đã lưu!','success');
+  }
 }
 function addSharedDocComment(i) {
   var inp = document.getElementById('sdoc-cmt-'+i);
   if (!inp||!inp.value.trim()) return;
   if (!sharedDocs[i].comments) sharedDocs[i].comments=[];
   sharedDocs[i].comments.push({author:currentUser?currentUser.name:'?', text:inp.value.trim()});
+  fbSet('/shared/sharedDocs', sharedDocs);
   renderSharedDocs();
   showToast('Đã gửi comment!','success');
 }
@@ -1663,6 +1742,7 @@ function moveDocToPersonal(i) {
 function createSharedSheet() {
   var name=prompt('Tên bảng tính chung:'); if(!name) return;
   sharedSheets.push({id:Date.now(),name:name,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:{}});
+  fbSet('/shared/sharedSheets', sharedSheets);
   renderSharedSheets(); showToast('Đã tạo bảng tính: '+name,'success');
 }
 function renderSharedSheets() {
