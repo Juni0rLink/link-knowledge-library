@@ -1692,64 +1692,125 @@ function renderPersonalModulesGrid() {
   }).join('');
 }
 
-function openPersonalModule(i) {
-  var m = personalModules[i]; if (!m) return;
-  var existing = document.getElementById('pm-editor-modal');
+// ── PERSONAL MODULE DETAIL (sub-modules system) ──
+function openPersonalModule(mi) {
+  var m = personalModules[mi]; if (!m) return;
+  if (!m.items) m.items = [];
+  var existing = document.getElementById('pm-detail-page');
   if (existing) existing.remove();
+
+  // Build sub-items grid HTML
+  function buildSubGrid() {
+    if (!m.items.length) return '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#aaa">Chưa có mục nào. Bấm + để thêm.</div>';
+    return m.items.map(function(item, si) {
+      return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;transition:box-shadow .15s" '
+        +'onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.1)\'" onmouseout="this.style.boxShadow=\'\'">'
+        +'<div style="font-size:26px;margin-bottom:8px">'+item.icon+'</div>'
+        +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+item.name+'</div>'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:10px">'+item.date+'</div>'
+        +'<div style="display:flex;gap:6px">'
+        +'<button onclick="openSubModule('+mi+','+si+')" style="flex:1;background:#ede9fe;color:#7c3aed;border:none;border-radius:6px;padding:5px;font-size:11px;font-weight:700;cursor:pointer">✏️ Mở</button>'
+        +'<button onclick="event.stopPropagation();personalModules['+mi+'].items.splice('+si+',1);document.getElementById(\'pm-subgrid\').innerHTML=buildPmSubGrid('+mi+')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer">🗑️</button>'
+        +'</div></div>';
+    }).join('');
+  }
+
   var d = document.createElement('div');
-  d.id = 'pm-editor-modal';
-  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px';
-  d.innerHTML = '<div style="background:#fff;border-radius:14px;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
-    // Header
-    + '<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:16px 20px;display:flex;align-items:center;gap:10px">'
-    + '<span style="font-size:24px;cursor:pointer" onclick="showIconPicker(\''+m.icon+'\',function(ic){personalModules['+i+'].icon=ic;document.querySelector(\'#pm-editor-modal .pm-icon\').textContent=ic;})" title="Đổi icon" class="pm-icon">'+m.icon+'</span>'
-    + '<input id="pm-name-inp" value="'+m.name+'" style="flex:1;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:8px 12px;color:#fff;font-size:15px;font-weight:700;outline:none" placeholder="Tên module">'
-    + '<button onclick="document.getElementById(\'pm-editor-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px">✕</button>'
-    + '</div>'
-    // Toolbar
-    + '<div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:6px 12px;display:flex;gap:4px;flex-wrap:wrap">'
-    + '<button class="btn-sm" onclick="document.execCommand(\'bold\')"><b>B</b></button>'
-    + '<button class="btn-sm" onclick="document.execCommand(\'italic\')"><i>I</i></button>'
-    + '<button class="btn-sm" onclick="document.execCommand(\'underline\')"><u>U</u></button>'
-    + '<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value);this.value=\'p\'">'
-    + '<option value="p">Đoạn văn</option><option value="h2">Tiêu đề lớn</option><option value="h3">Tiêu đề nhỏ</option></select>'
-    + '<button class="btn-sm" onclick="document.execCommand(\'insertUnorderedList\')">• List</button>'
-    + '<button class="btn-sm" onclick="document.execCommand(\'insertOrderedList\')">1. List</button>'
-    + '<button class="btn-sm" onclick="document.execCommand(\'insertHorizontalRule\')">─</button>'
-    + '</div>'
-    // Editor
-    + '<div id="pm-content-editor" contenteditable="true" style="flex:1;overflow-y:auto;padding:20px;outline:none;font-size:14px;line-height:1.8;min-height:280px;max-height:400px">'
-    + (m.content || '<p style="color:#aaa">Bắt đầu soạn thảo nội dung...</p>')
-    + '</div>'
-    // Notes
-    + '<div style="border-top:1px solid #e5e7eb;padding:12px 20px">'
-    + '<div style="font-size:12px;font-weight:700;color:#888;margin-bottom:6px">📎 Ghi chú nhanh</div>'
-    + '<textarea id="pm-notes-inp" rows="2" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px;outline:none;resize:none">'+( m.notes||'')+'</textarea>'
-    + '</div>'
-    // Footer
-    + '<div style="padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">'
-    + '<button onclick="document.getElementById(\'pm-editor-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">Hủy</button>'
-    + '<button onclick="savePersonalModule('+i+')" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer">💾 Lưu</button>'
-    + '</div></div>';
+  d.id = 'pm-detail-page';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f9fb;z-index:900;overflow-y:auto';
+  d.innerHTML =
+    '<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:16px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10">'
+    +'<button onclick="document.getElementById(\'pm-detail-page\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:7px;padding:7px 12px;cursor:pointer;font-size:13px;font-weight:600">&larr; Quay lại</button>'
+    +'<span id="pm-detail-icon" style="font-size:24px;cursor:pointer" onclick="showIconPicker(\''+m.icon+'\',function(ic){personalModules['+mi+'].icon=ic;document.getElementById(\'pm-detail-icon\').textContent=ic;})" title="Đổi icon">'+m.icon+'</span>'
+    +'<span style="color:#fff;font-size:16px;font-weight:700;flex:1">'+m.name+'</span>'
+    +'<button onclick="addSubModule('+mi+')" style="background:#fff;color:#7c3aed;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">+ Thêm mục</button>'
+    +'</div>'
+    +'<div style="max-width:900px;margin:24px auto;padding:0 16px">'
+    +'<div id="pm-subgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px">'
+    + buildSubGrid()
+    +'</div></div>';
   document.body.appendChild(d);
-  // Focus editor, clear placeholder on first click
-  var editor = document.getElementById('pm-content-editor');
-  editor.addEventListener('focus', function(){
-    if (editor.querySelector('p[style*="color:#aaa"]')) editor.innerHTML = '';
-  }, {once: true});
+
+  // expose buildSubGrid globally for delete button
+  window.buildPmSubGrid = function(idx) {
+    var mod = personalModules[idx]; if (!mod || !mod.items) return '';
+    if (!mod.items.length) return '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#aaa">Chưa có mục nào. Bấm + để thêm.</div>';
+    return mod.items.map(function(item, si) {
+      return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px">'
+        +'<div style="font-size:26px;margin-bottom:8px">'+item.icon+'</div>'
+        +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+item.name+'</div>'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:10px">'+item.date+'</div>'
+        +'<div style="display:flex;gap:6px">'
+        +'<button onclick="openSubModule('+idx+','+si+')" style="flex:1;background:#ede9fe;color:#7c3aed;border:none;border-radius:6px;padding:5px;font-size:11px;font-weight:700;cursor:pointer">✏️ Mở</button>'
+        +'<button onclick="personalModules['+idx+'].items.splice('+si+',1);document.getElementById(\'pm-subgrid\').innerHTML=buildPmSubGrid('+idx+')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer">🗑️</button>'
+        +'</div></div>';
+    }).join('');
+  };
 }
 
-function savePersonalModule(i) {
-  var m = personalModules[i]; if (!m) return;
-  var nameInp = document.getElementById('pm-name-inp');
-  var contentEl = document.getElementById('pm-content-editor');
-  var notesInp = document.getElementById('pm-notes-inp');
-  if (nameInp) m.name = nameInp.value || m.name;
-  if (contentEl) m.content = contentEl.innerHTML;
-  if (notesInp) m.notes = notesInp.value;
-  document.getElementById('pm-editor-modal').remove();
-  renderPersonalModulesGrid();
-  showToast('Đã lưu module: ' + m.name, 'success');
+function addSubModule(mi) {
+  var m = personalModules[mi]; if (!m) return;
+  if (!m.items) m.items = [];
+  var name = prompt('Tên mục mới:'); if (!name) return;
+  var icons2 = ['📄','📝','🔧','💡','📊','🛡️','⚙️','🔬','📋','🗂️','🔑','🚀'];
+  var item = { id: Date.now(), name: name, icon: icons2[m.items.length % icons2.length], content: '', notes: '', date: new Date().toLocaleDateString('vi-VN') };
+  m.items.push(item);
+  var grid = document.getElementById('pm-subgrid');
+  if (grid) grid.innerHTML = window.buildPmSubGrid(mi);
+  showToast('Đã thêm: ' + name, 'success');
+  openSubModule(mi, m.items.length - 1);
+}
+
+function openSubModule(mi, si) {
+  var m = personalModules[mi]; if (!m || !m.items) return;
+  var item = m.items[si]; if (!item) return;
+  var existing = document.getElementById('pm-sub-modal');
+  if (existing) existing.remove();
+  var d = document.createElement('div');
+  d.id = 'pm-sub-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:14px 18px;display:flex;align-items:center;gap:10px">'
+    +'<span id="sub-icon-disp" style="font-size:22px;cursor:pointer" onclick="showIconPicker(\''+item.icon+'\',function(ic){personalModules['+mi+'].items['+si+'].icon=ic;document.getElementById(\'sub-icon-disp\').textContent=ic;})" title="Đổi icon">'+item.icon+'</span>'
+    +'<input id="sub-name-inp" value="'+item.name+'" style="flex:1;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:14px;font-weight:700;outline:none">'
+    +'<button onclick="document.getElementById(\'pm-sub-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:5px 10px;display:flex;gap:3px;flex-wrap:wrap">'
+    +'<button class="btn-sm" onclick="document.execCommand(\'bold\')"><b>B</b></button>'
+    +'<button class="btn-sm" onclick="document.execCommand(\'italic\')"><i>I</i></button>'
+    +'<button class="btn-sm" onclick="document.execCommand(\'underline\')"><u>U</u></button>'
+    +'<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value);this.value=\'p\'"><option value="p">Đoạn văn</option><option value="h2">H2</option><option value="h3">H3</option></select>'
+    +'<button class="btn-sm" onclick="document.execCommand(\'insertUnorderedList\')">• List</button>'
+    +'<button class="btn-sm" onclick="document.execCommand(\'insertOrderedList\')">1. List</button>'
+    +'</div>'
+    +'<div id="sub-content-ed" contenteditable="true" style="flex:1;overflow-y:auto;padding:18px;outline:none;font-size:14px;line-height:1.8;min-height:260px;max-height:380px">'
+    +(item.content||'<p style="color:#aaa">Soạn thảo nội dung...</p>')
+    +'</div>'
+    +'<div style="border-top:1px solid #e5e7eb;padding:10px 18px">'
+    +'<textarea id="sub-notes-inp" rows="2" style="width:100%;border:1px solid #e5e7eb;border-radius:7px;padding:7px;font-size:12px;outline:none;resize:none" placeholder="📎 Ghi chú nhanh...">'+( item.notes||'')+'</textarea>'
+    +'</div>'
+    +'<div style="padding:10px 18px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">'
+    +'<button onclick="document.getElementById(\'pm-sub-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer">Hủy</button>'
+    +'<button onclick="saveSubModule('+mi+','+si+')" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer">💾 Lưu</button>'
+    +'</div></div>';
+  document.body.appendChild(d);
+  var ed = document.getElementById('sub-content-ed');
+  ed.addEventListener('focus', function(){ if(ed.querySelector('p[style*="color:#aaa"]')) ed.innerHTML=''; }, {once:true});
+}
+
+function saveSubModule(mi, si) {
+  var item = personalModules[mi] && personalModules[mi].items && personalModules[mi].items[si];
+  if (!item) return;
+  var n = document.getElementById('sub-name-inp');
+  var c = document.getElementById('sub-content-ed');
+  var nt = document.getElementById('sub-notes-inp');
+  if (n) item.name = n.value || item.name;
+  if (c) item.content = c.innerHTML;
+  if (nt) item.notes = nt.value;
+  document.getElementById('pm-sub-modal').remove();
+  var grid = document.getElementById('pm-subgrid');
+  if (grid && window.buildPmSubGrid) grid.innerHTML = window.buildPmSubGrid(mi);
+  showToast('Đã lưu: ' + item.name, 'success');
 }
 
 // ── PUBLIC MODULES GRID ──
