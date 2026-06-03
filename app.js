@@ -880,7 +880,7 @@ function syncSidebarModules() {
       '<span style="font-size:10px;transition:transform .2s;transform:rotate(' + (isCollapsed ? '-90' : '0') + 'deg)">▾</span>' +
       '</div>' +
       (!isCollapsed ? g.modules.map(function(m) {
-        return '<div class="nav-item" style="padding-left:26px;font-size:12px" onclick="showModulePage(' + m.id + ',\"' + m.name.replace(/"/g,'\\"') + '\",' + g.id + ',this)">' + m.icon + ' ' + m.name + '</div>';
+        return '<div class="nav-item" style="padding-left:26px;font-size:12px" onclick="showModulePage(' + m.id + ',\'' + m.name.replace(/'/g,"\\'") + '\',' + g.id + ',this)">' + m.icon + ' ' + m.name + '</div>';
       }).join('') : '');
   }).join('');
 }
