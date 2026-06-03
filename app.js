@@ -157,6 +157,7 @@ function fbSavePublicFiles()  { fbClearCache(); fbSet('/shared/publicFiles', pub
 var personalDocs = [];
 var personalSheets = [];
 var personalFiles = [];
+var personalModules = [];
 var personalNote = '';
 var sharedDocs = [];
 var sharedSheets = [];
@@ -1695,7 +1696,7 @@ function showPublicGroupDetail(gid) {
   var g = moduleGroups.find(function(x){return x.id===gid;}); if(!g) return;
   var grid = document.getElementById('public-modules-grid'); if(!grid) return;
   var html = '<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-bottom:12px">'
-    +'<button onclick="renderPublicModulesGrid()" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">&larr; Quay lai</button>'
+    +'<button onclick="renderPublicModulesGrid()" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">&larr; Quay lại</button>'
     +'<strong style="font-size:14px">'+g.icon+' '+g.name+'</strong></div>';
   g.modules.forEach(function(m){
     var docs = MODULE_DOCS[m.id]; var fc = docs ? docs.files.length : 0;
@@ -1711,49 +1712,3 @@ function showPublicGroupDetail(gid) {
   });
 }
 
-function editPersonalModule(i) {
-  var m = personalModules[i]; if(!m) return;
-  var name = prompt('Tên module:', m.name); if(!name) return;
-  m.name = name;
-  m.icon = prompt('Icon:', m.icon) || m.icon;
-  renderPersonalModulesGrid();
-}
-
-// ── PUBLIC MODULES GRID ──
-function renderPublicModulesGrid() {
-  var grid = document.getElementById('public-modules-grid');
-  if(!grid) return;
-  var html = '';
-  moduleGroups.forEach(function(g){
-    html += '<div onclick="showPublicGroupDetail('+g.id+')" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer">'
-      +'<div style="font-size:28px;margin-bottom:8px">'+g.icon+'</div>'
-      +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+g.name+'</div>'
-      +'<div style="font-size:11px;color:#aaa">'+g.modules.length+' modules</div>'
-      +'</div>';
-  });
-  grid.innerHTML = html;
-}
-
-function showPublicGroupDetail(gid) {
-  var g = moduleGroups.find(function(x){return x.id===gid;});
-  if(!g) return;
-  var grid = document.getElementById('public-modules-grid');
-  if(!grid) return;
-  var html = '<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-bottom:12px">'
-    +'<button onclick="renderPublicModulesGrid()" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">&larr; Quay lai</button>'
-    +'<span style="font-weight:700;font-size:14px">'+g.icon+' '+g.name+'</span></div>';
-  g.modules.forEach(function(m){
-    var docs = MODULE_DOCS[m.id];
-    var fc = docs ? docs.files.length : 0;
-    html += '<div onclick="showPage_mod_'+m.id+'" data-mid="'+m.id+'" data-gid="'+gid+'" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer" class="pub-mod-card">'
-    html += '<div class="pub-mod-card2" data-mid="'+m.id+'" data-gid2="'+gid+'" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer">'
-      +'<div style="font-size:24px;margin-bottom:8px">'+m.icon+'</div>'
-      +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+m.name+'</div>'
-      +'<div style="font-size:11px;color:#aaa">'+fc+' tai lieu</div>'
-      +'</div>';
-  });
-  grid.innerHTML = html;
-  grid.querySelectorAll(".pub-mod-card2").forEach(function(el){
-    el.addEventListener("click",function(){var mid2=parseInt(this.dataset.mid),g2=parseInt(this.dataset.gid2);var mod2=g.modules.find(function(x){return x.id===mid2;});if(mod2)showModulePage(mid2,mod2.name,g2,null);});
-  });
-}
