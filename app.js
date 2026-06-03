@@ -257,6 +257,10 @@ function launchApp() {
 
   updateNewsDot();
   renderNews();
+
+  if (isColleague) {
+    setTimeout(function(){ renderStorageWidget('home-storage-widget'); }, 100);
+  }
 }
 
 // ============================================================
@@ -1109,6 +1113,95 @@ function exportSheetCSV(){var rows=[];for(var r=0;r<sRows;r++){var row=[];for(va
 var trash = []; // deleted modules/groups go here
 var STORAGE_LIMIT_MB = 25000; // 25GB Cloudinary free
 var storageUsedMB = 847; // simulated — real: fetch from Cloudinary API
+
+// ============================================================
+// STORAGE STATS
+// ============================================================
+function getAppStorageStats() {
+  function sizeOf(obj) {
+    try { return new Blob([JSON.stringify(obj)]).size; } catch(e) { return 0; }
+  }
+  var sections = [
+    { label: '📋 Modules & Groups',  icon:'📋', bytes: sizeOf(moduleGroups), color:'#3b82f6' },
+    { label: '📝 Tài liệu cá nhân',  icon:'📝', bytes: sizeOf(personalDocs), color:'#7c3aed' },
+    { label: '📊 Bảng tính cá nhân', icon:'📊', bytes: sizeOf(personalSheets), color:'#059669' },
+    { label: '📁 Files cá nhân',     icon:'📁', bytes: sizeOf(personalFiles), color:'#0891b2' },
+    { label: '📝 Tài liệu chung',    icon:'📝', bytes: sizeOf(sharedDocs), color:'#d97706' },
+    { label: '📊 Bảng tính chung',   icon:'📊', bytes: sizeOf(sharedSheets), color:'#16a34a' },
+    { label: '📁 Files chung',       icon:'📁', bytes: sizeOf(sharedFiles), color:'#0e7490' },
+    { label: '📢 Tin tức/News',      icon:'📢', bytes: sizeOf(news), color:'#b45309' },
+    { label: '🗑️ Thùng rác',        icon:'🗑️', bytes: sizeOf(trash), color:'#dc2626' },
+  ];
+  var total = sections.reduce(function(s,x){return s+x.bytes;},0);
+  return { sections: sections, total: total };
+}
+
+function renderStorageWidget(containerId) {
+  var card = document.getElementById('home-storage-card');
+  if (card) card.style.display = 'block';
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var stats = getAppStorageStats();
+  var totalKB = (stats.total / 1024).toFixed(1);
+  var totalMB = (stats.total / 1024 / 1024).toFixed(3);
+  var RAM_LIMIT = 50 * 1024 * 1024; // 50MB soft limit for session
+  var ramPct = Math.min((stats.total / RAM_LIMIT) * 100, 100).toFixed(1);
+  var cloudPct = Math.min((storageUsedMB / STORAGE_LIMIT_MB) * 100, 100).toFixed(2);
+
+  var sectionsHtml = stats.sections.filter(function(s){return s.bytes>0;}).map(function(s) {
+    var kb = (s.bytes/1024).toFixed(1);
+    var pct = stats.total > 0 ? ((s.bytes/stats.total)*100).toFixed(0) : 0;
+    var barW = Math.max(pct, 2);
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+      '<div style="width:130px;font-size:12px;color:#555;flex-shrink:0">'+s.label+'</div>' +
+      '<div style="flex:1;background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden">' +
+        '<div style="width:'+barW+'%;height:100%;background:'+s.color+';border-radius:4px;transition:width .4s"></div>' +
+      '</div>' +
+      '<div style="width:60px;text-align:right;font-size:11px;color:#888;flex-shrink:0">'+kb+' KB</div>' +
+    '</div>';
+  }).join('');
+
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">' +
+      // RAM card
+      '<div style="background:#f8faff;border:1px solid #dbeafe;border-radius:10px;padding:14px">' +
+        '<div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">💾 RAM Session</div>' +
+        '<div style="font-size:22px;font-weight:800;color:#1e40af">'+totalKB+' <span style="font-size:13px;font-weight:400;color:#64748b">KB</span></div>' +
+        '<div style="font-size:11px;color:#64748b;margin-bottom:8px">'+totalMB+' MB / phiên hiện tại</div>' +
+        '<div style="background:#e2e8f0;border-radius:6px;height:10px;overflow:hidden">' +
+          '<div style="width:'+ramPct+'%;height:100%;background:linear-gradient(90deg,#3b82f6,#1d4ed8);border-radius:6px;transition:width .4s"></div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#94a3b8;margin-top:4px">'+ramPct+'% giới hạn session (50MB)</div>' +
+      '</div>' +
+      // Cloudinary card
+      '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px">' +
+        '<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">☁️ Cloudinary</div>' +
+        '<div style="font-size:22px;font-weight:800;color:#166534">'+storageUsedMB+' <span style="font-size:13px;font-weight:400;color:#64748b">MB</span></div>' +
+        '<div style="font-size:11px;color:#64748b;margin-bottom:8px">/ '+STORAGE_LIMIT_MB.toLocaleString()+' MB (25 GB free)</div>' +
+        '<div style="background:#dcfce7;border-radius:6px;height:10px;overflow:hidden">' +
+          '<div style="width:'+cloudPct+'%;height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:6px;transition:width .4s"></div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#94a3b8;margin-top:4px">'+cloudPct+'% đã dùng · còn '+(STORAGE_LIMIT_MB-storageUsedMB).toLocaleString()+' MB</div>' +
+      '</div>' +
+    '</div>' +
+    // Content library card
+    '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px">' +
+      '<div style="font-size:28px">📚</div>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:12px;font-weight:700;color:#92400e">Content Library (GitHub)</div>' +
+        '<div style="font-size:12px;color:#78350f;margin-top:2px">26 files · 6 PPTX GSC modules + 16 DOCX Operation Manual BMW A1HG01</div>' +
+      '</div>' +
+      '<div style="text-align:right"><div style="font-size:18px;font-weight:800;color:#92400e">~9 MB</div><div style="font-size:10px;color:#a16207">GitHub Pages</div></div>' +
+    '</div>' +
+    // Breakdown
+    '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">📊 Chi tiết theo loại dữ liệu</div>' +
+    (stats.sections.filter(function(s){return s.bytes>0;}).length > 0 ? sectionsHtml :
+      '<p style="color:#aaa;font-size:12px;font-style:italic">Chưa có dữ liệu nào trong phiên này.</p>') +
+    '<div style="margin-top:12px;padding:10px;background:#f8f9fb;border-radius:8px;border:1px solid #e5e7eb;font-size:11px;color:#888">' +
+      '⚠️ Dữ liệu RAM chỉ tồn tại trong phiên hiện tại (mất khi reload). ' +
+      'Để lưu vĩnh viễn → cần tích hợp <strong>Supabase database</strong>.' +
+    '</div>';
+}
 
 // Override deleteModule to send to trash instead
 var _origDeleteModule = deleteModule;
