@@ -1194,6 +1194,9 @@ function showModulePage(id, name, groupId, el) {
 
   pg.innerHTML =
     '<div class="page-header" style="background:linear-gradient(135deg,#1d4ed8,#1e40af)">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+    +'<button onclick="showPage(\'files\',document.querySelector(\'.nav-item[onclick*=\\\'files\\\']\'))" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">&larr; Thư viện chung</button>'
+    +'</div>'
     +'<div class="page-tag">Module</div>'
     +'<div class="page-title">'+name+'</div>'
     +'<div class="page-meta">Click tài liệu để xem online hoặc tải về</div>'
@@ -1706,14 +1709,84 @@ function switchFilesTab(tab, el) {
   ['modules','upload','notes'].forEach(function(t){var d=document.getElementById('shared-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
   if(tab==='upload') renderSharedFileList();
   if(tab==='modules') renderPublicModulesGrid();
+  if(tab==='notes') loadModuleActivity();
 }
 function createSharedDoc(){var name=prompt('Tên tài liệu chung:');if(!name)return;sharedDocs.push({id:Date.now(),name:name,content:'<p>Bắt đầu soạn thảo...</p>',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',comments:[]});fbSet('/shared/sharedDocs',sharedDocs);fbClearCache();renderSharedDocs();showToast('Đã tạo: '+name,'success');}
 function renderSharedDocs(){var list=document.getElementById('shared-docs-list');if(!list)return;if(!sharedDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}var isAdmin=currentUser&&['owner','admin'].includes(currentUser.role);list.innerHTML=sharedDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.author+' · '+doc.date+'</div></div>'+(isAdmin?'<button onclick="sharedDocs.splice('+i+',1);fbSet(\'/shared/sharedDocs\',sharedDocs);fbClearCache();renderSharedDocs()" class="btn-sm reject-btn">🗑️</button>':'')+'</div>';}).join('');}
 function createSharedSheet(){var name=prompt('Tên bảng tính chung:');if(!name)return;sharedSheets.push({id:Date.now(),name:name,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:{}});fbSet('/shared/sharedSheets',sharedSheets);fbClearCache();renderSharedSheets();showToast('Đã tạo: '+name,'success');}
 function renderSharedSheets(){var list=document.getElementById('shared-sheets-list');if(!list)return;if(!sharedSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}var isAdmin=currentUser&&['owner','admin'].includes(currentUser.role);list.innerHTML=sharedSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.author+' · '+s.date+'</div></div>'+(isAdmin?'<button onclick="sharedSheets.splice('+i+',1);fbSet(\'/shared/sharedSheets\',sharedSheets);fbClearCache();renderSharedSheets()" class="btn-sm reject-btn">🗑️</button>':'')+'</div>';}).join('');}
 function saveSharedNote(){var t=document.getElementById('shared-note-area');if(t){sharedNote=t.value;fbSet('/shared/sharedNote',sharedNote);showToast('Đã lưu ghi chú','success');}}
+
+function loadModuleActivity() {
+  var el = document.getElementById('module-activity-list'); if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa">Đang tải...</div>';
+  fbGet('/moduleData', function(err, data) {
+    if (err || !data) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa">Chưa có hoạt động nào.</div>'; return; }
+    // Collect all modules with comments
+    var rows = [];
+    Object.keys(data).forEach(function(mid) {
+      var mdata = data[mid];
+      var cmts = mdata && mdata.comments;
+      if (!cmts) return;
+      var list = Array.isArray(cmts) ? cmts : Object.values(cmts);
+      if (!list.length) return;
+      // Find module name
+      var modName = mid;
+      moduleGroups.forEach(function(g){
+        (g.modules||[]).forEach(function(m){ if(String(m.id)===String(mid)) modName = m.name; });
+      });
+      var last = list[list.length-1];
+      rows.push({ mid: parseInt(mid), name: modName, count: list.length, last: last, all: list });
+    });
+    if (!rows.length) { el.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa">Chưa có bình luận nào trong các module.</div>'; return; }
+    rows.sort(function(a,b){ return b.count - a.count; });
+    el.innerHTML = rows.map(function(r) {
+      var recentHtml = r.all.slice(-3).reverse().map(function(c){
+        var cfg = ROLE_CFG[c.role] || ROLE_CFG.colleague;
+        return '<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f5f5f5">'
+          +'<div style="width:28px;height:28px;border-radius:50%;background:'+cfg.color+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">'+c.author.charAt(0).toUpperCase()+'</div>'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="display:flex;gap:6px;align-items:center;margin-bottom:2px">'
+          +'<span style="font-weight:700;font-size:12px;color:#1e293b">'+c.author+'</span>'
+          +'<span class="role-badge '+cfg.cls+'" style="font-size:10px;padding:1px 5px">'+cfg.label+'</span>'
+          +'<span style="font-size:10px;color:#aaa;margin-left:auto">'+c.time+'</span>'
+          +'</div>'
+          +'<div style="font-size:12px;color:#475569;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.text+'</div>'
+          +'</div></div>';
+      }).join('');
+      return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:0;margin-bottom:12px;overflow:hidden">'
+        +'<div onclick="goToModule('+r.mid+')" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f8f9fb;cursor:pointer;border-bottom:1px solid #e5e7eb" '
+        +'onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'#f8f9fb\'">'
+        +'<span style="font-size:18px">💬</span>'
+        +'<div style="flex:1"><div style="font-weight:700;font-size:13px;color:#1e293b">'+r.name+'</div>'
+        +'<div style="font-size:11px;color:#64748b">'+r.count+' bình luận · Mới nhất: '+r.last.author+' · '+r.last.time+'</div></div>'
+        +'<span style="background:#dbeafe;color:#1d4ed8;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">'+r.count+'</span>'
+        +'<span style="font-size:12px;color:#94a3b8;margin-left:6px">→</span>'
+        +'</div>'
+        +'<div style="padding:8px 16px">'+recentHtml+'</div>'
+        +'</div>';
+    }).join('');
+  });
+}
+
+function goToModule(mid) {
+  var found = null, gid = null;
+  moduleGroups.forEach(function(g){
+    (g.modules||[]).forEach(function(m){ if(m.id===mid){ found=m; gid=g.id; } });
+  });
+  if (found) {
+    showPage('files', document.querySelector('.nav-item[onclick*="files"]'));
+    setTimeout(function(){ showModulePage(found.id, found.name, gid, null); }, 100);
+  }
+}
 function moveNoteToPersonal(){var t=document.getElementById('shared-note-area');if(t)personalNote=t.value;var pn=document.getElementById('personal-note');if(pn)pn.value=personalNote;showToast('Đã sao chép về Cá nhân','success');}
 function renderSharedFiles(){renderSharedFileList();}
+var _collapsedCats = {};
+function toggleCat(cat) {
+  _collapsedCats[cat] = !_collapsedCats[cat];
+  renderSharedFileList();
+}
+
 function renderSharedFileList(){
   var list=document.getElementById('shared-files-list');
   if(!list)return;
@@ -1722,18 +1795,27 @@ function renderSharedFileList(){
   sharedFiles.forEach(function(f){var cat=f.category||'Khác';if(!cats[cat])cats[cat]=[];cats[cat].push(f);});
   var html='';
   Object.keys(cats).forEach(function(cat){
-    html+='<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;padding-left:4px">'+cat+'</div>';
-    cats[cat].forEach(function(f){
-      var fileUrl=CONTENT_BASE+encodeURIComponent(f.file);
-      var viewUrl='https://view.officeapps.live.com/op/view.aspx?src='+fileUrl;
-      html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:6px">'
-        +'<span style="font-size:20px">'+(f.icon||'📄')+'</span>'
-        +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+f.name+'</div>'
-        +'<div style="font-size:11px;color:#888;margin-top:1px">'+(f.author||'')+' · '+(f.date||'')+(f.size?' · '+f.size:'')+'</div></div>'
-        +'<a href="'+viewUrl+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>'
-        +'<a href="'+fileUrl+'" download="'+f.file+'" style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>'
-        +'</div>';
-    });
+    var collapsed = _collapsedCats[cat];
+    var safecat = cat.replace(/'/g,"\\'");
+    html+='<div onclick="toggleCat(\''+safecat+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f1f5f9;border-radius:8px;margin:12px 0 6px;cursor:pointer;user-select:none">'
+      +'<span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;flex:1">'+cat+' <span style="color:#94a3b8;font-weight:400">('+cats[cat].length+')</span></span>'
+      +'<span style="font-size:12px;color:#94a3b8;transition:transform .2s;transform:rotate('+(collapsed?'-90':'0')+'deg)">▾</span>'
+      +'</div>';
+    if(!collapsed){
+      cats[cat].forEach(function(f){
+        var fileUrl = f.url || (CONTENT_BASE+encodeURIComponent(f.file||''));
+        var ext = (f.name||f.file||'').split('.').pop().toLowerCase();
+        var isOffice = ['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext) >= 0;
+        var viewUrl = isOffice ? 'https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl) : fileUrl;
+        html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:6px">'
+          +'<span style="font-size:20px">'+(f.icon||'📄')+'</span>'
+          +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+(f.name||f.file||'')+'</div>'
+          +'<div style="font-size:11px;color:#888;margin-top:1px">'+(f.author||'')+' · '+(f.date||'')+(f.size?' · '+f.size:'')+'</div></div>'
+          +'<a href="'+viewUrl+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>'
+          +'<a href="'+fileUrl+'" download style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>'
+          +'</div>';
+      });
+    }
   });
   list.innerHTML=html;
 }
