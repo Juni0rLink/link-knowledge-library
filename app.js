@@ -1641,42 +1641,115 @@ function renderSharedFileList(){
 }
 function uploadSharedFile(input){showToast('Upload coming soon','warning');if(input)input.value='';}
 
-function createPersonalModule(){
-  var name=prompt('Tên module cá nhân:'); if(!name) return;
-  var icons = ['📌','📘','📗','📙','🔧','⚡','🛡️','🔬','💡','🗂️','📋','🏗️'];
-  var icon = icons[personalModules.length % icons.length];
-  personalModules.push({id:Date.now(), name:name, icon:icon, notes:'', date:new Date().toLocaleDateString('vi-VN')});
+var PM_ICONS = ['📌','📘','📗','📙','📕','🔧','⚡','🛡️','🔬','💡','🗂️','📋','🏗️','🎯','🔑','📊','🧩','🚀','💼','🖥️','📐','🔍'];
+
+function showIconPicker(currentIcon, onSelect) {
+  var existing = document.getElementById('icon-picker-modal');
+  if (existing) existing.remove();
+  var d = document.createElement('div');
+  d.id = 'icon-picker-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:center;justify-content:center';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:20px;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)">'
+    + '<div style="font-weight:700;font-size:14px;margin-bottom:14px">Chọn icon</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px">'
+    + PM_ICONS.map(function(ic){
+        return '<button onclick="(function(){document.getElementById(\'icon-picker-modal\').remove();('+onSelect.toString()+')(\''+ic+'\');})()" '
+          +'style="font-size:22px;background:'+(ic===currentIcon?'#ede9fe':'#f8f9fb')+';border:'+(ic===currentIcon?'2px solid #7c3aed':'2px solid transparent')+';border-radius:8px;padding:6px;cursor:pointer">'+ic+'</button>';
+      }).join('')
+    + '</div>'
+    + '<button onclick="document.getElementById(\'icon-picker-modal\').remove()" style="width:100%;background:#f3f4f6;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer">Hủy</button>'
+    + '</div>';
+  document.body.appendChild(d);
+}
+
+function createPersonalModule() {
+  var name = prompt('Tên module cá nhân:'); if (!name) return;
+  var newMod = {id: Date.now(), name: name, icon: '📌', notes: '', content: '', date: new Date().toLocaleDateString('vi-VN')};
+  personalModules.push(newMod);
+  var idx = personalModules.length - 1;
   renderPersonalModulesGrid();
-  showToast('Đã tạo module: '+name,'success');
+  showToast('Đã tạo module: ' + name, 'success');
+  showIconPicker('📌', function(ic){ personalModules[idx].icon = ic; renderPersonalModulesGrid(); });
 }
 
 function renderPersonalModulesGrid() {
   var grid = document.getElementById('personal-modules-grid');
-  if(!grid) return;
-  if(!personalModules.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#aaa"><p>Chua co module nao.</p></div>';
+  if (!grid) return;
+  if (!personalModules.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#aaa"><p>Chưa có module nào.</p></div>';
     return;
   }
-  var html = '';
-  personalModules.forEach(function(m,i){
-    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px">'
-      +'<div style="font-size:28px;margin-bottom:8px">'+m.icon+'</div>'
-      +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+m.name+'</div>'
+  grid.innerHTML = personalModules.map(function(m, i){
+    return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;transition:box-shadow .15s" '
+      +'onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.1)\'" onmouseout="this.style.boxShadow=\'\'">'
+      +'<div style="font-size:28px;margin-bottom:8px;cursor:pointer" onclick="showIconPicker(\''+m.icon+'\',function(ic){personalModules['+i+'].icon=ic;renderPersonalModulesGrid();})" title="Bấm để đổi icon">'+m.icon+'</div>'
+      +'<div style="font-weight:700;font-size:13px;margin-bottom:2px">'+m.name+'</div>'
       +'<div style="font-size:11px;color:#aaa;margin-bottom:10px">'+m.date+'</div>'
       +'<div style="display:flex;gap:6px">'
-      +'<button onclick="editPersonalModule('+i+')" style="flex:1;background:#f3f4f6;border:none;border-radius:6px;padding:5px;font-size:11px;cursor:pointer">Sua</button>'
-      +'<button onclick="personalModules.splice('+i+',1);renderPersonalModulesGrid()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer">Xoa</button>'
+      +'<button onclick="openPersonalModule('+i+')" style="flex:1;background:#ede9fe;color:#7c3aed;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">✏️ Mở</button>'
+      +'<button onclick="event.stopPropagation();personalModules.splice('+i+',1);renderPersonalModulesGrid()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer">🗑️</button>'
       +'</div></div>';
-  });
-  grid.innerHTML = html;
+  }).join('');
 }
 
-function editPersonalModule(i) {
-  var m = personalModules[i]; if(!m) return;
-  var name = prompt('Tên module:', m.name); if(!name) return;
-  m.name = name;
-  m.icon = prompt('Icon:', m.icon) || m.icon;
+function openPersonalModule(i) {
+  var m = personalModules[i]; if (!m) return;
+  var existing = document.getElementById('pm-editor-modal');
+  if (existing) existing.remove();
+  var d = document.createElement('div');
+  d.id = 'pm-editor-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+    // Header
+    + '<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:16px 20px;display:flex;align-items:center;gap:10px">'
+    + '<span style="font-size:24px;cursor:pointer" onclick="showIconPicker(\''+m.icon+'\',function(ic){personalModules['+i+'].icon=ic;document.querySelector(\'#pm-editor-modal .pm-icon\').textContent=ic;})" title="Đổi icon" class="pm-icon">'+m.icon+'</span>'
+    + '<input id="pm-name-inp" value="'+m.name+'" style="flex:1;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:8px 12px;color:#fff;font-size:15px;font-weight:700;outline:none" placeholder="Tên module">'
+    + '<button onclick="document.getElementById(\'pm-editor-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px">✕</button>'
+    + '</div>'
+    // Toolbar
+    + '<div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:6px 12px;display:flex;gap:4px;flex-wrap:wrap">'
+    + '<button class="btn-sm" onclick="document.execCommand(\'bold\')"><b>B</b></button>'
+    + '<button class="btn-sm" onclick="document.execCommand(\'italic\')"><i>I</i></button>'
+    + '<button class="btn-sm" onclick="document.execCommand(\'underline\')"><u>U</u></button>'
+    + '<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value);this.value=\'p\'">'
+    + '<option value="p">Đoạn văn</option><option value="h2">Tiêu đề lớn</option><option value="h3">Tiêu đề nhỏ</option></select>'
+    + '<button class="btn-sm" onclick="document.execCommand(\'insertUnorderedList\')">• List</button>'
+    + '<button class="btn-sm" onclick="document.execCommand(\'insertOrderedList\')">1. List</button>'
+    + '<button class="btn-sm" onclick="document.execCommand(\'insertHorizontalRule\')">─</button>'
+    + '</div>'
+    // Editor
+    + '<div id="pm-content-editor" contenteditable="true" style="flex:1;overflow-y:auto;padding:20px;outline:none;font-size:14px;line-height:1.8;min-height:280px;max-height:400px">'
+    + (m.content || '<p style="color:#aaa">Bắt đầu soạn thảo nội dung...</p>')
+    + '</div>'
+    // Notes
+    + '<div style="border-top:1px solid #e5e7eb;padding:12px 20px">'
+    + '<div style="font-size:12px;font-weight:700;color:#888;margin-bottom:6px">📎 Ghi chú nhanh</div>'
+    + '<textarea id="pm-notes-inp" rows="2" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:13px;outline:none;resize:none">'+( m.notes||'')+'</textarea>'
+    + '</div>'
+    // Footer
+    + '<div style="padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">'
+    + '<button onclick="document.getElementById(\'pm-editor-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">Hủy</button>'
+    + '<button onclick="savePersonalModule('+i+')" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer">💾 Lưu</button>'
+    + '</div></div>';
+  document.body.appendChild(d);
+  // Focus editor, clear placeholder on first click
+  var editor = document.getElementById('pm-content-editor');
+  editor.addEventListener('focus', function(){
+    if (editor.querySelector('p[style*="color:#aaa"]')) editor.innerHTML = '';
+  }, {once: true});
+}
+
+function savePersonalModule(i) {
+  var m = personalModules[i]; if (!m) return;
+  var nameInp = document.getElementById('pm-name-inp');
+  var contentEl = document.getElementById('pm-content-editor');
+  var notesInp = document.getElementById('pm-notes-inp');
+  if (nameInp) m.name = nameInp.value || m.name;
+  if (contentEl) m.content = contentEl.innerHTML;
+  if (notesInp) m.notes = notesInp.value;
+  document.getElementById('pm-editor-modal').remove();
   renderPersonalModulesGrid();
+  showToast('Đã lưu module: ' + m.name, 'success');
 }
 
 // ── PUBLIC MODULES GRID ──
