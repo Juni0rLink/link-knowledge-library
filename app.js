@@ -1169,34 +1169,137 @@ function showModulePage(id, name, groupId, el) {
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var pid = 'page-mod-' + id;
   var pg = document.getElementById(pid);
-  if (!pg) {
-    pg = document.createElement('div');
-    pg.className = 'page'; pg.id = pid;
-    var docs = MODULE_DOCS[id];
-    var docsHtml = '';
-    if (docs) {
-      docsHtml = '<div class="card" style="margin-top:12px"><div class="card-title">📂 Tài liệu</div>' +
-        '<p style="color:#555;font-size:13px;margin-bottom:14px">' + docs.desc + '</p>' +
-        docs.files.map(function(f) {
+  if (pg) pg.remove(); // always rebuild to get fresh Firebase data
+
+  pg = document.createElement('div');
+  pg.className = 'page active'; pg.id = pid;
+  var isAdmin = currentUser && ['owner','admin'].includes(currentUser.role);
+
+  // Build static docs HTML
+  var docs = MODULE_DOCS[id];
+  var staticHtml = '';
+  if (docs) {
+    staticHtml = '<p style="color:#555;font-size:13px;margin-bottom:14px">' + docs.desc + '</p>'
+      + docs.files.map(function(f) {
           var dlUrl = BASE_URL + encodeURIComponent(f.file);
           var viewUrl = OFFICE_VIEW + dlUrl;
-          return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8f9fb;border-radius:8px;margin-bottom:8px;border:1px solid #e5e7eb">' +
-            '<span style="font-size:22px">' + f.icon + '</span>' +
-            '<div style="flex:1"><div style="font-weight:700;font-size:13px">' + f.name + '</div>' +
-            '<div style="font-size:11px;color:#888;margin-top:2px">' + f.desc + '</div></div>' +
-            '<a href="' + viewUrl + '" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer">👁️ Xem</a>' +
-            '<a href="' + dlUrl + '" download style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px;cursor:pointer">⬇️ Tải</a>' +
-            '</div>';
-        }).join('') + '</div>';
-    } else {
-      docsHtml = '<div class="card"><p style="color:#aaa;font-style:italic">Chưa có nội dung.</p><br><button class="btn btn-primary" style="width:auto;padding:8px 20px" onclick="showToast(\'Tính năng upload sắp ra mắt!\',\'warning\')">+ Thêm tài liệu</button></div>';
-    }
-    pg.innerHTML = '<div class="page-header"><div class="page-tag">Module</div><div class="page-title">' + name + '</div><div class="page-meta">Click tài liệu để xem online hoặc tải về</div></div>' + docsHtml;
-    var mainEl = document.querySelector('main'); if(mainEl) mainEl.appendChild(pg);
+          return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8f9fb;border-radius:8px;margin-bottom:8px;border:1px solid #e5e7eb">'
+            +'<span style="font-size:22px">'+f.icon+'</span>'
+            +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+f.name+'</div>'
+            +'<div style="font-size:11px;color:#888;margin-top:2px">'+f.desc+'</div></div>'
+            +'<a href="'+viewUrl+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>'
+            +'<a href="'+dlUrl+'" download style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>'
+            +'</div>';
+        }).join('');
   }
-  pg.classList.add('active');
+
+  var uploadBtn = isAdmin
+    ? '<label style="background:#0891b2;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">+ Upload tài liệu<input type="file" multiple style="display:none" onchange="uploadModuleFile(this,'+id+')"></label>'
+    : '';
+
+  pg.innerHTML =
+    '<div class="page-header" style="background:linear-gradient(135deg,#1d4ed8,#1e40af)">'
+    +'<div class="page-tag">Module</div>'
+    +'<div class="page-title">'+name+'</div>'
+    +'<div class="page-meta">Click tài liệu để xem online hoặc tải về</div>'
+    +'</div>'
+    // Docs card
+    +'<div class="card" style="margin-top:12px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'
+    +'<div class="card-title" style="margin:0">📂 Tài liệu</div>'
+    + uploadBtn
+    +'</div>'
+    + staticHtml
+    +'<div id="mod-extra-files-'+id+'"></div>'
+    +'</div>'
+    // Comments card
+    +'<div class="card" style="margin-top:0">'
+    +'<div class="card-title">💬 Ghi chú & Bình luận</div>'
+    +'<div id="mod-comments-'+id+'" style="margin-bottom:12px"></div>'
+    +'<div style="display:flex;gap:8px;align-items:flex-end">'
+    +'<textarea id="mod-cmt-inp-'+id+'" rows="2" placeholder="Thêm ghi chú hoặc bình luận..." style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;resize:none"></textarea>'
+    +'<button onclick="postModuleComment('+id+')" style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer">Gửi</button>'
+    +'</div>'
+    +'</div>';
+
+  var mainEl = document.querySelector('main'); if(mainEl) mainEl.appendChild(pg);
   if(el) el.classList.add('active');
   document.querySelector('main').scrollTop = 0;
+
+  // Load extra files + comments from Firebase
+  loadModuleExtras(id);
+}
+
+function loadModuleExtras(id) {
+  fbGet('/moduleData/'+id+'/files', function(e, files) {
+    var el = document.getElementById('mod-extra-files-'+id); if (!el) return;
+    if (!e && files && files.length) {
+      el.innerHTML = files.map(function(f) {
+        var isOffice = /\.(docx?|xlsx?|pptx?)$/i.test(f.name||'');
+        var viewHtml = isOffice
+          ? '<a href="'+OFFICE_VIEW+encodeURIComponent(f.url)+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>'
+          : '<a href="'+f.url+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>';
+        return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f0fdf4;border-radius:8px;margin-bottom:8px;border:1px solid #bbf7d0">'
+          +'<span style="font-size:20px">📎</span>'
+          +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+f.name+'</div>'
+          +'<div style="font-size:11px;color:#888">'+f.author+' · '+f.date+'</div></div>'
+          + viewHtml
+          +'<a href="'+f.url+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>'
+          +'</div>';
+      }).join('');
+    }
+  });
+  fbGet('/moduleData/'+id+'/comments', function(e, cmts) {
+    var el = document.getElementById('mod-comments-'+id); if (!el) return;
+    var list = (cmts && Array.isArray(cmts)) ? cmts : (cmts ? Object.values(cmts) : []);
+    if (!list.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px;font-style:italic">Chưa có bình luận nào.</p>'; return; }
+    el.innerHTML = list.map(function(c) {
+      var cfg = ROLE_CFG[c.role] || ROLE_CFG.colleague;
+      return '<div style="background:#f8f9fb;border-left:3px solid #1d4ed8;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'
+        +'<span style="font-weight:700;font-size:12px;color:#1d4ed8">'+c.author+'</span>'
+        +'<span class="role-badge '+cfg.cls+'" style="font-size:10px;padding:1px 6px">'+cfg.label+'</span>'
+        +'<span style="font-size:11px;color:#aaa;margin-left:auto">'+c.time+'</span>'
+        +'</div>'
+        +'<div style="font-size:13px;color:#374151;line-height:1.6">'+c.text+'</div>'
+        +'</div>';
+    }).join('');
+  });
+}
+
+function uploadModuleFile(input, moduleId) {
+  var files = Array.from(input.files); if (!files.length) return;
+  showToast('Đang upload...', 'warning');
+  files.forEach(function(file) {
+    uploadToCloud(file, function(err, f) {
+      if (err) { showToast('Lỗi upload: ' + file.name, 'error'); return; }
+      fbGet('/moduleData/'+moduleId+'/files', function(e2, existing) {
+        var arr = (existing && Array.isArray(existing)) ? existing : [];
+        arr.push({ name: f.name, url: f.url, author: currentUser.name, date: f.date });
+        fbSet('/moduleData/'+moduleId+'/files', arr, function() {
+          fbClearCache();
+          loadModuleExtras(moduleId);
+          showToast('✅ Đã upload: ' + f.name, 'success');
+        });
+      });
+    });
+  });
+  input.value = '';
+}
+
+function postModuleComment(moduleId) {
+  var inp = document.getElementById('mod-cmt-inp-'+moduleId);
+  var txt = inp ? inp.value.trim() : ''; if (!txt) return;
+  var cmt = { author: currentUser.name, role: currentUser.role, text: txt, time: new Date().toLocaleString('vi-VN') };
+  fbGet('/moduleData/'+moduleId+'/comments', function(e, existing) {
+    var arr = (existing && Array.isArray(existing)) ? existing : [];
+    arr.push(cmt);
+    fbSet('/moduleData/'+moduleId+'/comments', arr, function() {
+      inp.value = '';
+      loadModuleExtras(moduleId);
+      showToast('Đã gửi bình luận', 'success');
+    });
+  });
 }
 
 // ============================================================
