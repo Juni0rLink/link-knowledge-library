@@ -693,7 +693,7 @@ function showPage(id, el) {
   // Page init calls
   if (id === 'news') markNewsRead();
   if (id === 'modules') { renderModuleGroups(); syncSidebarModules(); }
-  if (id === 'trash') { renderTrash(); renderStorageWidget('home-storage-widget'); }
+  if (id === 'trash') { renderTrash(); renderStorageWidget('storage-widget'); }
   if (id === 'files') { renderSharedDocs(); renderSharedSheets(); renderSharedFileList(); renderPublicModulesGrid(); }
   if (id === 'myfiles') { renderPersonalDocs(); renderPersonalSheets(); renderPersonalFiles(); }
   if (id === 'admin') { renderRegRequests(); loadFirebaseMembers(); }
@@ -1722,5 +1722,117 @@ function showPublicGroupDetail(gid) {
     var el = document.getElementById('pubmod-'+m.id);
     if(el) el.addEventListener('click', function(){showModulePage(m.id, m.name, gid, null);});
   });
+}
+
+// ============================================================
+// TRASH & STORAGE
+// ============================================================
+var trash = [];
+
+function updateTrashBadge() {
+  var b = document.getElementById('trash-badge');
+  var n = trash.length;
+  if (b) { b.textContent = n; b.style.display = n > 0 ? 'inline' : 'none'; }
+}
+
+function renderTrash() {
+  var list = document.getElementById('trash-list');
+  var countEl = document.getElementById('trash-count');
+  if (!list) return;
+  if (countEl) countEl.textContent = trash.length ? '(' + trash.length + ' items)' : '';
+  if (!trash.length) {
+    list.innerHTML = '<p style="color:#aaa;font-style:italic;text-align:center;padding:24px">Thùng rác trống.</p>';
+    return;
+  }
+  list.innerHTML = trash.map(function(item, i) {
+    var label = (item.data && item.data.name) ? item.data.name : (item.type || 'Item');
+    var icon = item.type === 'file' ? '📁' : item.type === 'doc' ? '📝' : item.type === 'sheet' ? '📊' : '🗑️';
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #f5f5f5">'
+      + '<span style="font-size:20px">' + icon + '</span>'
+      + '<div style="flex:1">'
+      + '<div style="font-weight:600;font-size:13px">' + label + '</div>'
+      + '<div style="font-size:11px;color:#aaa">Xóa bởi ' + (item.deletedBy||'?') + ' · ' + (item.deletedAt||'') + (item.reason ? ' · ' + item.reason : '') + '</div>'
+      + '</div>'
+      + '<button onclick="restoreTrash(' + i + ')" style="background:#dcfce7;color:#166534;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">♻️ Khôi phục</button>'
+      + '<button onclick="deleteTrashItem(' + i + ')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">🗑️ Xóa vĩnh viễn</button>'
+      + '</div>';
+  }).join('');
+}
+
+function restoreTrash(i) {
+  var item = trash[i]; if (!item) return;
+  if (item.type === 'file') { sharedFiles.push(item.data); fbSaveSharedFiles(); }
+  else if (item.type === 'doc') { sharedDocs.push(item.data); fbSaveSharedDocs(); }
+  else if (item.type === 'sheet') { sharedSheets.push(item.data); fbSaveSharedSheets(); }
+  trash.splice(i, 1);
+  showToast('Đã khôi phục: ' + (item.data && item.data.name ? item.data.name : 'item'), 'success');
+  renderTrash(); updateTrashBadge();
+}
+
+function deleteTrashItem(i) {
+  var item = trash[i]; if (!item) return;
+  if (!confirm('Xóa vĩnh viễn "' + (item.data && item.data.name ? item.data.name : 'item') + '"?')) return;
+  trash.splice(i, 1);
+  showToast('Đã xóa vĩnh viễn', 'error');
+  renderTrash(); updateTrashBadge();
+}
+
+function emptyTrash() {
+  if (!trash.length) { showToast('Thùng rác đã trống', 'warning'); return; }
+  if (!confirm('Xóa vĩnh viễn tất cả ' + trash.length + ' items?')) return;
+  trash = [];
+  showToast('Đã làm trống thùng rác', 'error');
+  renderTrash(); updateTrashBadge();
+}
+
+// ── STORAGE WIDGET ──
+function renderStorageWidget(containerId) {
+  var el = document.getElementById(containerId || 'storage-widget');
+  if (!el) return;
+
+  // Count items
+  var totalFiles = sharedFiles.length + (cloudFiles ? cloudFiles.length : 0);
+  var totalDocs  = sharedDocs.length + personalDocs.length;
+  var totalSheets = sharedSheets.length + personalSheets.length;
+  var totalPersonalFiles = personalFiles.length;
+  var totalModules = moduleGroups.reduce(function(s,g){ return s + (g.modules||[]).length; }, 0);
+  var trashCount = trash.length;
+
+  // Estimate size from sharedFiles metadata
+  function parseSize(s) {
+    if (!s) return 0;
+    var m = s.match(/([\d.]+)\s*(MB|KB)/i);
+    if (!m) return 0;
+    return parseFloat(m[1]) * (m[2].toUpperCase() === 'MB' ? 1 : 0.001);
+  }
+  var estimatedMB = sharedFiles.reduce(function(s,f){ return s + parseSize(f.size); }, 0);
+  var maxMB = 1000; // GitHub Pages 1GB limit
+  var pct = Math.min(Math.round(estimatedMB / maxMB * 100), 100);
+  var barColor = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e';
+
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px">'
+    + _storCard('📁', 'Files chung', totalFiles, '#0891b2')
+    + _storCard('📝', 'Tài liệu', totalDocs, '#7c3aed')
+    + _storCard('📊', 'Bảng tính', totalSheets, '#217346')
+    + _storCard('📦', 'Modules', totalModules, '#1d4ed8')
+    + _storCard('🗑️', 'Thùng rác', trashCount, '#ef4444')
+    + '</div>'
+    + '<div style="margin-bottom:6px;display:flex;justify-content:space-between;font-size:12px;color:#555">'
+    + '<span>💾 Dung lượng ước tính</span>'
+    + '<span style="font-weight:700">' + estimatedMB.toFixed(1) + ' MB / ' + maxMB + ' MB</span>'
+    + '</div>'
+    + '<div style="background:#e5e7eb;border-radius:999px;height:10px;overflow:hidden">'
+    + '<div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:999px;transition:width .4s"></div>'
+    + '</div>'
+    + '<div style="font-size:11px;color:#aaa;margin-top:4px">' + pct + '% đã dùng · GitHub Pages limit ~1GB</div>';
+}
+
+function _storCard(icon, label, count, color) {
+  return '<div style="background:#f8f9fb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb">'
+    + '<div style="font-size:22px;margin-bottom:4px">' + icon + '</div>'
+    + '<div style="font-size:20px;font-weight:800;color:' + color + '">' + count + '</div>'
+    + '<div style="font-size:11px;color:#888;margin-top:2px">' + label + '</div>'
+    + '</div>';
 }
 
