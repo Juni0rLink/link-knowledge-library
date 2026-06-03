@@ -1940,7 +1940,7 @@ function renderStorageWidget(containerId) {
     return parseFloat(m[1]) * (m[2].toUpperCase() === 'MB' ? 1 : 0.001);
   }
   var estimatedMB = sharedFiles.reduce(function(s,f){ return s + parseSize(f.size); }, 0);
-  var maxMB = 1000; // GitHub Pages 1GB limit
+  var maxMB = 25600; // GitHub Pages 25GB limit
   var pct = Math.min(Math.round(estimatedMB / maxMB * 100), 100);
   var barColor = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e';
 
@@ -1959,7 +1959,7 @@ function renderStorageWidget(containerId) {
     + '<div style="background:#e5e7eb;border-radius:999px;height:10px;overflow:hidden">'
     + '<div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:999px;transition:width .4s"></div>'
     + '</div>'
-    + '<div style="font-size:11px;color:#aaa;margin-top:4px">' + pct + '% đã dùng · GitHub Pages limit ~1GB</div>';
+    + '<div style="font-size:11px;color:#aaa;margin-top:4px">' + pct + '% đã dùng · GitHub Pages limit ~25GB</div>';
 }
 
 function _storCard(icon, label, count, color) {
