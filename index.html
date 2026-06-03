@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LINK Knowledge Library</title>
 <link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c69d4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LINK Library">
 </head>
 <body>
 <div id="login-screen">
@@ -473,6 +478,18 @@ function renderEmojiGrid(cat){currentCategory=cat;renderEmojiCategories();var em
 function searchEmoji(q){if(!q){renderEmojiGrid(currentCategory);return;}var all=[].concat.apply([],Object.values(EMOJIS));document.getElementById('emoji-grid').innerHTML=all.map(function(e){return'<button data-em="'+e+'" onclick="selectEmoji(this.getAttribute(\'data-em\'))" style="font-size:20px;padding:4px;border:none;background:transparent;cursor:pointer;border-radius:6px">'+e+'</button>';}).join('');}
 function selectEmoji(emoji){if(!emoji)return;document.getElementById('emoji-picker').style.display='none';if(emojiCallback)emojiCallback(emoji);}
 document.addEventListener('click',function(e){var p=document.getElementById('emoji-picker');if(p&&!p.contains(e.target)&&!e.target.classList.contains('emoji-trigger'))p.style.display='none';});
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/link-knowledge-library/sw.js')
+      .then(function(reg) {
+        // Check for updates every 60s
+        setInterval(function(){ reg.update(); }, 60000);
+      })
+      .catch(function(e) { console.log('SW error:', e); });
+  });
+}
 </script>
 </body>
 </html>

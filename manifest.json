@@ -1,0 +1,27 @@
+{
+  "name": "LINK Knowledge Library",
+  "short_name": "LINK Library",
+  "description": "Nền tảng kiến thức kỹ thuật nội bộ LINK Group",
+  "start_url": "/link-knowledge-library/",
+  "scope": "/link-knowledge-library/",
+  "display": "standalone",
+  "background_color": "#1a2332",
+  "theme_color": "#1c69d4",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "education", "business"],
+  "lang": "vi"
+}
