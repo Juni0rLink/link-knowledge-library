@@ -1639,7 +1639,56 @@ function renderSharedFileList(){
   });
   list.innerHTML=html;
 }
-function uploadSharedFile(input){showToast('Upload coming soon','warning');if(input)input.value='';}
+function uploadToCloud(file, onDone) {
+  var isVideo = file.type.startsWith('video/');
+  var isImage = file.type.startsWith('image/');
+  var resType = isVideo ? 'video' : isImage ? 'image' : 'raw';
+  var fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', UPLOAD_PRESET);
+  fd.append('folder', 'link-library');
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/' + resType + '/upload');
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      var res = JSON.parse(xhr.responseText);
+      onDone(null, { id: res.public_id, name: file.name, url: res.secure_url,
+        type: file.type, size: res.bytes, date: new Date().toLocaleDateString('vi-VN'),
+        author: currentUser ? currentUser.name : '', cloudinary: true });
+    } else { onDone('Upload failed'); }
+  };
+  xhr.onerror = function(){ onDone('Network error'); };
+  xhr.send(fd);
+}
+
+function uploadSharedFile(input) {
+  var files = Array.from(input.files); if (!files.length) return;
+  var prog = document.getElementById('shared-upload-progress');
+  if (prog) { prog.style.display = 'block'; prog.textContent = 'Đang upload...'; }
+  var done = 0;
+  files.forEach(function(file) {
+    uploadToCloud(file, function(err, f) {
+      done++;
+      if (!err) {
+        sharedFiles.push(f); fbSaveSharedFiles(); renderSharedFileList();
+        showToast('✅ Upload xong: ' + f.name, 'success');
+      } else { showToast('Lỗi upload: ' + file.name, 'error'); }
+      if (done === files.length && prog) prog.style.display = 'none';
+    });
+  });
+  input.value = '';
+}
+
+function uploadPersonalFile(input) {
+  var files = Array.from(input.files); if (!files.length) return;
+  files.forEach(function(file) {
+    uploadToCloud(file, function(err, f) {
+      if (!err) { personalFiles.push(f); renderPersonalFiles(); showToast('✅ Upload: ' + f.name, 'success'); }
+      else { showToast('Lỗi upload: ' + file.name, 'error'); }
+    });
+  });
+  input.value = '';
+}
 
 var PM_ICONS = ['📌','📘','📗','📙','📕','🔧','⚡','🛡️','🔬','💡','🗂️','📋','🏗️','🎯','🔑','📊','🧩','🚀','💼','🖥️','📐','🔍'];
 
@@ -1923,43 +1972,42 @@ function emptyTrash() {
 function renderStorageWidget(containerId) {
   var el = document.getElementById(containerId || 'storage-widget');
   if (!el) return;
-
-  // Count items
-  var totalFiles = sharedFiles.length + (cloudFiles ? cloudFiles.length : 0);
-  var totalDocs  = sharedDocs.length + personalDocs.length;
-  var totalSheets = sharedSheets.length + personalSheets.length;
-  var totalPersonalFiles = personalFiles.length;
+  var totalFiles = sharedFiles.length + personalFiles.length + (cloudFiles ? cloudFiles.length : 0);
   var totalModules = moduleGroups.reduce(function(s,g){ return s + (g.modules||[]).length; }, 0);
   var trashCount = trash.length;
 
-  // Estimate size from sharedFiles metadata
-  function parseSize(s) {
-    if (!s) return 0;
-    var m = s.match(/([\d.]+)\s*(MB|KB)/i);
-    if (!m) return 0;
-    return parseFloat(m[1]) * (m[2].toUpperCase() === 'MB' ? 1 : 0.001);
+  function bar(usedMB, maxMB, color, label) {
+    var pct = Math.min(Math.round(usedMB / maxMB * 100), 100);
+    var bc = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : color;
+    var usedStr = usedMB >= 1024 ? (usedMB/1024).toFixed(1)+'GB' : usedMB.toFixed(0)+'MB';
+    var maxStr  = maxMB  >= 1024 ? (maxMB/1024).toFixed(0)+'GB'  : maxMB+'MB';
+    return '<div style="margin-bottom:14px">'
+      +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">'
+      +'<span style="font-weight:700;color:#374151">'+label+'</span>'
+      +'<span style="color:#555">'+usedStr+' / '+maxStr+'</span></div>'
+      +'<div style="background:#e5e7eb;border-radius:999px;height:8px;overflow:hidden">'
+      +'<div style="width:'+pct+'%;height:100%;background:'+bc+';border-radius:999px;transition:width .4s"></div>'
+      +'</div>'
+      +'<div style="font-size:10px;color:#aaa;margin-top:2px">'+pct+'% đã dùng</div>'
+      +'</div>';
   }
-  var estimatedMB = sharedFiles.reduce(function(s,f){ return s + parseSize(f.size); }, 0);
-  var maxMB = 25600; // GitHub Pages 25GB limit
-  var pct = Math.min(Math.round(estimatedMB / maxMB * 100), 100);
-  var barColor = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e';
+
+  // File sizes from cloudinary metadata (bytes)
+  var cloudUsedBytes = sharedFiles.concat(personalFiles).reduce(function(s,f){ return s + (f.size && typeof f.size === 'number' ? f.size : 0); }, 0);
+  var cloudUsedMB = cloudUsedBytes / 1048576;
 
   el.innerHTML =
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px">'
-    + _storCard('📁', 'Files chung', totalFiles, '#0891b2')
-    + _storCard('📝', 'Tài liệu', totalDocs, '#7c3aed')
-    + _storCard('📊', 'Bảng tính', totalSheets, '#217346')
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">'
+    + _storCard('📁', 'Tổng files', totalFiles, '#0891b2')
     + _storCard('📦', 'Modules', totalModules, '#1d4ed8')
     + _storCard('🗑️', 'Thùng rác', trashCount, '#ef4444')
     + '</div>'
-    + '<div style="margin-bottom:6px;display:flex;justify-content:space-between;font-size:12px;color:#555">'
-    + '<span>💾 Dung lượng ước tính</span>'
-    + '<span style="font-weight:700">' + estimatedMB.toFixed(1) + ' MB / ' + maxMB + ' MB</span>'
-    + '</div>'
-    + '<div style="background:#e5e7eb;border-radius:999px;height:10px;overflow:hidden">'
-    + '<div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:999px;transition:width .4s"></div>'
-    + '</div>'
-    + '<div style="font-size:11px;color:#aaa;margin-top:4px">' + pct + '% đã dùng · GitHub Pages limit ~25GB</div>';
+    + '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">📊 Dung lượng theo nền tảng</div>'
+    + bar(cloudUsedMB, 25*1024, '#f59e0b', '☁️ Cloudinary (file uploads)')
+    + bar(50, 1024, '#0891b2', '🐙 GitHub Pages (code + tài liệu)')
+    + bar(0.1, 1024, '#22c55e', '🔥 Firebase Realtime DB')
+    + '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:12px;color:#166534">'
+    +'✅ Tổng dung lượng miễn phí: <strong>~27GB</strong> (Cloudinary 25GB + GitHub 1GB + Firebase 1GB)</div>';
 }
 
 function _storCard(icon, label, count, color) {
