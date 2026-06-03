@@ -1060,7 +1060,7 @@ function renderModuleGroups() {
       '<button class="btn-sm" style="background:#e8f0fd;color:#0653b6;border:none;cursor:pointer" onclick="editGroupName(' + g.id + ')">✏️ Đổi tên nhóm</button>' +
       '<button class="btn-sm reject-btn" style="margin-left:6px" onclick="deleteGroup(' + g.id + ')">🗑️ Xóa</button>' +
       '</div>' +
-      g.modules.map(function(m) {
+      (g.modules||[]).map(function(m) {
         return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0">' +
           '<span style="cursor:pointer;border-radius:4px;padding:1px" title="Bấm để đổi icon" onclick="pickModuleIcon('+g.id+','+m.id+',this)">' + m.icon + '</span>' +
           '<span style="flex:1;font-size:13px" id="mname-' + m.id + '">' + m.name + '</span>' +
@@ -1688,7 +1688,7 @@ function renderPublicModulesGrid() {
     html += '<div onclick="showPublicGroupDetail('+g.id+')" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer">'
       +'<div style="font-size:28px;margin-bottom:8px">'+g.icon+'</div>'
       +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+g.name+'</div>'
-      +'<div style="font-size:11px;color:#aaa">'+g.modules.length+' modules</div>'
+      +'<div style="font-size:11px;color:#aaa">'+((g.modules||[]).length)+' modules</div>'
       +'</div>';
   });
   grid.innerHTML = html;
@@ -1698,7 +1698,7 @@ function showPublicGroupDetail(gid) {
   var g = moduleGroups.find(function(x){return x.id===gid;}); if(!g) return;
   var container = document.getElementById('public-modules-grid'); if(!container) return;
   var modsHtml = '';
-  g.modules.forEach(function(m){
+  (g.modules||[]).forEach(function(m){
     var docs = MODULE_DOCS[m.id]; var fc = docs ? docs.files.length : 0;
     var hasDocs = fc > 0;
     modsHtml += '<div id="pubmod-'+m.id+'" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px 16px;cursor:pointer;transition:box-shadow .15s,border-color .15s" '
