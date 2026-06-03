@@ -1422,4 +1422,55 @@ function renderSharedSheets() {
 function openSharedSheet(i) {
   var s=sharedSheets[i]; var editor=document.getElementById('shared-sheet-editor'); if(!editor) return;
   editor.style.display='block';
-  editor.innerHTML='<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:18px">Ὄa</span><div style="font-weight:700;font-size:15px">'+s.name+'</div><button onclick="document.getElementById(\'shared-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button></div><div style="overflow:auto"><table id="ss'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><div style="display:flex;gap:8px;margin-top:8px"><button onclick="exportSSCSV('+i+')" style="background:#217346;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">⬇️ CSV</button><button onclick="moveSheetToPersonal('+i+')" style="back
+  editor.innerHTML='<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:18px">📊</span><div style="font-weight:700;font-size:15px">'+s.name+'</div><button onclick="document.getElementById(\'shared-sheet-editor\').style.display=\'none\'" style="margin-left:auto;background:#f3f4f6;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button></div><div style="overflow:auto"><table id="ss'+i+'" style="border-collapse:collapse;min-width:100%"></table></div><div style="display:flex;gap:8px;margin-top:8px"><button onclick="exportSSCSV('+i+')" style="background:#217346;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">⬇️ CSV</button><button onclick="moveSheetToPersonal('+i+')" style="background:#ede9fe;color:#7c3aed;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">📋 Cá nhân</button></div></div>';
+  buildSSSheet(i);
+}
+
+function buildSSSheet(si) {
+  var t = document.getElementById('ss' + si);
+  if (!t) return;
+  var R=8,C=6,h='<tr><th style="background:#f1f3f5;border:1px solid #d1d5db;width:36px;height:22px;font-size:10px;position:sticky;top:0;left:0;z-index:3"></th>';
+  for(var c=0;c<C;c++) h+='<th style="background:#f1f3f5;border:1px solid #d1d5db;width:80px;height:22px;text-align:center;font-size:10px;font-weight:700;color:#6b7280;position:sticky;top:0">'+colL(c)+'</th>';
+  h+='</tr>';
+  for(var r=0;r<R;r++){
+    h+='<tr><td style="background:#f1f3f5;border:1px solid #d1d5db;text-align:center;font-size:10px;color:#6b7280;font-weight:700;position:sticky;left:0;min-width:30px;padding:0 4px">'+(r+1)+'</td>';
+    for(var c=0;c<C;c++){var id=sCellId(r,c);h+='<td style="border:1px solid #e5e7eb;padding:0;min-width:80px;height:24px"><input id="ss'+si+'-sc-'+id+'" style="width:100%;height:100%;border:none;outline:none;padding:0 3px;font-size:12px;background:transparent" onblur="ssRecalc('+si+')" onchange="sharedSheets['+si+'].data[\''+id+'\']=this.value;ssRecalc('+si+')"></td>';}
+    h+='</tr>';
+  }
+  t.innerHTML=h;
+  var data = sharedSheets[si] ? sharedSheets[si].data : {};
+  for(var id in data){var el=document.getElementById('ss'+si+'-sc-'+id);if(el)el.value=data[id];}
+}
+
+function ssRecalc(si) {
+  var data = sharedSheets[si] ? sharedSheets[si].data : {};
+  for (var id in data) {
+    var el = document.getElementById('ss'+si+'-sc-'+id);
+    if (!el) continue;
+    if ((data[id]||'').startsWith('=')) {
+      try {
+        var expr = data[id].substring(1).toUpperCase();
+        expr = expr.replace(/SUM\(([^)]+)\)/g, function(m,r){return sExpand(r).map(function(c){return parseFloat(data[c])||0;}).reduce(function(a,b){return a+b;},0);});
+        expr = expr.replace(/AVG\(([^)]+)\)/g, function(m,r){var a=sExpand(r).map(function(c){return parseFloat(data[c])||0;});return a.reduce(function(s,v){return s+v;},0)/a.length;});
+        expr = expr.replace(/([A-Z]\d+)/g, function(c){return parseFloat(data[c])||0;});
+        el.value = Math.round(eval(expr)*1000)/1000;
+        el.style.color = '#0653b6';
+      } catch(e) { el.value = '#ERR'; el.style.color = '#ef4444'; }
+    }
+  }
+}
+
+function exportSSCSV(si) {
+  var data = sharedSheets[si] ? sharedSheets[si].data : {};
+  var rows = [];
+  for (var r=0;r<8;r++){var row=[];for(var c=0;c<6;c++){var id=sCellId(r,c);row.push(data[id]||'');}rows.push(row.join(','));}
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(sharedSheets[si].name||'sheet')+'.csv';a.click();
+  showToast('Đã xuất CSV!','success');
+}
+
+function moveSheetToPersonal(i) {
+  var s=sharedSheets[i]; if(!s) return;
+  personalSheets.push({id:Date.now(),name:s.name+' (copy)',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:Object.assign({},s.data)});
+  showToast('Đã sao chép "'+s.name+'" về File cá nhân!','success');
+}
