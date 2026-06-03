@@ -1690,26 +1690,105 @@ function uploadPersonalFile(input) {
   input.value = '';
 }
 
-var PM_ICONS = ['📌','📘','📗','📙','📕','🔧','⚡','🛡️','🔬','💡','🗂️','📋','🏗️','🎯','🔑','📊','🧩','🚀','💼','🖥️','📐','🔍'];
+// ── EMOJI PICKER (full, searchable) ──
+var EMOJI_DB = [
+  // Tech & Tools
+  '🔧','🔨','⚙️','🛠️','🔩','🔬','🔭','💡','🖥️','💻','🖨️','⌨️','🖱️','📱','📡','🔌','🔋','💾','💿','📀',
+  // Documents & Office
+  '📄','📝','📋','📊','📈','📉','📌','📍','📎','🖇️','📏','📐','✂️','🗂️','🗃️','🗄️','📁','📂','🗑️',
+  '📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🏷️',
+  // Business & Work
+  '💼','👔','🏢','🏭','🏗️','🔑','🗝️','🚪','🪑','🖊️','✒️','🖋️','📮','📬','📭','📯','📢','📣',
+  // Safety & Warning
+  '🛡️','⚠️','🚨','🚧','⛔','🔴','🟡','🟢','🔵','🟣','🟤','⚡','🔥','❄️','💧','🌊',
+  // Science & Research
+  '🧪','🧫','🧬','⚗️','🔮','🧲','🪝','🧯','🩺','🏥','💊','🩹','🩻',
+  // Arrows & Symbols
+  '✅','❌','⭕','❓','❕','💯','🔄','↩️','↪️','⬆️','⬇️','➡️','⬅️','🔃','🔁','🔂',
+  // Stars & Awards
+  '⭐','🌟','💫','✨','🏆','🥇','🎯','🎖️','🏅','🎗️','🎀','🎁','🎊','🎉',
+  // Nature
+  '🌱','🌿','🍀','🌳','🌲','🌴','🌵','🍃','🌾','🌸','🌺','🌻','🌼','🌞','🌙','⛅','🌈','⚡',
+  // Transport
+  '🚀','✈️','🚁','🚂','🚗','🚕','🛻','🚛','🏎️','🛥️','⚓','🗺️',
+  // People & Roles
+  '👤','👥','👨‍💻','👩‍💻','👷','👮','🧑‍🔬','👨‍🏫','🧑‍💼','🤝','👋','✋','👍','👎','💪',
+  // Misc
+  '🧩','🎮','🎲','🃏','🧸','🪆','🎭','🎨','🖼️','📸','🎵','🎶','📺','📻','⏰','⏱️','📅','📆',
+];
 
-function showIconPicker(currentIcon, onSelect) {
-  var existing = document.getElementById('icon-picker-modal');
-  if (existing) existing.remove();
+var EMOJI_LABELS = {
+  '🔧':'công cụ','🔨':'búa','⚙️':'cài đặt','🛠️':'sửa chữa','🔩':'ốc vít','🔬':'kính hiển vi','💡':'ý tưởng',
+  '🖥️':'máy tính','💻':'laptop','📄':'tài liệu','📝':'ghi chú','📋':'clipboard','📊':'biểu đồ','📈':'tăng',
+  '📌':'ghim','🗂️':'hồ sơ','📁':'thư mục','📂':'thư mục mở','📚':'sách','📖':'đọc','🔑':'chìa khóa',
+  '🛡️':'an toàn','⚠️':'cảnh báo','🚨':'khẩn cấp','⚡':'điện','🔥':'nóng','🧪':'thí nghiệm',
+  '✅':'hoàn thành','❌':'lỗi','🏆':'giải thưởng','⭐':'sao','🚀':'phóng','💼':'công việc',
+  '🏗️':'xây dựng','🏭':'nhà máy','👥':'nhóm','🧩':'module','🎯':'mục tiêu','🔵':'xanh',
+  '📦':'hộp','📡':'ăng ten','🌐':'toàn cầu','💾':'lưu','🗃️':'lưu trữ','🔄':'làm mới',
+};
+
+function showEmojiPicker(currentIcon, onSelect) {
+  var ex = document.getElementById('emoji-picker-modal'); if (ex) ex.remove();
   var d = document.createElement('div');
-  d.id = 'icon-picker-modal';
-  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:center;justify-content:center';
-  d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:20px;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)">'
-    + '<div style="font-weight:700;font-size:14px;margin-bottom:14px">Chọn icon</div>'
-    + '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px">'
-    + PM_ICONS.map(function(ic){
-        return '<button onclick="(function(){document.getElementById(\'icon-picker-modal\').remove();('+onSelect.toString()+')(\''+ic+'\');})()" '
-          +'style="font-size:22px;background:'+(ic===currentIcon?'#ede9fe':'#f8f9fb')+';border:'+(ic===currentIcon?'2px solid #7c3aed':'2px solid transparent')+';border-radius:8px;padding:6px;cursor:pointer">'+ic+'</button>';
-      }).join('')
-    + '</div>'
-    + '<button onclick="document.getElementById(\'icon-picker-modal\').remove()" style="width:100%;background:#f3f4f6;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer">Hủy</button>'
-    + '</div>';
+  d.id = 'emoji-picker-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+
+  function buildGrid(list) {
+    return list.map(function(e){
+      var tip = EMOJI_LABELS[e] || '';
+      return '<button title="'+tip+'" onclick="(function(){'
+        +'document.getElementById(\'emoji-picker-modal\').remove();'
+        +'(window._emojiCb||function(){})(\''+e+'\');'
+        +'})()" style="font-size:22px;background:'+(e===currentIcon?'#ede9fe':'transparent')+';border:'+(e===currentIcon?'2px solid #7c3aed':'2px solid transparent')+';border-radius:8px;padding:5px;cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'#f3f4f6\'" onmouseout="this.style.background=\''+(e===currentIcon?'#ede9fe':'transparent')+'\'">'+e+'</button>';
+    }).join('');
+  }
+
+  d.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:420px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+    +'<div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;gap:8px;align-items:center">'
+    +'<input id="emoji-search" placeholder="🔍 Tìm emoji... (vd: an toàn, công cụ)" style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:13px;outline:none">'
+    +'<button onclick="document.getElementById(\'emoji-picker-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:7px;padding:6px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div id="emoji-grid" style="padding:12px;display:grid;grid-template-columns:repeat(9,1fr);gap:4px;overflow-y:auto;max-height:400px">'
+    + buildGrid(EMOJI_DB)
+    +'</div>'
+    +'<div style="padding:8px 14px;border-top:1px solid #e5e7eb;font-size:11px;color:#aaa">'+EMOJI_DB.length+' emojis · Bấm để chọn</div>'
+    +'</div>';
+
+  window._emojiCb = onSelect;
   document.body.appendChild(d);
+
+  document.getElementById('emoji-search').addEventListener('input', function() {
+    var q = this.value.toLowerCase();
+    var filtered = q ? EMOJI_DB.filter(function(e){
+      return e.includes(q) || (EMOJI_LABELS[e]||'').toLowerCase().includes(q);
+    }) : EMOJI_DB;
+    document.getElementById('emoji-grid').innerHTML = buildGrid(filtered)
+      || '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#aaa">Không tìm thấy</div>';
+  });
+  setTimeout(function(){ var s=document.getElementById('emoji-search'); if(s) s.focus(); }, 100);
 }
+
+// Keep showIconPicker as alias
+function showIconPicker(currentIcon, onSelect) { showEmojiPicker(currentIcon, onSelect); }
+
+function pickGroupIcon(gid, el) {
+  var g = moduleGroups.find(function(x){return x.id===gid;});
+  showEmojiPicker(g ? g.icon : '📂', function(ic){
+    if (g) g.icon = ic;
+    fbSaveModules(); renderModuleGroups(); syncSidebarModules();
+  });
+}
+
+function pickModuleIcon(gid, mid, el) {
+  var g = moduleGroups.find(function(x){return x.id===gid;});
+  var m = g && (g.modules||[]).find(function(x){return x.id===mid;});
+  showEmojiPicker(m ? m.icon : '📦', function(ic){
+    if (m) m.icon = ic;
+    fbSaveModules(); renderModuleGroups(); syncSidebarModules();
+  });
+}
+
+var PM_ICONS = EMOJI_DB;
 
 function createPersonalModule() {
   var name = prompt('Tên module cá nhân:'); if (!name) return;
