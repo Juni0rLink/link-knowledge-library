@@ -480,6 +480,89 @@ function deleteFile(id) {
 // ============================================================
 // MODULE MANAGER
 // ============================================================
+var BASE_URL = 'https://juni0rlink.github.io/link-knowledge-library/content/';
+var OFFICE_VIEW = 'https://view.officeapps.live.com/op/view.aspx?src=';
+
+var MODULE_DOCS = {
+  101: {
+    desc: 'GSC (Group Standard Controls) — tiêu chuẩn phần mềm PLC cho toàn bộ dây chuyền LINK Group.',
+    files: [
+      { name:'GSC Software Structure', file:'GSC Software structure.pptx', icon:'🏗️', desc:'Kiến trúc tổng thể phần mềm GSC' },
+      { name:'GSC Phase Concept', file:'GSC Module Phase concept.pptx', icon:'🔄', desc:'Cấu trúc Phase, RESEQ, Sequencer' },
+      { name:'GSC User Sequence', file:'GSC Module User sequence.pptx', icon:'📋', desc:'User sequence logic' },
+      { name:'GSC Type Management', file:'GSC Type management.pptx', icon:'🗂️', desc:'TYPE_DECO_FB, decode/generate data' },
+    ]
+  },
+  201: {
+    desc: 'Tổng quan an toàn — F-runtime, zone concept, safety program.',
+    files: [
+      { name:'GSC Module Safety', file:'GSC Module Safety.pptx', icon:'🛡️', desc:'Safety program, F-runtime group, zone concept' },
+      { name:'Overview Basic Concept Safety', file:'Overview Basic Concept Safety_Nguyễn Tuấn Phong.pptx', icon:'📖', desc:'Operating modes, MDB, component blocks' },
+    ]
+  },
+  202: {
+    desc: 'E-STOP procedure và zone concept trong hệ thống GSC.',
+    files: [
+      { name:'GSC Module Safety', file:'GSC Module Safety.pptx', icon:'⚡', desc:'E-STOP, safe actuators, zone concept' },
+    ]
+  },
+  301: {
+    desc: 'SAS (System Architecture Software) — cấu hình fixture và hardware trong SAS.',
+    files: [
+      { name:'GSC Module SAS', file:'GSC Module SAS.pptx', icon:'⚙️', desc:'Working with Fixture in SAS, hardware config' },
+    ]
+  },
+  401: {
+    desc: 'Phase Concept & Resequencing — cấu trúc sequencer, RESEQ, network structure.',
+    files: [
+      { name:'GSC Module Phase Concept', file:'GSC Module Phase concept.pptx', icon:'🔄', desc:'RESEQ sequencer, phase parameterization' },
+    ]
+  },
+  402: {
+    desc: 'User Sequence — logic điều khiển user sequence trong GSC.',
+    files: [
+      { name:'GSC Module User Sequence', file:'GSC Module User sequence.pptx', icon:'📊', desc:'User sequence structure and logic' },
+    ]
+  },
+  403: {
+    desc: 'Type Management — TYPE_DECO_FB, UDB, decode/generate data functions.',
+    files: [
+      { name:'GSC Type Management', file:'GSC Type management.pptx', icon:'🗂️', desc:'TYPE_DECO_FB, decode/generate, UDB blocks' },
+    ]
+  },
+  501: {
+    desc: 'Operation Manual tổng quan — A1HG01 Housing Cluster, BMW Plant Irlbach-Strasskirchen.',
+    files: [
+      { name:'Cover Page', file:'MAN_00101_Manual_Cover.docx', icon:'📄', desc:'Customer: BMW AG, Plant 2.6 Irlbach' },
+      { name:'General Information', file:'MAN_00201_Manual_General.docx', icon:'📋', desc:'Electrical documentation, technical data' },
+      { name:'LINE Overview', file:'MAN_00301_Manual_LINE.docx', icon:'🏭', desc:'GSC hardware/software, TIA CPU1518F, Profinet Safety' },
+      { name:'PLC Overview', file:'MAN_00401_Manual_PLC.docx', icon:'💻', desc:'Production line process, Acrylic ST030-032, UV ST050' },
+    ]
+  },
+  502: {
+    desc: 'Safety Gates SG01–SG06 — Conveyor stations ST700, ST710, ST711, ST712, ST030, ST031.',
+    files: [
+      { name:'SG01 – ST700', file:'MAN_00501_Manual_SG01.docx', icon:'🔲', desc:'Layout Conveyor ST700 — transmission only' },
+      { name:'SG02 – ST710', file:'MAN_00601_Manual_SG02.docx', icon:'🔲', desc:'Layout Conveyor ST710 — transmission only' },
+      { name:'SG04 – ST711', file:'MAN_00602_Manual_SG04.docx', icon:'🔲', desc:'Layout Conveyor ST711 — transmission only' },
+      { name:'SG06 – ST712', file:'MAN_00603_Manual_SG06.docx', icon:'🔲', desc:'Layout Conveyor ST712 — transmission only' },
+      { name:'SG03 – ST030', file:'MAN_00701_Manual_SG03.docx', icon:'🔧', desc:'Acrylic station, dual PLC coordination' },
+      { name:'SG05 – ST031', file:'MAN_00702_Manual_SG05.docx', icon:'🔧', desc:'Acrylic station ST031, PNPN signal' },
+    ]
+  },
+  503: {
+    desc: 'Safety Gates SG07–SG12 — Conveyor stations ST032, ST719, ST720, ST050, ST730, ST739.',
+    files: [
+      { name:'SG07 – ST032', file:'MAN_00703_Manual_SG07.docx', icon:'🔧', desc:'Acrylic station ST032, dual PLC' },
+      { name:'SG08 – ST719', file:'MAN_00801_Manual_SG08.docx', icon:'🔲', desc:'Take in transmission lines ST719' },
+      { name:'SG09 – ST720', file:'MAN_00901_Manual_SG09.docx', icon:'🔲', desc:'Conveyor ST720 — transmission only' },
+      { name:'SG10 – ST050', file:'MAN_01001_Manual_SG10.docx', icon:'💡', desc:'UV Station — Puck test, ICAD measurement, UV curing' },
+      { name:'SG11 – ST730', file:'MAN_01101_Manual_SG11.docx', icon:'🔲', desc:'Conveyor ST730 — transmission only' },
+      { name:'SG12 – ST739', file:'MAN_01201_Manual_SG12.docx', icon:'🔲', desc:'Take In/Out transmission lines ST739' },
+    ]
+  },
+};
+
 var moduleGroups = [
   { id:1, icon:'📚', name:'BMW Standards', modules:[
     { id:101, icon:'🔷', name:'GSC – Group Standard Controls' },
@@ -498,6 +581,11 @@ var moduleGroups = [
     { id:401, icon:'🔄', name:'Phase Concept & Resequencing' },
     { id:402, icon:'📊', name:'User Sequence' },
     { id:403, icon:'🗂️', name:'Type Management' },
+  ]},
+  { id:5, icon:'📘', name:'Operation Manual A1HG01', modules:[
+    { id:501, icon:'📋', name:'General & Overview' },
+    { id:502, icon:'🔲', name:'Safety Gates SG01–SG06' },
+    { id:503, icon:'🔲', name:'Safety Gates SG07–SG12' },
   ]},
 ];
 function renderModuleGroups() {
@@ -622,8 +710,27 @@ function showModulePage(id, name, groupId, el) {
   if (!pg) {
     pg = document.createElement('div');
     pg.className = 'page'; pg.id = pid;
-    pg.innerHTML = '<div class="page-header"><div class="page-tag">Module</div><div class="page-title">' + name + '</div><div class="page-meta">Nội dung module — click + Thêm để đóng góp</div></div>' +
-      '<div class="card"><div class="card-title">Nội dung</div><p style="color:#aaa;font-style:italic">Chưa có nội dung. Bấm nút bên dưới để thêm tài liệu.</p><br><button class="btn btn-primary" style="width:auto;padding:8px 20px" onclick="showToast(\'Tính năng upload sắp ra mắt!\',\'warning\')">+ Thêm tài liệu</button></div>';
+    var docs = MODULE_DOCS[id];
+    var docsHtml = '';
+    if (docs) {
+      docsHtml = '<div class="card" style="margin-top:12px"><div class="card-title">📂 Tài liệu</div>' +
+        '<p style="color:#555;font-size:13px;margin-bottom:14px">' + docs.desc + '</p>' +
+        docs.files.map(function(f) {
+          var url = encodeURIComponent(BASE_URL + f.file);
+          var viewUrl = OFFICE_VIEW + url;
+          var dlUrl = BASE_URL + f.file;
+          return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8f9fb;border-radius:8px;margin-bottom:8px;border:1px solid #e5e7eb">' +
+            '<span style="font-size:22px">' + f.icon + '</span>' +
+            '<div style="flex:1"><div style="font-weight:700;font-size:13px">' + f.name + '</div>' +
+            '<div style="font-size:11px;color:#888;margin-top:2px">' + f.desc + '</div></div>' +
+            '<a href="' + viewUrl + '" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer">👁️ Xem</a>' +
+            '<a href="' + dlUrl + '" download style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px;cursor:pointer">⬇️ Tải</a>' +
+            '</div>';
+        }).join('') + '</div>';
+    } else {
+      docsHtml = '<div class="card"><p style="color:#aaa;font-style:italic">Chưa có nội dung.</p><br><button class="btn btn-primary" style="width:auto;padding:8px 20px" onclick="showToast(\'Tính năng upload sắp ra mắt!\',\'warning\')">+ Thêm tài liệu</button></div>';
+    }
+    pg.innerHTML = '<div class="page-header"><div class="page-tag">Module</div><div class="page-title">' + name + '</div><div class="page-meta">Click tài liệu để xem online hoặc tải về</div></div>' + docsHtml;
     var mainEl = document.querySelector('main'); if(mainEl) mainEl.appendChild(pg);
   }
   pg.classList.add('active');
