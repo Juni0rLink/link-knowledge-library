@@ -260,6 +260,65 @@ function launchApp() {
 }
 
 // ============================================================
+// KNOWLEDGE SEARCH
+// ============================================================
+var searchIndex = null;
+
+function loadSearchIndex(cb) {
+  if (searchIndex) { cb(searchIndex); return; }
+  fetch('search-index.json')
+    .then(function(r){return r.json();})
+    .then(function(data){ searchIndex = data; cb(data); })
+    .catch(function(){ cb([]); });
+}
+
+function doKnowledgeSearch() {
+  var q = document.getElementById('ks-input').value.trim().toLowerCase();
+  var results = document.getElementById('ks-results');
+  if (!q) { results.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px">Nhập từ khóa để tìm kiếm...</p>'; return; }
+  results.innerHTML = '<p style="color:#888;padding:12px">⏳ Đang tìm...</p>';
+  loadSearchIndex(function(idx) {
+    var words = q.split(/\s+/).filter(Boolean);
+    var scored = idx.map(function(item) {
+      var t = item.text.toLowerCase();
+      var s = item.source.toLowerCase();
+      var score = 0;
+      words.forEach(function(w){ if(t.includes(w)) score += 2; if(s.includes(w)) score += 1; });
+      return { item: item, score: score };
+    }).filter(function(x){ return x.score > 0; })
+      .sort(function(a,b){ return b.score - a.score; })
+      .slice(0, 15);
+    if (!scored.length) {
+      results.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa"><div style="font-size:36px;margin-bottom:8px">🔍</div><p>Không tìm thấy kết quả cho <strong>"'+q+'"</strong></p><p style="font-size:12px;margin-top:6px">Thử từ khóa khác: E-STOP, TYPE_DECO, SAS, safety zone...</p></div>';
+      return;
+    }
+    var html = '<div style="font-size:12px;color:#888;margin-bottom:12px">Tìm thấy <strong>'+scored.length+'</strong> kết quả cho "<strong>'+q+'</strong>"</div>';
+    scored.forEach(function(r) {
+      var item = r.item;
+      var fileUrl = 'https://juni0rlink.github.io/link-knowledge-library/content/' + encodeURIComponent(item.file);
+      var viewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(fileUrl);
+      var excerpt = item.text;
+      words.forEach(function(w){
+        var re = new RegExp('('+w+')', 'gi');
+        excerpt = excerpt.replace(re, '<mark style="background:#fef08a;padding:0 2px;border-radius:2px">$1</mark>');
+      });
+      excerpt = excerpt.slice(0, 300) + (excerpt.length > 300 ? '...' : '');
+      html += '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:14px 16px;margin-bottom:10px">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<span style="font-size:11px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px">'+item.source+'</span>' +
+        '<span style="font-size:11px;color:#888">'+item.page+'</span>' +
+        '<div style="margin-left:auto;display:flex;gap:6px">' +
+        '<a href="'+viewUrl+'" target="_blank" style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:3px 8px;border-radius:6px;text-decoration:none;font-weight:700">👁️ Xem</a>' +
+        '<a href="'+fileUrl+'" download style="font-size:11px;background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:6px;text-decoration:none;font-weight:700">⬇️ Tải</a>' +
+        '</div></div>' +
+        '<div style="font-size:13px;color:#333;line-height:1.6">'+excerpt+'</div>' +
+        '</div>';
+    });
+    results.innerHTML = html;
+  });
+}
+
+// ============================================================
 // NAVIGATION
 // ============================================================
 function showPage(id, el) {
