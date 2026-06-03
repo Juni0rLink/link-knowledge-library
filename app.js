@@ -1,6 +1,3 @@
-https://raw.githubusercontent.com/Juni0rLink/link-knowledge-library/main/app.js
-→ https://raw.githubusercontent.com/Juni0rLink/link-knowledge-library/main/app.js
-Content-Type: text/plain; charset=utf-8
 
 // ============================================================
 // DATA
