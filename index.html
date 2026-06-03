@@ -363,6 +363,23 @@
           </table>
         </div>
         <div class="warning-box">⚠️ Chỉ Owner mới có thể cấp quyền Admin cho người khác.</div>
+        <div class="card" id="my-profile-card">
+          <div class="card-title">👤 Thông tin của tôi</div>
+          <table>
+            <tr><td style="color:#888;width:140px">Họ tên</td><td><strong id="profile-name-display">—</strong></td></tr>
+            <tr><td style="color:#888">Email</td><td id="profile-email-display">—</td></tr>
+            <tr><td style="color:#888">Vai trò</td><td id="profile-role-display">—</td></tr>
+          </table>
+          <div style="margin-top:16px;border-top:1px solid #f0f0f0;padding-top:16px">
+            <div class="card-title" style="font-size:13px;margin-bottom:10px">🔑 Đổi mật khẩu</div>
+            <div style="display:flex;flex-direction:column;gap:8px;max-width:400px">
+              <input id="change-pass-new" type="password" class="form-input" placeholder="Mật khẩu mới (tối thiểu 6 ký tự)">
+              <input id="change-pass-confirm" type="password" class="form-input" placeholder="Nhập lại mật khẩu mới">
+              <button onclick="doChangePassword()" style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;width:100%">Đổi mật khẩu</button>
+              <div id="change-pass-msg" style="display:none;font-size:12px;padding:8px;border-radius:6px"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>

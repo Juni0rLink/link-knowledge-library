@@ -238,16 +238,66 @@ function doLogin() {
     }
     // Load user profile from Firebase DB
     var uid = data.localId;
+    sessionStorage.setItem('lkl_id_token', data.idToken || '');
     fbGet('/users/' + uid, function(e2, profile) {
       if (profile && profile.role) {
         currentUser = { email: email, name: profile.name || email, role: profile.role, uid: uid };
       } else {
-        // New user — pending approval
         currentUser = { email: email, name: email.split('@')[0], role: 'viewer', uid: uid };
       }
       launchApp();
     });
   });
+}
+
+function doChangePassword() {
+  var np = document.getElementById('change-pass-new').value;
+  var cp = document.getElementById('change-pass-confirm').value;
+  var msg = document.getElementById('change-pass-msg');
+  msg.style.display = 'none';
+  if (!np || np.length < 6) {
+    msg.style.cssText = 'display:block;background:#fee2e2;color:#dc2626;font-size:12px;padding:8px;border-radius:6px';
+    msg.textContent = 'Mật khẩu tối thiểu 6 ký tự'; return;
+  }
+  if (np !== cp) {
+    msg.style.cssText = 'display:block;background:#fee2e2;color:#dc2626;font-size:12px;padding:8px;border-radius:6px';
+    msg.textContent = 'Mật khẩu nhập lại không khớp'; return;
+  }
+  var key = currentUser && currentUser.email ? localStorage.getItem('claude-api-key') : null;
+  // Use Firebase Auth REST to change password
+  var idToken = sessionStorage.getItem('lkl_id_token');
+  if (!idToken) {
+    msg.style.cssText = 'display:block;background:#fee2e2;color:#dc2626;font-size:12px;padding:8px;border-radius:6px';
+    msg.textContent = 'Phiên đăng nhập hết hạn. Vui lòng đăng xuất và đăng nhập lại.'; return;
+  }
+  fetch('https://identitytoolkit.googleapis.com/v1/accounts:update?key=' + FB_API_KEY, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ idToken: idToken, password: np, returnSecureToken: true })
+  }).then(function(r){ return r.json(); }).then(function(d) {
+    if (d.error) {
+      msg.style.cssText = 'display:block;background:#fee2e2;color:#dc2626;font-size:12px;padding:8px;border-radius:6px';
+      msg.textContent = 'Lỗi: ' + d.error.message;
+    } else {
+      sessionStorage.setItem('lkl_id_token', d.idToken || idToken);
+      msg.style.cssText = 'display:block;background:#dcfce7;color:#166534;font-size:12px;padding:8px;border-radius:6px';
+      msg.textContent = '✅ Đã đổi mật khẩu thành công!';
+      document.getElementById('change-pass-new').value = '';
+      document.getElementById('change-pass-confirm').value = '';
+    }
+  });
+}
+
+function renderProfileCard() {
+  if (!currentUser) return;
+  var n = document.getElementById('profile-name-display');
+  var e = document.getElementById('profile-email-display');
+  var r = document.getElementById('profile-role-display');
+  if (n) n.textContent = currentUser.name || '—';
+  if (e) e.textContent = currentUser.email || '—';
+  if (r) {
+    var cfg = ROLE_CFG[currentUser.role] || ROLE_CFG.viewer;
+    r.innerHTML = '<span class="role-badge ' + cfg.cls + '">' + cfg.label + '</span>';
+  }
 }
 
 function forgotPassword() {
@@ -392,6 +442,11 @@ function launchApp() {
   var am = document.getElementById('acc-myfiles');
   if (am) am.innerHTML = isColleague ? ok + ' (riêng tư)' : no;
 
+  // Sidebar modules — tất cả role (trừ viewer) đều thấy
+  if (isColleague) {
+    syncSidebarModules();
+  }
+
   if (isAdmin) {
     var navAdmin = document.getElementById('nav-admin');
     if (navAdmin) navAdmin.style.display = 'flex';
@@ -399,7 +454,7 @@ function launchApp() {
     if (navMod) navMod.style.display = 'flex';
     var navTrash = document.getElementById('nav-trash');
     if (navTrash) navTrash.style.display = 'flex';
-    renderModuleGroups(); syncSidebarModules();
+    renderModuleGroups();
     updateRegBadge();
     loadFirebaseMembers();
   }
@@ -422,7 +477,8 @@ function launchApp() {
     renderSharedDocs();
     renderSharedSheets();
     renderSharedFiles();
-    if (isAdmin) { renderModuleGroups(); syncSidebarModules(); }
+    syncSidebarModules();
+    if (isAdmin) { renderModuleGroups(); }
   });
 
   renderVideos();
@@ -600,10 +656,11 @@ function showPage(id, el) {
   // Page init calls
   if (id === 'news') markNewsRead();
   if (id === 'modules') { renderModuleGroups(); syncSidebarModules(); }
-  if (id === 'trash') { renderTrash(); renderStorageWidget(); }
+  if (id === 'trash') { renderTrash(); renderStorageWidget('home-storage-widget'); }
   if (id === 'files') { renderSharedDocs(); renderSharedSheets(); renderSharedFileList(); }
   if (id === 'myfiles') { renderPersonalDocs(); renderPersonalSheets(); renderPersonalFiles(); }
-  if (id === 'admin') { renderRegRequests(); }
+  if (id === 'admin') { renderRegRequests(); loadFirebaseMembers(); }
+  if (id === 'settings') { renderProfileCard(); }
 }
 
 // ============================================================
