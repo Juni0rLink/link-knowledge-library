@@ -1,7 +1,7 @@
 // LINK Knowledge Library — Service Worker
 // Cache các file tĩnh để dùng offline
 
-var CACHE_NAME = 'lkl-v1.0';
+var CACHE_NAME = 'lkl-v1.2';
 var STATIC_FILES = [
   '/link-knowledge-library/',
   '/link-knowledge-library/index.html',

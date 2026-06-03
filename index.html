@@ -37,7 +37,6 @@
       <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Đăng nhập</button>
       <div class="login-divider">hoac</div>
       <div style="text-align:right;margin-top:-8px;margin-bottom:4px"><button onclick="forgotPassword()" style="background:none;border:none;color:#1d4ed8;font-size:12px;cursor:pointer;text-decoration:underline">Quên mật khẩu?</button></div>
-      <button class="viewer-btn" onclick="viewerAccess()">Xem với tư cách khách</button>
     </div>
     <div class="auth-panel" id="panel-register">
       <div class="alert alert-success" id="reg-success"></div>
@@ -80,7 +79,6 @@
       <div class="nav-item" id="nav-admin" style="display:none" onclick="showPage('admin',this)">🔐 Admin Panel <span id="pending-badge" class="pending-badge" style="display:none"></span></div>
       <div class="nav-item" style="position:relative" onclick="showPage('news',this)">📢 News <span id="news-dot" style="display:none;position:absolute;top:10px;right:16px;width:8px;height:8px;border-radius:50%;background:#ef4444"></span></div>
       <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)">⚙️ Cài đặt</div>
-      <div class="viewer-notice" id="viewer-notice" style="display:none">Bạn đang xem với tư cách Viewer.</div>
     </aside>
     <main>
       <div class="page active" id="page-home">
@@ -129,8 +127,7 @@
       <div class="page" id="page-standards">
         <div class="page-header"><div class="page-tag">BMW Standards</div><div class="page-title">📚 BMW Standards</div></div>
         <div class="card"><div class="card-title">GSC – Group Standard Controls</div><p>10 modules: Introduction, Software Structure, Safety, SAS, MEDIA, User Blocks, Phase Concept, User Sequence, Type Management, Exercises.</p></div>
-        <div id="std-colleague" style="display:none"><div class="card"><div class="card-title">Đóng góp</div><button class="btn-sm" style="background:var(--blue);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer" onclick="showToast('Tính năng upload sắp ra mắt!','warning')">+ Thêm tài liệu</button></div></div>
-        <div id="std-viewer" style="display:none"><div class="card" style="opacity:0.5"><div class="card-title">Cần tài khoản để xem chi tiết</div></div></div>
+        <div id="std-colleague" style="display:none"><div class="card"><div class="card-title">Đóng góp</div><button class="btn-sm" style="background:var(--blue);color:#fff;padding:8px 16px;border-radius:6px;border:none;cursor:pointer" onclick="showToast('Tính năng upload sắp ra mắt!','warning')">+ Thêm tài liệu</button></div></div></div>
       </div>
       <div class="page" id="page-equipment">
         <div class="page-header"><div class="page-tag">Equipment</div><div class="page-title">🔧 Equipment & Issues</div></div>
@@ -147,9 +144,6 @@
           <div class="page-tag">Không gian riêng tư</div>
           <div class="page-title">👤 File cá nhân</div>
           <div class="page-meta">Chỉ bạn mới thấy — Tài liệu, bảng tính, ghi chú, files. Bấm 📤 Public để chia sẻ.</div>
-        </div>
-        <div id="myfiles-viewer" style="display:none">
-          <div class="warning-box">⚠️ Cần tài khoản để sử dụng không gian cá nhân.</div>
         </div>
         <div id="myfiles-colleague" style="display:none">
           <div style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:16px;background:#fff;border-radius:10px 10px 0 0;overflow:hidden">
@@ -355,10 +349,6 @@
             <tr>
               <td><span class="role-badge role-colleague">👥 Colleague</span></td>
               <td>Xem toàn bộ tài liệu, upload file, tạo/sửa nội dung chung, dùng AI chat</td>
-            </tr>
-            <tr>
-              <td><span class="role-badge role-viewer">👁️ Viewer</span></td>
-              <td>Chỉ xem trang được Admin chỉ định — không upload, không chỉnh sửa</td>
             </tr>
           </table>
         </div>
