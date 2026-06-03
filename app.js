@@ -1588,7 +1588,7 @@ function exportSheetCSV(){var rows=[];for(var r=0;r<sRows;r++){var row=[];for(va
 function switchPersonalTab(tab, el) {
   document.querySelectorAll('.personal-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
   el.style.color='#7c3aed';el.style.borderBottomColor='#7c3aed';
-  ['modules','docs','sheets','files','notes'].forEach(function(t){var d=document.getElementById('personal-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
+  ['modules','files','notes'].forEach(function(t){var d=document.getElementById('personal-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
   if(tab==='modules') renderPersonalModulesGrid();
 }
 function createPersonalDoc(){var name=prompt('Tên tài liệu:');if(!name)return;personalDocs.push({id:Date.now(),name:name,content:'<p>Bắt đầu soạn thảo...</p>',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:''});renderPersonalDocs();showToast('Đã tạo: '+name,'success');}
@@ -1605,7 +1605,7 @@ function savePersonalNote(){var t=document.getElementById('personal-note');if(t)
 function switchFilesTab(tab, el) {
   document.querySelectorAll('.files-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
   el.style.color='#0891b2';el.style.borderBottomColor='#0891b2';
-  ['modules','docs','sheets','upload','notes'].forEach(function(t){var d=document.getElementById('shared-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
+  ['modules','upload','notes'].forEach(function(t){var d=document.getElementById('shared-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
   if(tab==='upload') renderSharedFileList();
   if(tab==='modules') renderPublicModulesGrid();
 }
