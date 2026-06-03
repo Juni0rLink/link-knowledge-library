@@ -64,29 +64,91 @@ function fbDelete(path, cb) {
     .catch(function(e){ if(cb) cb(e); });
 }
 
-// Load all shared data from Firebase
+// Preload search index in background
+(function() {
+  var SEARCH_CACHE = 'lkl_search_index';
+  var SEARCH_TS = 'lkl_search_ts';
+  var SEARCH_TTL = 3600000; // 1 hour
+  try {
+    var cached = sessionStorage.getItem(SEARCH_CACHE);
+    var ts = parseInt(sessionStorage.getItem(SEARCH_TS) || '0');
+    if (cached && Date.now() - ts < SEARCH_TTL) {
+      searchIndex = JSON.parse(cached);
+      return;
+    }
+  } catch(e) {}
+  fetch('search-index.json')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      searchIndex = data;
+      try {
+        sessionStorage.setItem(SEARCH_CACHE, JSON.stringify(data));
+        sessionStorage.setItem(SEARCH_TS, Date.now().toString());
+      } catch(e) {}
+    }).catch(function(){});
+})();
+
+// Load all shared data from Firebase with sessionStorage cache
 function fbLoadAll(onDone) {
-  fbGet('/shared', function(err, data) {
-    if (err || !data) { if(onDone) onDone(); return; }
+  var CACHE_KEY = 'lkl_shared_cache';
+  var CACHE_TS  = 'lkl_shared_ts';
+  var TTL = 60000; // 60s cache
+
+  function applyData(data) {
+    if (!data) return;
     if (data.news && Array.isArray(data.news)) newsItems = data.news;
     if (data.sharedDocs && Array.isArray(data.sharedDocs)) sharedDocs = data.sharedDocs;
     if (data.sharedSheets && Array.isArray(data.sharedSheets)) sharedSheets = data.sharedSheets;
-    if (data.sharedFiles && Array.isArray(data.sharedFiles)) { sharedFiles = data.sharedFiles; }
+    if (data.sharedFiles && Array.isArray(data.sharedFiles)) sharedFiles = data.sharedFiles;
     if (data.sharedNote) sharedNote = data.sharedNote;
     if (data.moduleGroups && Array.isArray(data.moduleGroups)) moduleGroups = data.moduleGroups;
     if (data.publicFiles && Array.isArray(data.publicFiles)) publicFiles = data.publicFiles;
-    if(onDone) onDone();
+    if (data.pendingRegs && Array.isArray(data.pendingRegs)) pendingRegs = data.pendingRegs;
+  }
+
+  // Try cache first
+  try {
+    var cached = sessionStorage.getItem(CACHE_KEY);
+    var ts = parseInt(sessionStorage.getItem(CACHE_TS) || '0');
+    if (cached && Date.now() - ts < TTL) {
+      applyData(JSON.parse(cached));
+      if (onDone) onDone();
+      // Refresh in background
+      fbGet('/shared', function(err, data) {
+        if (!err && data) {
+          applyData(data);
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          sessionStorage.setItem(CACHE_TS, Date.now().toString());
+        }
+      });
+      return;
+    }
+  } catch(e) {}
+
+  fbGet('/shared', function(err, data) {
+    if (err || !data) { if(onDone) onDone(); return; }
+    applyData(data);
+    try {
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      sessionStorage.setItem(CACHE_TS, Date.now().toString());
+    } catch(e) {}
+    if (onDone) onDone();
   });
 }
 
+// Invalidate cache when data changes
+function fbClearCache() {
+  try { sessionStorage.removeItem('lkl_shared_cache'); sessionStorage.removeItem('lkl_shared_ts'); } catch(e) {}
+}
+
 // Save shared data to Firebase
-function fbSaveNews()         { fbSet('/shared/news', news); }
-function fbSaveSharedDocs()   { fbSet('/shared/sharedDocs', sharedDocs); }
-function fbSaveSharedSheets() { fbSet('/shared/sharedSheets', sharedSheets); }
-function fbSaveSharedFiles()  { fbSet('/shared/sharedFiles', sharedFiles); }
-function fbSaveSharedNote()   { fbSet('/shared/sharedNote', sharedNote); }
-function fbSaveModules()      { fbSet('/shared/moduleGroups', moduleGroups); }
-function fbSavePublicFiles()  { fbSet('/shared/publicFiles', publicFiles); }
+function fbSaveNews()         { fbClearCache(); fbSet('/shared/news', newsItems); }
+function fbSaveSharedDocs()   { fbClearCache(); fbSet('/shared/sharedDocs', sharedDocs); }
+function fbSaveSharedSheets() { fbClearCache(); fbSet('/shared/sharedSheets', sharedSheets); }
+function fbSaveSharedFiles()  { fbClearCache(); fbSet('/shared/sharedFiles', sharedFiles); }
+function fbSaveSharedNote()   { fbClearCache(); fbSet('/shared/sharedNote', sharedNote); }
+function fbSaveModules()      { fbClearCache(); fbSet('/shared/moduleGroups', moduleGroups); }
+function fbSavePublicFiles()  { fbClearCache(); fbSet('/shared/publicFiles', publicFiles); }
 
 // ============================================================
 // DATA
