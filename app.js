@@ -1042,6 +1042,47 @@ var CLOUD_NAME = 'draqjeguw';
 var UPLOAD_PRESET = 'ml_default';
 var cloudFiles = [];
 
+// ============================================================
+// VERSION CONTROL
+// ============================================================
+function getNextVersion(name) {
+  var base = name.replace(/\s*v(\d+)(\.[^.]+)?$/, '').replace(/(\.[^.]+)$/, '');
+  var ext  = name.match(/(\.[^.]+)$/) ? name.match(/(\.[^.]+)$/)[1] : '';
+  // Find existing versions in sharedFiles + cloudFiles
+  var all = sharedFiles.concat(cloudFiles || []);
+  var existing = all.filter(function(f) {
+    return f.name && f.name.replace(/\s*v\d+/, '').replace(/\.[^.]+$/, '') === base;
+  });
+  if (!existing.length) return null; // no conflict
+  var maxV = 1;
+  existing.forEach(function(f) {
+    var m = f.name.match(/v(\d+)/);
+    if (m) maxV = Math.max(maxV, parseInt(m[1]));
+  });
+  return { base: base, ext: ext, existing: existing, nextV: maxV + 1 };
+}
+
+function showVersionDialog(fileName, onReplace, onKeepBoth) {
+  var existing = document.getElementById('version-dialog');
+  if (existing) existing.remove();
+  var d = document.createElement('div');
+  d.id = 'version-dialog';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">' +
+    '<div style="font-size:20px;margin-bottom:6px">📄 File đã tồn tại</div>' +
+    '<p style="font-size:14px;color:#555;margin-bottom:20px">File <strong>"' + fileName + '"</strong> đã có trong thư viện. Bạn muốn làm gì?</p>' +
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+      '<button id="vd-replace" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">🔄 Thay thế — File cũ vào Thùng rác</button>' +
+      '<button id="vd-keep" style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">📋 Giữ cả 2 — Lưu thành phiên bản mới</button>' +
+      '<button id="vd-cancel" style="background:#f3f4f6;color:#555;border:none;border-radius:8px;padding:11px;font-size:13px;cursor:pointer">Hủy</button>' +
+    '</div>' +
+  '</div>';
+  document.body.appendChild(d);
+  document.getElementById('vd-replace').onclick = function() { d.remove(); onReplace(); };
+  document.getElementById('vd-keep').onclick   = function() { d.remove(); onKeepBoth(); };
+  document.getElementById('vd-cancel').onclick = function() { d.remove(); };
+}
+
 function uploadToCloudinary(input) {
   var files = Array.from(input.files);
   if (!files.length) return;
@@ -1069,17 +1110,52 @@ function uploadToCloudinary(input) {
       done++;
       if (xhr.status === 200) {
         var res = JSON.parse(xhr.responseText);
-        cloudFiles.push({ id: res.public_id, name: file.name, url: res.secure_url,
+        var newFile = { id: res.public_id, name: file.name, url: res.secure_url,
           type: file.type, size: res.bytes, isVideo: isVideo, isImage: isImage,
           date: new Date().toLocaleDateString('vi-VN'),
-          author: currentUser ? currentUser.name : '' });
-        renderCloudFiles();
+          author: currentUser ? currentUser.name : '', version: 1 };
+
+        var vInfo = getNextVersion(file.name);
+        if (vInfo) {
+          // Conflict detected
+          showVersionDialog(file.name,
+            function() {
+              // Replace — move old to trash
+              vInfo.existing.forEach(function(old) {
+                trash.push({ type: 'file', data: old, deletedBy: currentUser ? currentUser.name : '?',
+                  deletedAt: new Date().toLocaleString('vi-VN'), reason: 'Replaced by new version' });
+                cloudFiles = cloudFiles.filter(function(f){ return f.id !== old.id; });
+                sharedFiles = sharedFiles.filter(function(f){ return f.id !== old.id; });
+              });
+              newFile.version = vInfo.nextV;
+              cloudFiles.push(newFile);
+              fbSet('/shared/sharedFiles', cloudFiles);
+              fbClearCache(); updateTrashBadge();
+              renderCloudFiles(); showToast('✅ Đã thay thế — phiên bản cũ vào Thùng rác', 'success');
+            },
+            function() {
+              // Keep both — rename new as v{n}
+              var base = vInfo.base, ext = vInfo.ext;
+              newFile.name = base + ' v' + vInfo.nextV + ext;
+              newFile.version = vInfo.nextV;
+              cloudFiles.push(newFile);
+              fbSet('/shared/sharedFiles', cloudFiles);
+              fbClearCache(); renderCloudFiles();
+              showToast('✅ Đã lưu "' + newFile.name + '"', 'success');
+            }
+          );
+        } else {
+          newFile.version = 1;
+          cloudFiles.push(newFile);
+          fbSet('/shared/sharedFiles', cloudFiles);
+          fbClearCache(); renderCloudFiles();
+        }
       } else {
         showToast('Lỗi upload: ' + file.name, 'error');
       }
       if (done === files.length) {
         if (progressEl) progressEl.style.display = 'none';
-        showToast('Upload xong ' + done + ' file!', 'success');
+        if (!getNextVersion(file.name)) showToast('Upload xong ' + done + ' file!', 'success');
         input.value = '';
       }
     };
