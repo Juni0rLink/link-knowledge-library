@@ -1602,4 +1602,24 @@ function renderStorageWidget(containerId) {
         '<div style="font-size:22px;font-weight:800;color:#1e40af">'+totalKB+' <span style="font-size:13px;font-weight:400;color:#64748b">KB</span></div>' +
         '<div style="font-size:11px;color:#64748b;margin-bottom:8px">'+totalMB+' MB / phiên hiện tại</div>' +
         '<div style="background:#e2e8f0;border-radius:6px;height:10px;overflow:hidden">' +
-          '<div style="width:'+ramPct+'%;height:100%;background:linear-gradient(90deg,#3b82f6,
+          '<div style="width:'+ramPct+'%;height:100%;background:linear-gradient(90deg,#3b82f6,#1d4ed8);border-radius:6px;transition:width .4s"></div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#94a3b8;margin-top:4px">'+ramPct+'% giới hạn session (50MB)</div>' +
+      '</div>' +
+      '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px">' +
+        '<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">☁️ Cloudinary</div>' +
+        '<div style="font-size:22px;font-weight:800;color:#166534">'+storageUsedMB+' <span style="font-size:13px;font-weight:400;color:#64748b">MB</span></div>' +
+        '<div style="font-size:11px;color:#64748b;margin-bottom:8px">/ '+STORAGE_LIMIT_MB.toLocaleString()+' MB (25 GB free)</div>' +
+        '<div style="background:#dcfce7;border-radius:6px;height:10px;overflow:hidden">' +
+          '<div style="width:'+cloudPct+'%;height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:6px"></div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#94a3b8;margin-top:4px">'+cloudPct+'% đã dùng</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">📊 Chi tiết</div>' +
+    (stats.sections.filter(function(s){return s.bytes>0;}).length > 0 ? sectionsHtml :
+      '<p style="color:#aaa;font-size:12px">Chưa có dữ liệu.</p>') +
+    '<div style="margin-top:10px;padding:8px 10px;background:#f8f9fb;border-radius:8px;font-size:11px;color:#888">' +
+      '⚠️ Data RAM mất khi reload. Tích hợp <strong>Supabase</strong> để lưu vĩnh viễn.' +
+    '</div>';
+}
