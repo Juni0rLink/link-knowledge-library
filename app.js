@@ -397,8 +397,11 @@ function launchApp() {
     if (navAdmin) navAdmin.style.display = 'flex';
     var navMod = document.getElementById('nav-modules');
     if (navMod) navMod.style.display = 'flex';
+    var navTrash = document.getElementById('nav-trash');
+    if (navTrash) navTrash.style.display = 'flex';
     renderModuleGroups(); syncSidebarModules();
     updateRegBadge();
+    loadFirebaseMembers();
   }
 
   if (!isAdmin) {
@@ -590,6 +593,47 @@ function rejectReg(id) {
   pendingRegs = pendingRegs.filter(function(r) { return r.id !== id; });
   showToast('Đã từ chối yêu cầu của ' + (reg ? reg.name : ''), 'error');
   updateRegBadge();
+}
+
+function loadFirebaseMembers() {
+  var container = document.getElementById('member-rows');
+  if (!container) return;
+  fbGet('/users', function(err, data) {
+    if (err || !data) return;
+    container.innerHTML = '';
+    Object.keys(data).forEach(function(uid) {
+      var u = data[uid];
+      if (!u || !u.email) return;
+      var cfg = ROLE_CFG[u.role] || ROLE_CFG.viewer;
+      var isOwnerUser = u.role === 'owner';
+      var canEdit = currentUser && currentUser.role === 'owner' && !isOwnerUser;
+      var roleSelect = canEdit
+        ? '<select onchange="changeUserRole(\'' + uid + '\',this.value)" style="border:1px solid #ddd;border-radius:6px;padding:3px 6px;font-size:12px">' +
+          ['owner','admin','colleague','viewer'].map(function(r){
+            return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+ROLE_CFG[r].label+'</option>';
+          }).join('') + '</select>'
+        : '<span class="role-badge ' + cfg.cls + '">' + cfg.label + '</span>';
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><strong>' + (u.name||u.email.split('@')[0]) + '</strong></td>' +
+        '<td style="font-size:12px;color:#888">' + u.email + '</td>' +
+        '<td>' + roleSelect + '</td>' +
+        '<td>' + (isOwnerUser ? '—' : (canEdit ? '<button class="btn-sm reject-btn" onclick="removeUser(\''+uid+'\')">🗑️</button>' : '')) + '</td>';
+      container.appendChild(tr);
+    });
+  });
+}
+
+function changeUserRole(uid, newRole) {
+  fbSet('/users/' + uid + '/role', newRole);
+  showToast('Đã cập nhật vai trò', 'success');
+  fbClearCache();
+}
+
+function removeUser(uid) {
+  if (!confirm('Xóa người dùng này?')) return;
+  fbDelete('/users/' + uid);
+  loadFirebaseMembers();
+  showToast('Đã xóa người dùng', 'error');
 }
 
 function addMemberRow(name, email, role) {
