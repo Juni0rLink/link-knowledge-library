@@ -539,7 +539,7 @@ function launchApp() {
   renderNews();
 
   if (isColleague) {
-    setTimeout(function(){ renderStorageWidget('home-storage-widget'); }, 100);
+    setTimeout(function(){ if(typeof renderStorageWidget === 'function') renderStorageWidget('home-storage-widget'); }, 500);
   }
 }
 
