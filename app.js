@@ -153,6 +153,46 @@ function fbSavePublicFiles()  { fbClearCache(); fbSet('/shared/publicFiles', pub
 // ============================================================
 // DATA
 // ============================================================
+// ── Personal & Shared data arrays ──
+var personalDocs = [];
+var personalSheets = [];
+var personalFiles = [];
+var personalNote = '';
+var sharedDocs = [];
+var sharedSheets = [];
+var sharedNote = '';
+var publicFiles = [];
+var CONTENT_BASE = 'https://juni0rlink.github.io/link-knowledge-library/content/';
+var DEFAULT_SHARED_FILES = [
+  { id:1001, name:'GSC Software Structure', file:'GSC Software structure.pptx', type:'pptx', icon:'🏗️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~2MB' },
+  { id:1002, name:'GSC Phase Concept', file:'GSC Module Phase concept.pptx', type:'pptx', icon:'🔄', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~3MB' },
+  { id:1003, name:'GSC Module Safety', file:'GSC Module Safety.pptx', type:'pptx', icon:'🛡️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~1MB' },
+  { id:1004, name:'GSC Module SAS', file:'GSC Module SAS.pptx', type:'pptx', icon:'⚙️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~2MB' },
+  { id:1005, name:'GSC User Sequence', file:'GSC Module User sequence.pptx', type:'pptx', icon:'📋', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~1MB' },
+  { id:1006, name:'GSC Type Management', file:'GSC Type management.pptx', type:'pptx', icon:'🗂️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~1MB' },
+  { id:1007, name:'Overview Basic Concept Safety', file:'Overview Basic Concept Safety_Nguyễn Tuấn Phong.pptx', type:'pptx', icon:'📖', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'~2MB' },
+  { id:1008, name:'Training Record', file:'Training Record_Nguyễn Tuấn Phong.pptx', type:'pptx', icon:'📊', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'~1MB' },
+  { id:1009, name:'Mess System', file:'Mess_System_Nguyễn Tuấn Phong.pptx', type:'pptx', icon:'📐', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'~1MB' },
+  { id:1010, name:'Issues Q&A', file:'Issues.pptx', type:'pptx', icon:'❓', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'<1MB' },
+  { id:2001, name:'Manual Cover A1HG01', file:'MAN_00101_Manual_Cover.docx', type:'docx', icon:'📄', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2002, name:'Manual General', file:'MAN_00201_Manual_General.docx', type:'docx', icon:'📋', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2003, name:'Manual LINE', file:'MAN_00301_Manual_LINE.docx', type:'docx', icon:'🏭', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2004, name:'Manual PLC', file:'MAN_00401_Manual_PLC.docx', type:'docx', icon:'💻', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2005, name:'SG01 – ST700', file:'MAN_00501_Manual_SG01.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2006, name:'SG02 – ST710', file:'MAN_00601_Manual_SG02.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2007, name:'SG04 – ST711', file:'MAN_00602_Manual_SG04.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2008, name:'SG06 – ST712', file:'MAN_00603_Manual_SG06.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2009, name:'SG03 – ST030', file:'MAN_00701_Manual_SG03.docx', type:'docx', icon:'🔧', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2010, name:'SG05 – ST031', file:'MAN_00702_Manual_SG05.docx', type:'docx', icon:'🔧', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2011, name:'SG07 – ST032', file:'MAN_00703_Manual_SG07.docx', type:'docx', icon:'🔧', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2012, name:'SG08 – ST719', file:'MAN_00801_Manual_SG08.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2013, name:'SG09 – ST720', file:'MAN_00901_Manual_SG09.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2014, name:'SG10 – ST050 UV', file:'MAN_01001_Manual_SG10.docx', type:'docx', icon:'💡', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2015, name:'SG11 – ST730', file:'MAN_01101_Manual_SG11.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2016, name:'SG12 – ST739', file:'MAN_01201_Manual_SG12.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+];
+var sharedFiles = DEFAULT_SHARED_FILES.slice();
+
 const USERS = {
   'owner@bmw.com':  { password: 'owner123',  name: 'Nguyễn Tuấn Phong', role: 'owner' },
   'admin@bmw.com':  { password: 'admin123',  name: 'Tran Thi B',    role: 'admin' },
@@ -1543,83 +1583,58 @@ function exportSheetCSV(){var rows=[];for(var r=0;r<sRows;r++){var row=[];for(va
 // ============================================================
 // TRASH & STORAGE MANAGEMENT
 // ============================================================
-var trash = []; // deleted modules/groups go here
-var STORAGE_LIMIT_MB = 25000; // 25GB Cloudinary free
-var storageUsedMB = 847; // simulated — real: fetch from Cloudinary API
-
-// ============================================================
-// STORAGE STATS
-// ============================================================
-function getAppStorageStats() {
-  function sizeOf(obj) {
-    try { return new Blob([JSON.stringify(obj)]).size; } catch(e) { return 0; }
-  }
-  var sections = [
-    { label: '📋 Modules & Groups',  icon:'📋', bytes: sizeOf(moduleGroups), color:'#3b82f6' },
-    { label: '📝 Tài liệu cá nhân',  icon:'📝', bytes: sizeOf(personalDocs), color:'#7c3aed' },
-    { label: '📊 Bảng tính cá nhân', icon:'📊', bytes: sizeOf(personalSheets), color:'#059669' },
-    { label: '📁 Files cá nhân',     icon:'📁', bytes: sizeOf(personalFiles), color:'#0891b2' },
-    { label: '📝 Tài liệu chung',    icon:'📝', bytes: sizeOf(sharedDocs), color:'#d97706' },
-    { label: '📊 Bảng tính chung',   icon:'📊', bytes: sizeOf(sharedSheets), color:'#16a34a' },
-    { label: '📁 Files chung',       icon:'📁', bytes: sizeOf(sharedFiles), color:'#0e7490' },
-    { label: '📢 Tin tức/News',      icon:'📢', bytes: sizeOf(news), color:'#b45309' },
-    { label: '🗑️ Thùng rác',        icon:'🗑️', bytes: sizeOf(trash), color:'#dc2626' },
-  ];
-  var total = sections.reduce(function(s,x){return s+x.bytes;},0);
-  return { sections: sections, total: total };
+// ── PERSONAL FILES ──
+function switchPersonalTab(tab, el) {
+  document.querySelectorAll('.personal-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
+  el.style.color='#7c3aed';el.style.borderBottomColor='#7c3aed';
+  ['docs','sheets','files','notes'].forEach(function(t){var d=document.getElementById('personal-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
 }
+function createPersonalDoc(){var name=prompt('Tên tài liệu:');if(!name)return;personalDocs.push({id:Date.now(),name:name,content:'<p>Bắt đầu soạn thảo...</p>',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:''});renderPersonalDocs();showToast('Đã tạo: '+name,'success');}
+function renderPersonalDocs(){var list=document.getElementById('personal-docs-list');if(!list)return;if(!personalDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}list.innerHTML=personalDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.date+'</div></div><button onclick="editPersonalDoc('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Sửa</button><button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>'+'<div id="doc-editor-'+i+'" style="display:none;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px"><div contenteditable="true" id="doc-content-'+i+'" style="min-height:120px;padding:12px;outline:none;font-size:13px">'+doc.content+'</div><button onclick="savePersonalDoc('+i+')" style="margin:8px;background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer">💾 Lưu</button></div>';}).join('');}
+function editPersonalDoc(i){var el=document.getElementById('doc-editor-'+i);if(el)el.style.display=el.style.display==='none'?'block':'none';}
+function savePersonalDoc(i){var c=document.getElementById('doc-content-'+i);if(c&&personalDocs[i]){personalDocs[i].content=c.innerHTML;showToast('Đã lưu!','success');}}
+function createPersonalSheet(){var name=prompt('Tên bảng tính:');if(!name)return;personalSheets.push({id:Date.now(),name:name,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:{}});renderPersonalSheets();showToast('Đã tạo: '+name,'success');}
+function renderPersonalSheets(){var list=document.getElementById('personal-sheets-list');if(!list)return;if(!personalSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}list.innerHTML=personalSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.date+'</div></div><button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn">🗑️</button></div>';}).join('');}
+function uploadPersonalFile(input){var files=Array.from(input.files);files.forEach(function(f){var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),url:URL.createObjectURL(f)});});renderPersonalFiles();showToast('Đã upload '+files.length+' file','success');input.value='';}
+function renderPersonalFiles(){var list=document.getElementById('personal-files-list');if(!list)return;if(!personalFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p>';return;}list.innerHTML=personalFiles.map(function(f,i){return '<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📁</span><div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.date+'</div></div><a href="'+f.url+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none">⬇️</a><button onclick="personalFiles.splice('+i+',1);renderPersonalFiles()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>';}).join('');}
+function savePersonalNote(){var t=document.getElementById('personal-note');if(t){personalNote=t.value;showToast('Đã lưu ghi chú','success');}}
 
-function renderStorageWidget(containerId) {
-  var card = document.getElementById('home-storage-card');
-  if (card) card.style.display = 'block';
-  var el = document.getElementById(containerId);
-  if (!el) return;
-  var stats = getAppStorageStats();
-  var totalKB = (stats.total / 1024).toFixed(1);
-  var totalMB = (stats.total / 1024 / 1024).toFixed(3);
-  var RAM_LIMIT = 50 * 1024 * 1024; // 50MB soft limit for session
-  var ramPct = Math.min((stats.total / RAM_LIMIT) * 100, 100).toFixed(1);
-  var cloudPct = Math.min((storageUsedMB / STORAGE_LIMIT_MB) * 100, 100).toFixed(2);
-
-  var sectionsHtml = stats.sections.filter(function(s){return s.bytes>0;}).map(function(s) {
-    var kb = (s.bytes/1024).toFixed(1);
-    var pct = stats.total > 0 ? ((s.bytes/stats.total)*100).toFixed(0) : 0;
-    var barW = Math.max(pct, 2);
-    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
-      '<div style="width:130px;font-size:12px;color:#555;flex-shrink:0">'+s.label+'</div>' +
-      '<div style="flex:1;background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden">' +
-        '<div style="width:'+barW+'%;height:100%;background:'+s.color+';border-radius:4px;transition:width .4s"></div>' +
-      '</div>' +
-      '<div style="width:60px;text-align:right;font-size:11px;color:#888;flex-shrink:0">'+kb+' KB</div>' +
-    '</div>';
-  }).join('');
-
-  el.innerHTML =
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">' +
-      // RAM card
-      '<div style="background:#f8faff;border:1px solid #dbeafe;border-radius:10px;padding:14px">' +
-        '<div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">💾 RAM Session</div>' +
-        '<div style="font-size:22px;font-weight:800;color:#1e40af">'+totalKB+' <span style="font-size:13px;font-weight:400;color:#64748b">KB</span></div>' +
-        '<div style="font-size:11px;color:#64748b;margin-bottom:8px">'+totalMB+' MB / phiên hiện tại</div>' +
-        '<div style="background:#e2e8f0;border-radius:6px;height:10px;overflow:hidden">' +
-          '<div style="width:'+ramPct+'%;height:100%;background:linear-gradient(90deg,#3b82f6,#1d4ed8);border-radius:6px;transition:width .4s"></div>' +
-        '</div>' +
-        '<div style="font-size:11px;color:#94a3b8;margin-top:4px">'+ramPct+'% giới hạn session (50MB)</div>' +
-      '</div>' +
-      '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px">' +
-        '<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">☁️ Cloudinary</div>' +
-        '<div style="font-size:22px;font-weight:800;color:#166534">'+storageUsedMB+' <span style="font-size:13px;font-weight:400;color:#64748b">MB</span></div>' +
-        '<div style="font-size:11px;color:#64748b;margin-bottom:8px">/ '+STORAGE_LIMIT_MB.toLocaleString()+' MB (25 GB free)</div>' +
-        '<div style="background:#dcfce7;border-radius:6px;height:10px;overflow:hidden">' +
-          '<div style="width:'+cloudPct+'%;height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:6px"></div>' +
-        '</div>' +
-        '<div style="font-size:11px;color:#94a3b8;margin-top:4px">'+cloudPct+'% đã dùng</div>' +
-      '</div>' +
-    '</div>' +
-    '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">📊 Chi tiết</div>' +
-    (stats.sections.filter(function(s){return s.bytes>0;}).length > 0 ? sectionsHtml :
-      '<p style="color:#aaa;font-size:12px">Chưa có dữ liệu.</p>') +
-    '<div style="margin-top:10px;padding:8px 10px;background:#f8f9fb;border-radius:8px;font-size:11px;color:#888">' +
-      '⚠️ Data RAM mất khi reload. Tích hợp <strong>Supabase</strong> để lưu vĩnh viễn.' +
-    '</div>';
+// ── SHARED DOCS & SHEETS ──
+function switchFilesTab(tab, el) {
+  document.querySelectorAll('.files-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
+  el.style.color='#0891b2';el.style.borderBottomColor='#0891b2';
+  ['docs','sheets','upload','notes'].forEach(function(t){var d=document.getElementById('shared-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
+  if(tab==='upload') renderSharedFileList();
 }
+function createSharedDoc(){var name=prompt('Tên tài liệu chung:');if(!name)return;sharedDocs.push({id:Date.now(),name:name,content:'<p>Bắt đầu soạn thảo...</p>',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',comments:[]});fbSet('/shared/sharedDocs',sharedDocs);fbClearCache();renderSharedDocs();showToast('Đã tạo: '+name,'success');}
+function renderSharedDocs(){var list=document.getElementById('shared-docs-list');if(!list)return;if(!sharedDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}var isAdmin=currentUser&&['owner','admin'].includes(currentUser.role);list.innerHTML=sharedDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.author+' · '+doc.date+'</div></div>'+(isAdmin?'<button onclick="sharedDocs.splice('+i+',1);fbSet(\'/shared/sharedDocs\',sharedDocs);fbClearCache();renderSharedDocs()" class="btn-sm reject-btn">🗑️</button>':'')+'</div>';}).join('');}
+function createSharedSheet(){var name=prompt('Tên bảng tính chung:');if(!name)return;sharedSheets.push({id:Date.now(),name:name,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:{}});fbSet('/shared/sharedSheets',sharedSheets);fbClearCache();renderSharedSheets();showToast('Đã tạo: '+name,'success');}
+function renderSharedSheets(){var list=document.getElementById('shared-sheets-list');if(!list)return;if(!sharedSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}var isAdmin=currentUser&&['owner','admin'].includes(currentUser.role);list.innerHTML=sharedSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.author+' · '+s.date+'</div></div>'+(isAdmin?'<button onclick="sharedSheets.splice('+i+',1);fbSet(\'/shared/sharedSheets\',sharedSheets);fbClearCache();renderSharedSheets()" class="btn-sm reject-btn">🗑️</button>':'')+'</div>';}).join('');}
+function saveSharedNote(){var t=document.getElementById('shared-note-area');if(t){sharedNote=t.value;fbSet('/shared/sharedNote',sharedNote);showToast('Đã lưu ghi chú','success');}}
+function moveNoteToPersonal(){var t=document.getElementById('shared-note-area');if(t)personalNote=t.value;var pn=document.getElementById('personal-note');if(pn)pn.value=personalNote;showToast('Đã sao chép về Cá nhân','success');}
+function renderSharedFiles(){renderSharedFileList();}
+function renderSharedFileList(){
+  var list=document.getElementById('shared-files-list');
+  if(!list)return;
+  if(!sharedFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có file nào.</p>';return;}
+  var cats={};
+  sharedFiles.forEach(function(f){var cat=f.category||'Khác';if(!cats[cat])cats[cat]=[];cats[cat].push(f);});
+  var html='';
+  Object.keys(cats).forEach(function(cat){
+    html+='<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;padding-left:4px">'+cat+'</div>';
+    cats[cat].forEach(function(f){
+      var fileUrl=CONTENT_BASE+encodeURIComponent(f.file);
+      var viewUrl='https://view.officeapps.live.com/op/view.aspx?src='+fileUrl;
+      html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:6px">'
+        +'<span style="font-size:20px">'+(f.icon||'📄')+'</span>'
+        +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+f.name+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-top:1px">'+(f.author||'')+' · '+(f.date||'')+(f.size?' · '+f.size:'')+'</div></div>'
+        +'<a href="'+viewUrl+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>'
+        +'<a href="'+fileUrl+'" download="'+f.file+'" style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>'
+        +'</div>';
+    });
+  });
+  list.innerHTML=html;
+}
+function uploadSharedFile(input){showToast('Tính năng upload đang phát triển','warning');if(input)input.value='';}
+
