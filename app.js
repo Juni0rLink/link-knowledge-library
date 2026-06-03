@@ -488,7 +488,7 @@ function doKnowledgeSearch() {
     scored.forEach(function(r) {
       var item = r.item;
       var fileUrl = 'https://juni0rlink.github.io/link-knowledge-library/content/' + encodeURIComponent(item.file);
-      var viewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(fileUrl);
+      var viewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + fileUrl;
       var excerpt = item.text;
       words.forEach(function(w){
         var re = new RegExp('('+w+')', 'gi');
@@ -1014,9 +1014,8 @@ function showModulePage(id, name, groupId, el) {
       docsHtml = '<div class="card" style="margin-top:12px"><div class="card-title">📂 Tài liệu</div>' +
         '<p style="color:#555;font-size:13px;margin-bottom:14px">' + docs.desc + '</p>' +
         docs.files.map(function(f) {
-          var url = encodeURIComponent(BASE_URL + f.file);
-          var viewUrl = OFFICE_VIEW + url;
-          var dlUrl = BASE_URL + f.file;
+          var dlUrl = BASE_URL + encodeURIComponent(f.file);
+          var viewUrl = OFFICE_VIEW + dlUrl;
           return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8f9fb;border-radius:8px;margin-bottom:8px;border:1px solid #e5e7eb">' +
             '<span style="font-size:22px">' + f.icon + '</span>' +
             '<div style="flex:1"><div style="font-weight:700;font-size:13px">' + f.name + '</div>' +
@@ -1595,7 +1594,7 @@ function renderSharedFileList() {
     html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;padding-left:4px">' + cat + '</div>';
     cats[cat].forEach(function(f) {
       var fileUrl = CONTENT_BASE + encodeURIComponent(f.file);
-      var viewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(fileUrl);
+      var viewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + fileUrl;
       html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:6px">' +
         '<span style="font-size:20px">' + (f.icon || '📄') + '</span>' +
         '<div style="flex:1">' +
