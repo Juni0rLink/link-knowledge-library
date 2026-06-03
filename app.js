@@ -171,10 +171,6 @@ var DEFAULT_SHARED_FILES = [
   { id:1004, name:'GSC Module SAS', file:'GSC Module SAS.pptx', type:'pptx', icon:'⚙️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~2MB' },
   { id:1005, name:'GSC User Sequence', file:'GSC Module User sequence.pptx', type:'pptx', icon:'📋', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~1MB' },
   { id:1006, name:'GSC Type Management', file:'GSC Type management.pptx', type:'pptx', icon:'🗂️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~1MB' },
-  { id:1007, name:'Overview Basic Concept Safety', file:'Overview Basic Concept Safety_Nguyễn Tuấn Phong.pptx', type:'pptx', icon:'📖', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'~2MB' },
-  { id:1008, name:'Training Record', file:'Training Record_Nguyễn Tuấn Phong.pptx', type:'pptx', icon:'📊', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'~1MB' },
-  { id:1009, name:'Mess System', file:'Mess_System_Nguyễn Tuấn Phong.pptx', type:'pptx', icon:'📐', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'~1MB' },
-  { id:1010, name:'Issues Q&A', file:'Issues.pptx', type:'pptx', icon:'❓', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'<1MB' },
   { id:2001, name:'Manual Cover A1HG01', file:'MAN_00101_Manual_Cover.docx', type:'docx', icon:'📄', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
   { id:2002, name:'Manual General', file:'MAN_00201_Manual_General.docx', type:'docx', icon:'📋', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
   { id:2003, name:'Manual LINE', file:'MAN_00301_Manual_LINE.docx', type:'docx', icon:'🏭', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
@@ -958,7 +954,6 @@ var MODULE_DOCS = {
     desc: 'Tổng quan an toàn — F-runtime, zone concept, safety program.',
     files: [
       { name:'GSC Module Safety', file:'GSC Module Safety.pptx', icon:'🛡️', desc:'Safety program, F-runtime group, zone concept' },
-      { name:'Overview Basic Concept Safety', file:'Overview Basic Concept Safety_Nguyễn Tuấn Phong.pptx', icon:'📖', desc:'Operating modes, MDB, component blocks' },
     ]
   },
   202: {
@@ -1083,7 +1078,7 @@ function editGroupName(gid) {
   inp.onblur = function() {
     var g = moduleGroups.find(function(g){return g.id===gid;});
     if (g && inp.value.trim()) g.name = inp.value.trim();
-    renderModuleGroups(); syncSidebarModules();
+    fbSaveModules(); renderModuleGroups(); syncSidebarModules();
     showToast('Đã đổi tên nhóm', 'success');
   };
   inp.onkeydown = function(e){ if(e.key==='Enter') inp.blur(); };
@@ -1099,7 +1094,7 @@ function editModuleName(gid, mid) {
     var g = moduleGroups.find(function(g){return g.id===gid;});
     var m = g && g.modules.find(function(m){return m.id===mid;});
     if (m && inp.value.trim()) m.name = inp.value.trim();
-    renderModuleGroups(); syncSidebarModules();
+    fbSaveModules(); renderModuleGroups(); syncSidebarModules();
     showToast('Đã đổi tên module', 'success');
   };
   inp.onkeydown = function(e){ if(e.key==='Enter') inp.blur(); };
