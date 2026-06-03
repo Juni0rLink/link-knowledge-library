@@ -32,12 +32,6 @@
       <div class="login-divider">hoac</div>
       <div style="text-align:right;margin-top:-8px;margin-bottom:4px"><button onclick="forgotPassword()" style="background:none;border:none;color:#1d4ed8;font-size:12px;cursor:pointer;text-decoration:underline">Quên mật khẩu?</button></div>
       <button class="viewer-btn" onclick="viewerAccess()">Xem với tư cách khách</button>
-      <div style="margin-top:14px;padding:10px;background:#f8f9fb;border-radius:8px;border:1px solid #eee;font-size:11px;color:#555;line-height:2">
-        <strong>Demo:</strong><br>
-        owner@bmw.com / owner123<br>
-        admin@bmw.com / admin123<br>
-        editor@bmw.com / editor123
-      </div>
     </div>
     <div class="auth-panel" id="panel-register">
       <div class="alert alert-success" id="reg-success"></div>
@@ -337,9 +331,32 @@
             <tr><td style="color:#888;width:160px">Tên platform</td><td><strong>LINK Knowledge Library</strong></td></tr>
             <tr><td style="color:#888">Phiên bản</td><td><strong>v1.0.0</strong></td></tr>
             <tr><td style="color:#888">Owner</td><td><strong>Nguyễn Tuấn Phong</strong></td></tr>
+            <tr><td style="color:#888">URL</td><td><a href="https://juni0rlink.github.io/link-knowledge-library" target="_blank" style="color:#1d4ed8">juni0rlink.github.io/link-knowledge-library</a></td></tr>
           </table>
         </div>
-        <div class="warning-box">⚠️ Trang này chỉ Admin & Owner mới truy cập được.</div>
+        <div class="card">
+          <div class="card-title">👥 Phân quyền tài khoản</div>
+          <table>
+            <tr><th>Vai trò</th><th>Quyền</th></tr>
+            <tr>
+              <td><span class="role-badge role-owner">👑 Owner</span></td>
+              <td>Toàn quyền — thêm/xóa/sửa tất cả, phân quyền Admin, xem mọi thứ</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge role-admin">🔑 Admin</span></td>
+              <td>Quản lý thành viên, duyệt đăng ký, đăng News — <strong>không thể cấp quyền Admin</strong></td>
+            </tr>
+            <tr>
+              <td><span class="role-badge role-colleague">👥 Colleague</span></td>
+              <td>Xem toàn bộ tài liệu, upload file, tạo/sửa nội dung chung, dùng AI chat</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge role-viewer">👁️ Viewer</span></td>
+              <td>Chỉ xem trang được Admin chỉ định — không upload, không chỉnh sửa</td>
+            </tr>
+          </table>
+        </div>
+        <div class="warning-box">⚠️ Chỉ Owner mới có thể cấp quyền Admin cho người khác.</div>
       </div>
     </main>
   </div>

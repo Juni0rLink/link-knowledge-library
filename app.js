@@ -490,33 +490,37 @@ function renderRegRequests() {
     list.innerHTML = '<p style="color:#aaa;font-style:italic;font-size:13px">Chưa có yêu cầu đăng ký nào.</p>';
     return;
   }
+  var isOwner = currentUser && currentUser.role === 'owner';
   list.innerHTML = pendingRegs.map(function(r) {
+    var roleOptions = '<option value="colleague">👥 Colleague</option><option value="viewer">👁️ Viewer</option>';
+    if (isOwner) roleOptions += '<option value="admin">🔑 Admin</option>';
     return '<div class="reg-item" id="reg-' + r.id + '">' +
       '<div class="reg-name">' + r.name + '</div>' +
       '<div class="reg-detail">' + r.email + ' | ' + r.dept + '</div>' +
-      '<div class="reg-detail">' + r.time + '</div>' +
+      '<div class="reg-detail">' + (r.reason ? '💬 ' + r.reason + ' · ' : '') + r.time + '</div>' +
       '<div class="reg-actions">' +
       '<span style="font-size:12px;font-weight:600">Phân quyền:</span>' +
-      '<select class="assign-select" id="role-sel-' + r.id + '">' +
-      '<option value="colleague">Colleague</option>' +
-      '<option value="viewer">Viewer</option>' +
-      '<option value="admin">Admin (can duyet)</option>' +
-      '</select>' +
-      '<button class="btn-sm approve-btn" onclick="acceptReg(' + r.id + ')">Chấp nhận</button>' +
-      '<button class="btn-sm reject-btn" onclick="rejectReg(' + r.id + ')">Từ chối</button>' +
+      '<select class="assign-select" id="role-sel-' + r.id + '">' + roleOptions + '</select>' +
+      '<button class="btn-sm approve-btn" onclick="acceptReg(\'' + r.id + '\')">✅ Chấp nhận</button>' +
+      '<button class="btn-sm reject-btn" onclick="rejectReg(\'' + r.id + '\')">❌ Từ chối</button>' +
       '</div></div>';
   }).join('');
 }
 
 function acceptReg(id) {
-  var reg = pendingRegs.find(function(r) { return r.id === id; });
+  var reg = pendingRegs.find(function(r) { return r.id == id; });
   if (!reg) return;
   var roleSel = document.getElementById('role-sel-' + id);
   var chosenRole = roleSel ? roleSel.value : 'colleague';
+  // Update role in Firebase DB
+  fbSet('/users/' + id + '/role', chosenRole);
+  fbSet('/users/' + id + '/status', 'active');
   addMemberRow(reg.name, reg.email, chosenRole);
-  showToast('Đã cấp quyền cho ' + reg.name, 'success');
-  pendingRegs = pendingRegs.filter(function(r) { return r.id !== id; });
+  showToast('✅ Đã cấp quyền ' + chosenRole + ' cho ' + reg.name, 'success');
+  pendingRegs = pendingRegs.filter(function(r) { return r.id != id; });
+  fbSet('/shared/pendingRegs', pendingRegs);
   updateRegBadge();
+  renderRegRequests();
 }
 
 function rejectReg(id) {
