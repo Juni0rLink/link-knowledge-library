@@ -1766,6 +1766,8 @@ function uploadToCloud(file, onDone) {
 
 function uploadSharedFile(input) {
   var files = Array.from(input.files); if (!files.length) return;
+  var catEl = document.getElementById('shared-upload-category');
+  var category = catEl ? catEl.value : 'Chung';
   var prog = document.getElementById('shared-upload-progress');
   if (prog) { prog.style.display = 'block'; prog.textContent = 'Đang upload...'; }
   var done = 0;
@@ -1773,6 +1775,8 @@ function uploadSharedFile(input) {
     uploadToCloud(file, function(err, f) {
       done++;
       if (!err) {
+        f.category = category;
+        f.icon = getSharedFileIcon(file.name);
         sharedFiles.push(f); fbSaveSharedFiles(); renderSharedFileList();
         showToast('✅ Upload xong: ' + f.name, 'success');
       } else { showToast('Lỗi upload: ' + file.name, 'error'); }
@@ -1780,6 +1784,12 @@ function uploadSharedFile(input) {
     });
   });
   input.value = '';
+}
+
+function getSharedFileIcon(name) {
+  var ext = (name||'').split('.').pop().toLowerCase();
+  var map = {pdf:'📄',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📋',pptx:'📋',txt:'📃',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',mp4:'🎬',avi:'🎬',zip:'📦',rar:'📦'};
+  return map[ext] || '📎';
 }
 
 function uploadPersonalFile(input) {

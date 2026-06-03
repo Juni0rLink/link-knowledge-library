@@ -186,12 +186,27 @@
           <div id="public-modules-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;padding:4px 0"></div>
         </div>
         <div id="shared-tab-upload" style="display:none">
-          <div style="border:2px dashed #a5f3fc;border-radius:10px;padding:24px;text-align:center;background:#f0f9ff;cursor:pointer;margin-bottom:16px" onclick="document.getElementById('shared-file-input').click()">
-            <div style="font-size:36px;margin-bottom:8px">📁</div>
-            <p style="font-weight:700;color:#0891b2;margin-bottom:4px">Upload file lên thư viện chung</p>
-            <p style="font-size:12px;color:#888">Hỗ trợ tất cả định dạng: PDF, Word, Excel, PowerPoint, ảnh...</p>
+          <div style="display:flex;gap:10px;margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px">
+              <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:4px">📂 Phân vùng / Module</div>
+              <select id="shared-upload-category" class="form-input" style="padding:8px 10px;font-size:13px">
+                <option value="GSC Modules">GSC Modules</option>
+                <option value="Safety &amp; Compliance">Safety &amp; Compliance</option>
+                <option value="Tools &amp; Software">Tools &amp; Software</option>
+                <option value="Advanced Modules">Advanced Modules</option>
+                <option value="Operation Manual A1HG01">Operation Manual A1HG01</option>
+                <option value="Training">Training</option>
+                <option value="Chung">Chung</option>
+              </select>
+            </div>
+            <label style="background:#0891b2;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">
+              📁 Chọn file
+              <input type="file" id="shared-file-input" multiple style="display:none" onchange="uploadSharedFile(this)">
+            </label>
           </div>
-          <input type="file" id="shared-file-input" multiple style="display:none" onchange="uploadSharedFile(this)">
+          <div style="border:2px dashed #a5f3fc;border-radius:10px;padding:14px;text-align:center;background:#f0f9ff;margin-bottom:12px;cursor:pointer" onclick="document.getElementById('shared-file-input').click()">
+            <p style="font-size:12px;color:#888;margin:0">Kéo thả hoặc bấm "Chọn file" — PDF, Word, Excel, PowerPoint, ảnh...</p>
+          </div>
           <p id="shared-upload-progress" style="display:none;color:#0891b2;font-size:12px;font-weight:600;margin-bottom:8px"></p>
           <div id="shared-files-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p></div>
         </div>
