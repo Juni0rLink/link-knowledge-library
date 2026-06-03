@@ -99,7 +99,7 @@ function fbLoadAll(onDone) {
     if (data.news && Array.isArray(data.news)) newsItems = data.news;
     if (data.sharedDocs && Array.isArray(data.sharedDocs)) sharedDocs = data.sharedDocs;
     if (data.sharedSheets && Array.isArray(data.sharedSheets)) sharedSheets = data.sharedSheets;
-    if (data.sharedFiles && Array.isArray(data.sharedFiles)) sharedFiles = data.sharedFiles;
+    if (data.sharedFiles && Array.isArray(data.sharedFiles) && data.sharedFiles.length > 0) sharedFiles = data.sharedFiles;
     if (data.sharedNote) sharedNote = data.sharedNote;
     if (data.moduleGroups && Array.isArray(data.moduleGroups)) moduleGroups = data.moduleGroups;
     if (data.publicFiles && Array.isArray(data.publicFiles)) publicFiles = data.publicFiles;
@@ -1568,8 +1568,58 @@ function switchFilesTab(tab, el) {
     t.style.color = '#888'; t.style.borderBottomColor = 'transparent';
   });
   el.style.color = '#0891b2'; el.style.borderBottomColor = '#0891b2';
-  renderPublicFiles(tab);
+  ['docs','sheets','upload','notes'].forEach(function(t) {
+    var d = document.getElementById('shared-tab-' + t);
+    if (d) d.style.display = t === tab ? 'block' : 'none';
+  });
+  if (tab === 'upload') renderSharedFileList();
 }
+
+function renderSharedFileList() {
+  var list = document.getElementById('shared-files-list');
+  if (!list) return;
+  if (!sharedFiles.length) {
+    list.innerHTML = '<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có file nào.</p>';
+    return;
+  }
+  // Group by category
+  var cats = {};
+  sharedFiles.forEach(function(f) {
+    var cat = f.category || 'Khác';
+    if (!cats[cat]) cats[cat] = [];
+    cats[cat].push(f);
+  });
+  var isAdmin = currentUser && ['owner','admin'].includes(currentUser.role);
+  var html = '';
+  Object.keys(cats).forEach(function(cat) {
+    html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;padding-left:4px">' + cat + '</div>';
+    cats[cat].forEach(function(f) {
+      var fileUrl = CONTENT_BASE + encodeURIComponent(f.file);
+      var viewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(fileUrl);
+      html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:6px">' +
+        '<span style="font-size:20px">' + (f.icon || '📄') + '</span>' +
+        '<div style="flex:1">' +
+          '<div style="font-weight:700;font-size:13px">' + f.name + '</div>' +
+          '<div style="font-size:11px;color:#888;margin-top:1px">' + (f.author||'') + ' · ' + (f.date||'') + (f.size?' · '+f.size:'') + '</div>' +
+        '</div>' +
+        '<a href="' + viewUrl + '" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>' +
+        '<a href="' + fileUrl + '" download="' + f.file + '" style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>' +
+        (isAdmin && f.id > 9999 ? '<button onclick="removeSharedFile(' + f.id + ')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;margin-left:4px">🗑️</button>' : '') +
+      '</div>';
+    });
+  });
+  list.innerHTML = html;
+}
+
+function removeSharedFile(id) {
+  sharedFiles = sharedFiles.filter(function(f){ return f.id !== id; });
+  fbSet('/shared/sharedFiles', sharedFiles);
+  renderSharedFileList();
+  showToast('Đã xóa file', 'error');
+}
+
+// Also call renderSharedFileList when switching to files tab on page load
+function renderSharedFiles() { renderSharedFileList(); }
 
 // Personal Docs
 function createPersonalDoc() {
@@ -1813,7 +1863,39 @@ function pickModuleIcon(gid, mid, el) {
 // ============================================================
 var sharedDocs = [];
 var sharedSheets = [];
-var sharedFiles = [];
+var CONTENT_BASE = 'https://juni0rlink.github.io/link-knowledge-library/content/';
+var DEFAULT_SHARED_FILES = [
+  // GSC Modules
+  { id:1001, name:'GSC Software Structure', file:'GSC Software structure.pptx', type:'pptx', icon:'🏗️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~2MB' },
+  { id:1002, name:'GSC Phase Concept', file:'GSC Module Phase concept.pptx', type:'pptx', icon:'🔄', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~3MB' },
+  { id:1003, name:'GSC Module Safety', file:'GSC Module Safety.pptx', type:'pptx', icon:'🛡️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~1MB' },
+  { id:1004, name:'GSC Module SAS', file:'GSC Module SAS.pptx', type:'pptx', icon:'⚙️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~2MB' },
+  { id:1005, name:'GSC User Sequence', file:'GSC Module User sequence.pptx', type:'pptx', icon:'📋', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~1MB' },
+  { id:1006, name:'GSC Type Management', file:'GSC Type management.pptx', type:'pptx', icon:'🗂️', category:'GSC Modules', author:'LINK Group', date:'01/06/2024', size:'~1MB' },
+  // Training
+  { id:1007, name:'Overview Basic Concept Safety', file:'Overview Basic Concept Safety_Nguyễn Tuấn Phong.pptx', type:'pptx', icon:'📖', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'~2MB' },
+  { id:1008, name:'Training Record - Nguyễn Tuấn Phong', file:'Training Record_Nguyễn Tuấn Phong.pptx', type:'pptx', icon:'📊', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'~1MB' },
+  { id:1009, name:'Mess System', file:'Mess_System_Nguyễn Tuấn Phong.pptx', type:'pptx', icon:'📐', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'~1MB' },
+  { id:1010, name:'Issues Q&A', file:'Issues.pptx', type:'pptx', icon:'❓', category:'Training', author:'Nguyễn Tuấn Phong', date:'01/06/2024', size:'<1MB' },
+  // Operation Manual A1HG01
+  { id:2001, name:'Manual Cover - A1HG01', file:'MAN_00101_Manual_Cover.docx', type:'docx', icon:'📄', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2002, name:'Manual General', file:'MAN_00201_Manual_General.docx', type:'docx', icon:'📋', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2003, name:'Manual LINE Overview', file:'MAN_00301_Manual_LINE.docx', type:'docx', icon:'🏭', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2004, name:'Manual PLC', file:'MAN_00401_Manual_PLC.docx', type:'docx', icon:'💻', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2005, name:'SG01 – ST700', file:'MAN_00501_Manual_SG01.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2006, name:'SG02 – ST710', file:'MAN_00601_Manual_SG02.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2007, name:'SG04 – ST711', file:'MAN_00602_Manual_SG04.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2008, name:'SG06 – ST712', file:'MAN_00603_Manual_SG06.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2009, name:'SG03 – ST030 (Acrylic)', file:'MAN_00701_Manual_SG03.docx', type:'docx', icon:'🔧', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2010, name:'SG05 – ST031 (Acrylic)', file:'MAN_00702_Manual_SG05.docx', type:'docx', icon:'🔧', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2011, name:'SG07 – ST032 (Acrylic)', file:'MAN_00703_Manual_SG07.docx', type:'docx', icon:'🔧', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2012, name:'SG08 – ST719', file:'MAN_00801_Manual_SG08.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2013, name:'SG09 – ST720', file:'MAN_00901_Manual_SG09.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2014, name:'SG10 – ST050 (UV Station)', file:'MAN_01001_Manual_SG10.docx', type:'docx', icon:'💡', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2015, name:'SG11 – ST730', file:'MAN_01101_Manual_SG11.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:2016, name:'SG12 – ST739', file:'MAN_01201_Manual_SG12.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+];
+var sharedFiles = DEFAULT_SHARED_FILES.slice();
 var sharedNote = '';
 
 function switchFilesTab(tab, el) {
