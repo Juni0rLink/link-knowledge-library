@@ -144,11 +144,15 @@ function fbClearCache() {
 // Save shared data to Firebase
 function fbSavePersonal() {
   if (!currentUser || !currentUser.uid) return;
-  fbSet('/users/' + currentUser.uid + '/personalData', {
-    modules: personalModules,
-    files: personalFiles,
-    note: personalNote
-  });
+  var data = { modules: personalModules, files: personalFiles, note: personalNote };
+  // Guard: warn if personal data getting large (>500KB)
+  try {
+    var size = JSON.stringify(data).length;
+    if (size > 500000) {
+      showToast('⚠️ Dữ liệu cá nhân > 500KB — nên xóa bớt nội dung HTML dài trong modules', 'warning');
+    }
+  } catch(e) {}
+  fbSet('/users/' + currentUser.uid + '/personalData', data);
 }
 
 function fbSaveNews()         { fbClearCache(); fbSet('/shared/news', newsItems); }
@@ -1928,6 +1932,55 @@ function renderSharedFileList(){
   });
   list.innerHTML=html;
 }
+// ── DUPLICATE DETECTION ──
+function hashFile(file, cb) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    crypto.subtle.digest('SHA-256', e.target.result).then(function(buf) {
+      var hex = Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+      cb(hex);
+    }).catch(function(){ cb(null); });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function checkDuplicate(file, allFiles, cb) {
+  // Quick check by name+size first
+  var nameDup = allFiles.find(function(f){ return (f.name||f.file) === file.name && f.size === file.size; });
+  if (nameDup) { cb('name', nameDup); return; }
+  // Hash check for same name different size
+  var sameNameDiff = allFiles.find(function(f){ return (f.name||f.file) === file.name; });
+  if (!sameNameDiff) { cb(null); return; }
+  hashFile(file, function(hash) {
+    if (!hash) { cb(null); return; }
+    // Store hash in file metadata when uploading
+    fbGet('/fileHashes/' + hash, function(err, existing) {
+      if (!err && existing) cb('hash', existing);
+      else cb(null, null, hash);
+    });
+  });
+}
+
+function showDuplicateDialog(file, dupInfo, onReplace, onKeepBoth, onCancel) {
+  var ex = document.getElementById('dup-dialog'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'dup-dialog';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:24px;max-width:400px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.25)">'
+    +'<div style="font-size:24px;margin-bottom:8px">⚠️</div>'
+    +'<div style="font-weight:700;font-size:15px;margin-bottom:6px">File đã tồn tại!</div>'
+    +'<p style="font-size:13px;color:#555;margin-bottom:18px">File <strong>"'+file.name+'"</strong> đã có trong thư viện. Bạn muốn làm gì?</p>'
+    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<button id="dup-replace" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🔄 Thay thế file cũ</button>'
+    +'<button id="dup-keep" style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📋 Giữ cả 2</button>'
+    +'<button id="dup-cancel" style="background:#f3f4f6;color:#555;border:none;border-radius:8px;padding:10px;font-size:13px;cursor:pointer">Hủy upload</button>'
+    +'</div></div>';
+  document.body.appendChild(d);
+  document.getElementById('dup-replace').onclick = function(){ d.remove(); onReplace(); };
+  document.getElementById('dup-keep').onclick   = function(){ d.remove(); onKeepBoth(); };
+  document.getElementById('dup-cancel').onclick  = function(){ d.remove(); onCancel(); };
+}
+
 function uploadToCloud(file, onDone) {
   var isVideo = file.type.startsWith('video/');
   var isImage = file.type.startsWith('image/');
@@ -1955,18 +2008,43 @@ function uploadSharedFile(input) {
   var catEl = document.getElementById('shared-upload-category');
   var category = catEl ? catEl.value : 'Chung';
   var prog = document.getElementById('shared-upload-progress');
-  if (prog) { prog.style.display = 'block'; prog.textContent = 'Đang upload...'; }
-  var done = 0;
-  files.forEach(function(file) {
+
+  function doUpload(file, nameOverride) {
+    if (prog) { prog.style.display='block'; prog.textContent='Đang upload: '+file.name+'...'; }
     uploadToCloud(file, function(err, f) {
-      done++;
       if (!err) {
-        f.category = category;
-        f.icon = getSharedFileIcon(file.name);
+        if (nameOverride) f.name = nameOverride;
+        f.category = category; f.icon = getSharedFileIcon(file.name);
+        // Save hash to Firebase for future duplicate detection
+        hashFile(file, function(hash) {
+          if (hash) fbSet('/fileHashes/'+hash, {name:f.name, url:f.url, date:f.date});
+        });
         sharedFiles.push(f); fbSaveSharedFiles(); renderSharedFileList();
         showToast('✅ Upload xong: ' + f.name, 'success');
       } else { showToast('Lỗi upload: ' + file.name, 'error'); }
-      if (done === files.length && prog) prog.style.display = 'none';
+      if (prog) prog.style.display='none';
+    });
+  }
+
+  files.forEach(function(file) {
+    var allFiles = sharedFiles.concat(personalFiles);
+    checkDuplicate(file, allFiles, function(dupType, dupInfo, hash) {
+      if (dupType) {
+        showDuplicateDialog(file, dupInfo,
+          function() { // Replace
+            sharedFiles = sharedFiles.filter(function(f){ return (f.name||f.file) !== file.name; });
+            doUpload(file);
+          },
+          function() { // Keep both — add timestamp suffix
+            var ext = file.name.lastIndexOf('.');
+            var newName = (ext>0 ? file.name.slice(0,ext) : file.name) + '_' + Date.now() + (ext>0 ? file.name.slice(ext) : '');
+            doUpload(file, newName);
+          },
+          function() {} // Cancel
+        );
+      } else {
+        doUpload(file);
+      }
     });
   });
   input.value = '';
@@ -2407,9 +2485,15 @@ function renderStorageWidget(containerId) {
       +'</div>';
   }
 
-  // File sizes from cloudinary metadata (bytes)
-  var cloudUsedBytes = sharedFiles.concat(personalFiles).reduce(function(s,f){ return s + (f.size && typeof f.size === 'number' ? f.size : 0); }, 0);
+  // Cloudinary: sum bytes from uploaded files (cloudinary:true have numeric size in bytes)
+  var cloudUsedBytes = sharedFiles.concat(personalFiles).reduce(function(s,f){ return s + (f.cloudinary && typeof f.size === 'number' ? f.size : 0); }, 0);
   var cloudUsedMB = cloudUsedBytes / 1048576;
+  var cloudFileCount = sharedFiles.concat(personalFiles).filter(function(f){ return f.cloudinary; }).length;
+
+  // Firebase: estimate from JSON size
+  var fbEstKB = 0;
+  try { fbEstKB = Math.round(JSON.stringify({personalModules,personalFiles,sharedFiles,moduleGroups}).length / 1024); } catch(e){}
+  var fbUsedMB = fbEstKB / 1024;
 
   el.innerHTML =
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">'
@@ -2418,9 +2502,9 @@ function renderStorageWidget(containerId) {
     + _storCard('🗑️', 'Thùng rác', trashCount, '#ef4444')
     + '</div>'
     + '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">📊 Dung lượng theo nền tảng</div>'
-    + bar(cloudUsedMB, 25*1024, '#f59e0b', '☁️ Cloudinary (file uploads)')
-    + bar(50, 1024, '#0891b2', '🐙 GitHub Pages (code + tài liệu)')
-    + bar(0.1, 1024, '#22c55e', '🔥 Firebase Realtime DB')
+    + bar(cloudUsedMB, 25*1024, '#f59e0b', '☁️ Cloudinary ('+cloudFileCount+' files đã upload)')
+    + bar(50, 1024, '#0891b2', '🐙 GitHub Pages (code + tài liệu tĩnh)')
+    + bar(fbUsedMB, 1024, '#22c55e', '🔥 Firebase DB (metadata ~'+fbEstKB+'KB)')
     + '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:12px;color:#166534">'
     +'✅ Tổng dung lượng miễn phí: <strong>~27GB</strong> (Cloudinary 25GB + GitHub 1GB + Firebase 1GB)</div>';
 }
