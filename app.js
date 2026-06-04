@@ -142,17 +142,44 @@ function fbClearCache() {
 }
 
 // Save shared data to Firebase
+// ── OPTIMIZED PERSONAL STORAGE ──
+// Metadata (light): id, name, icon, date, notes — saved in /personalData
+// Content (heavy): HTML rich text — saved separately in /itemContent/{itemId}
+
 function fbSavePersonal() {
   if (!currentUser || !currentUser.uid) return;
-  var data = { modules: personalModules, files: personalFiles, note: personalNote };
-  // Guard: warn if personal data getting large (>500KB)
-  try {
-    var size = JSON.stringify(data).length;
-    if (size > 500000) {
-      showToast('⚠️ Dữ liệu cá nhân > 500KB — nên xóa bớt nội dung HTML dài trong modules', 'warning');
-    }
-  } catch(e) {}
-  fbSet('/users/' + currentUser.uid + '/personalData', data);
+  // Strip content from modules before saving metadata
+  var lightModules = personalModules.map(function(m) {
+    return {
+      id: m.id, name: m.name, icon: m.icon, date: m.date,
+      items: (m.items||[]).map(function(item) {
+        return { id: item.id, name: item.name, icon: item.icon, date: item.date, notes: item.notes||'' };
+        // content saved separately via fbSaveItemContent
+      })
+    };
+  });
+  fbSet('/users/' + currentUser.uid + '/personalData', {
+    modules: lightModules,
+    files: personalFiles,
+    note: personalNote
+  });
+}
+
+function fbSaveItemContent(itemId, content) {
+  if (!currentUser || !currentUser.uid) return;
+  fbSet('/users/' + currentUser.uid + '/itemContent/' + itemId, { html: content, updated: Date.now() });
+}
+
+function fbLoadItemContent(itemId, cb) {
+  if (!currentUser || !currentUser.uid) { cb(''); return; }
+  fbGet('/users/' + currentUser.uid + '/itemContent/' + itemId, function(err, data) {
+    cb((!err && data && data.html) ? data.html : '');
+  });
+}
+
+function fbDeleteItemContent(itemId) {
+  if (!currentUser || !currentUser.uid) return;
+  fbDelete('/users/' + currentUser.uid + '/itemContent/' + itemId);
 }
 
 function fbSaveNews()         { fbClearCache(); fbSet('/shared/news', newsItems); }
@@ -530,7 +557,14 @@ function launchApp() {
   if (isColleague && currentUser.uid) {
     fbGet('/users/' + currentUser.uid + '/personalData', function(err, data) {
       if (err || !data) return;
-      if (data.modules && Array.isArray(data.modules)) { personalModules = data.modules; renderPersonalModulesGrid(); }
+      if (data.modules && Array.isArray(data.modules)) {
+    personalModules = data.modules.map(function(m){
+      if (!m.items) m.items = [];
+      // items loaded without content (content lives in /itemContent)
+      return m;
+    });
+    renderPersonalModulesGrid();
+  }
       if (data.files && Array.isArray(data.files)) { personalFiles = data.files; renderPersonalFiles(); }
       if (data.note) { personalNote = data.note; var n=document.getElementById('personal-note'); if(n) n.value=data.note; }
     });
@@ -2325,7 +2359,7 @@ function openSubModule(mi, si) {
     +'<button class="btn-sm" onclick="document.execCommand(\'insertOrderedList\')">1. List</button>'
     +'</div>'
     +'<div id="sub-content-ed" contenteditable="true" style="flex:1;overflow-y:auto;padding:18px;outline:none;font-size:14px;line-height:1.8;min-height:260px;max-height:380px">'
-    +(item.content||'<p style="color:#aaa">Soạn thảo nội dung...</p>')
+    +'<p style="color:#aaa">⏳ Đang tải nội dung...</p>'
     +'</div>'
     +'<div style="border-top:1px solid #e5e7eb;padding:10px 18px">'
     +'<textarea id="sub-notes-inp" rows="2" style="width:100%;border:1px solid #e5e7eb;border-radius:7px;padding:7px;font-size:12px;outline:none;resize:none" placeholder="📎 Ghi chú nhanh...">'+( item.notes||'')+'</textarea>'
@@ -2335,8 +2369,12 @@ function openSubModule(mi, si) {
     +'<button onclick="saveSubModule('+mi+','+si+')" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer">💾 Lưu</button>'
     +'</div></div>';
   document.body.appendChild(d);
-  var ed = document.getElementById('sub-content-ed');
-  ed.addEventListener('focus', function(){ if(ed.querySelector('p[style*="color:#aaa"]')) ed.innerHTML=''; }, {once:true});
+  // Load content from Firebase
+  fbLoadItemContent(item.id, function(html) {
+    var ed = document.getElementById('sub-content-ed'); if (!ed) return;
+    ed.innerHTML = html || '<p style="color:#aaa">Soạn thảo nội dung...</p>';
+    ed.addEventListener('focus', function(){ if(ed.querySelector('p[style*="color:#aaa"]')) ed.innerHTML=''; }, {once:true});
+  });
 }
 
 function saveSubModule(mi, si) {
@@ -2346,10 +2384,11 @@ function saveSubModule(mi, si) {
   var c = document.getElementById('sub-content-ed');
   var nt = document.getElementById('sub-notes-inp');
   if (n) item.name = n.value || item.name;
-  if (c) item.content = c.innerHTML;
   if (nt) item.notes = nt.value;
+  // Save heavy content separately — does NOT go into personalData
+  if (c) fbSaveItemContent(item.id, c.innerHTML);
   document.getElementById('pm-sub-modal').remove();
-  fbSavePersonal();
+  fbSavePersonal(); // only saves lightweight metadata
   var grid = document.getElementById('pm-subgrid');
   if (grid && window.buildPmSubGrid) grid.innerHTML = window.buildPmSubGrid(mi);
   showToast('Đã lưu: ' + item.name, 'success');
