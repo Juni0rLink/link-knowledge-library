@@ -1707,7 +1707,7 @@ function switchFilesTab(tab, el) {
   document.querySelectorAll('.files-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
   el.style.color='#0891b2';el.style.borderBottomColor='#0891b2';
   ['modules','upload','notes'].forEach(function(t){var d=document.getElementById('shared-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
-  if(tab==='upload') renderSharedFileList();
+  if(tab==='upload') { renderSharedFileList(); populateCategoryDropdown(); }
   if(tab==='modules') renderPublicModulesGrid();
   if(tab==='notes') loadModuleActivity();
 }
@@ -1861,6 +1861,34 @@ function uploadSharedFile(input) {
     });
   });
   input.value = '';
+}
+
+function populateCategoryDropdown() {
+  var sel = document.getElementById('shared-upload-category'); if (!sel) return;
+  var current = sel.value;
+  // Build options: module group names + custom categories already used
+  var options = moduleGroups.map(function(g){ return g.name; });
+  // Add custom categories from existing files not in moduleGroups
+  sharedFiles.forEach(function(f){
+    if (f.category && options.indexOf(f.category) < 0) options.push(f.category);
+  });
+  options.push('── Thêm mục mới ──');
+  sel.innerHTML = options.map(function(o){
+    return '<option value="'+o+'"'+(o===current?' selected':'')+'>'+o+'</option>';
+  }).join('');
+  sel.onchange = function() {
+    if (sel.value === '── Thêm mục mới ──') {
+      var name = prompt('Tên mục mới:');
+      if (name && name.trim()) {
+        var opt = document.createElement('option');
+        opt.value = name.trim(); opt.textContent = name.trim(); opt.selected = true;
+        sel.insertBefore(opt, sel.lastChild); // before "Thêm mục mới"
+        sel.value = name.trim();
+      } else {
+        sel.value = options[0];
+      }
+    }
+  };
 }
 
 function getSharedFileIcon(name) {
