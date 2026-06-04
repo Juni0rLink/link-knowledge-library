@@ -745,7 +745,7 @@ function showPage(id, el) {
   // Page init calls
   if (id === 'news') markNewsRead();
   if (id === 'modules') { renderModuleGroups(); syncSidebarModules(); }
-  if (id === 'trash') { renderTrash(); renderStorageWidget('storage-widget'); }
+  if (id === 'trash') { renderTrash(); renderStorageWidget('storage-widget'); renderCleanupPanel(); renderBackupPanel(); }
   if (id === 'files') { renderSharedDocs(); renderSharedSheets(); renderSharedFileList(); renderPublicModulesGrid(); }
   if (id === 'myfiles') { renderPersonalDocs(); renderPersonalSheets(); renderPersonalFiles(); }
   if (id === 'admin') { renderRegRequests(); loadFirebaseMembers(); }
@@ -2501,6 +2501,184 @@ function emptyTrash() {
 }
 
 // ── STORAGE WIDGET ──
+// ── TRASH TABS ──
+function switchTrashTab(tab, el) {
+  document.querySelectorAll('.trash-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
+  el.style.color='#dc2626'; el.style.borderBottomColor='#dc2626';
+  ['storage','trash','cleanup','backup'].forEach(function(t){var d=document.getElementById('trash-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
+  if(tab==='storage') renderStorageWidget('storage-widget');
+  if(tab==='trash') renderTrash();
+  if(tab==='cleanup') renderCleanupPanel();
+  if(tab==='backup') renderBackupPanel();
+}
+
+// ── CLEANUP ──
+function renderCleanupPanel() {
+  var el = document.getElementById('cleanup-panel'); if(!el) return;
+  el.innerHTML = '<div class="card" style="border-top-color:#f59e0b">'
+    +'<div class="card-title">🧹 Công cụ dọn dẹp Firebase</div>'
+    +'<div style="display:flex;flex-direction:column;gap:10px">'
+
+    // Orphaned itemContent
+    +'<div style="background:#f8f9fb;border-radius:10px;padding:16px;border:1px solid #e5e7eb">'
+    +'<div style="display:flex;align-items:center;gap:10px">'
+    +'<div style="flex:1"><div style="font-weight:700;font-size:13px">🗃️ Xóa nội dung mồ côi</div>'
+    +'<div style="font-size:12px;color:#888;margin-top:2px">Xóa HTML content của items đã bị xóa khỏi personal modules</div></div>'
+    +'<button onclick="cleanOrphanedContent()" style="background:#f59e0b;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">Dọn dẹp</button>'
+    +'</div><div id="cleanup-orphan-result" style="margin-top:8px;font-size:12px;color:#555"></div></div>'
+
+    // Old file hashes
+    +'<div style="background:#f8f9fb;border-radius:10px;padding:16px;border:1px solid #e5e7eb">'
+    +'<div style="display:flex;align-items:center;gap:10px">'
+    +'<div style="flex:1"><div style="font-weight:700;font-size:13px">🔑 Xóa hash table cũ</div>'
+    +'<div style="font-size:12px;color:#888;margin-top:2px">Xóa bảng hash dùng để detect file trùng — tự động rebuild khi upload mới</div></div>'
+    +'<button onclick="cleanFileHashes()" style="background:#6366f1;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">Xóa hết</button>'
+    +'</div><div id="cleanup-hash-result" style="margin-top:8px;font-size:12px;color:#555"></div></div>'
+
+    // Old comments
+    +'<div style="background:#f8f9fb;border-radius:10px;padding:16px;border:1px solid #e5e7eb">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+    +'<div style="flex:1"><div style="font-weight:700;font-size:13px">💬 Xóa comments cũ</div>'
+    +'<div style="font-size:12px;color:#888;margin-top:2px">Xóa bình luận trong modules cũ hơn N ngày</div></div></div>'
+    +'<div style="display:flex;gap:8px;align-items:center">'
+    +'<label style="font-size:12px;color:#555">Xóa comments cũ hơn</label>'
+    +'<input id="cleanup-days" type="number" value="90" min="7" style="width:70px;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;font-size:13px">'
+    +'<label style="font-size:12px;color:#555">ngày</label>'
+    +'<button onclick="cleanOldComments()" style="background:#ef4444;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto">Xóa</button>'
+    +'</div><div id="cleanup-comment-result" style="margin-top:8px;font-size:12px;color:#555"></div></div>'
+
+    +'</div></div>';
+}
+
+function cleanOrphanedContent() {
+  if (!currentUser || !currentUser.uid) return;
+  var el = document.getElementById('cleanup-orphan-result');
+  if(el) el.textContent = '⏳ Đang kiểm tra...';
+  // Collect all valid item IDs
+  var validIds = {};
+  personalModules.forEach(function(m){ (m.items||[]).forEach(function(item){ validIds[item.id] = true; }); });
+  fbGet('/users/' + currentUser.uid + '/itemContent', function(err, data) {
+    if (err || !data) { if(el) el.textContent = 'Không có gì để dọn.'; return; }
+    var orphans = Object.keys(data).filter(function(id){ return !validIds[id]; });
+    if (!orphans.length) { if(el) el.innerHTML = '<span style="color:#22c55e">✅ Không có nội dung mồ côi.</span>'; return; }
+    var done = 0;
+    orphans.forEach(function(id) {
+      fbDelete('/users/' + currentUser.uid + '/itemContent/' + id, function(){
+        done++;
+        if (done === orphans.length && el) el.innerHTML = '<span style="color:#22c55e">✅ Đã xóa '+done+' items mồ côi (~'+Math.round(done*3)+'KB giải phóng)</span>';
+      });
+    });
+  });
+}
+
+function cleanFileHashes() {
+  var el = document.getElementById('cleanup-hash-result');
+  if(el) el.textContent = '⏳ Đang xóa...';
+  fbDelete('/fileHashes', function() {
+    if(el) el.innerHTML = '<span style="color:#22c55e">✅ Đã xóa toàn bộ hash table. Sẽ tự build lại khi upload file mới.</span>';
+  });
+}
+
+function cleanOldComments() {
+  var daysEl = document.getElementById('cleanup-days');
+  var days = parseInt(daysEl ? daysEl.value : 90);
+  var cutoff = Date.now() - days * 86400000;
+  var el = document.getElementById('cleanup-comment-result');
+  if(el) el.textContent = '⏳ Đang kiểm tra...';
+  fbGet('/moduleData', function(err, data) {
+    if (err || !data) { if(el) el.textContent = 'Không có module data.'; return; }
+    var total = 0;
+    var mids = Object.keys(data);
+    var pending = mids.length;
+    if (!pending) { if(el) el.textContent = 'Không có gì để dọn.'; return; }
+    mids.forEach(function(mid) {
+      var cmts = data[mid] && data[mid].comments;
+      if (!cmts || !cmts.length) { if(!--pending && el) el.innerHTML = '<span style="color:#22c55e">✅ Đã xóa '+total+' comments cũ.</span>'; return; }
+      var arr = Array.isArray(cmts) ? cmts : Object.values(cmts);
+      var filtered = arr.filter(function(c) {
+        // Parse Vietnamese date format dd/mm/yyyy hh:mm:ss
+        try { var d = new Date(c.time); return !isNaN(d) ? d.getTime() > cutoff : true; } catch(e){ return true; }
+      });
+      total += arr.length - filtered.length;
+      fbSet('/moduleData/'+mid+'/comments', filtered, function(){
+        if (!--pending && el) el.innerHTML = '<span style="color:#22c55e">✅ Đã xóa '+total+' comments cũ hơn '+days+' ngày.</span>';
+      });
+    });
+  });
+}
+
+// ── BACKUP ──
+function renderBackupPanel() {
+  var el = document.getElementById('backup-panel'); if(!el) return;
+  el.innerHTML = '<div class="card" style="border-top-color:#1d4ed8">'
+    +'<div class="card-title">💿 Backup & Restore</div>'
+    +'<div style="display:flex;flex-direction:column;gap:10px">'
+
+    +'<div style="background:#f0f9ff;border-radius:10px;padding:16px;border:1px solid #bae6fd">'
+    +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">📥 Export toàn bộ dữ liệu</div>'
+    +'<div style="font-size:12px;color:#555;margin-bottom:12px">Tải về file JSON chứa: modules, files, comments, settings. Dùng để backup hoặc migrate.</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+    +'<button onclick="exportBackup(\'shared\')" style="background:#1d4ed8;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer">⬇️ Export Shared Data</button>'
+    +'<button onclick="exportBackup(\'personal\')" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer">⬇️ Export Personal Data</button>'
+    +'<button onclick="exportBackup(\'all\')" style="background:#0891b2;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer">⬇️ Export Tất cả</button>'
+    +'</div></div>'
+
+    +'<div style="background:#fefce8;border-radius:10px;padding:16px;border:1px solid #fde047">'
+    +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">📤 Import / Restore</div>'
+    +'<div style="font-size:12px;color:#555;margin-bottom:10px">⚠️ Sẽ ghi đè dữ liệu hiện tại. Backup trước khi restore!</div>'
+    +'<label style="background:#f59e0b;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer">'
+    +'📂 Chọn file JSON để restore<input type="file" accept=".json" style="display:none" onchange="importBackup(this)"></label>'
+    +'<div id="import-result" style="margin-top:8px;font-size:12px"></div>'
+    +'</div>'
+
+    +'</div></div>';
+}
+
+function exportBackup(type) {
+  var filename = 'lkl-backup-' + type + '-' + new Date().toISOString().slice(0,10) + '.json';
+  function download(data) {
+    var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = filename; a.click();
+    showToast('✅ Đã export: ' + filename, 'success');
+  }
+  if (type === 'personal' && currentUser && currentUser.uid) {
+    fbGet('/users/' + currentUser.uid, function(err, data){ download({type:'personal', uid: currentUser.uid, data: data, exported: new Date().toISOString()}); });
+  } else if (type === 'shared') {
+    fbGet('/shared', function(err, data){ download({type:'shared', data: data, exported: new Date().toISOString()}); });
+  } else {
+    fbGet('/shared', function(err, shared){
+      fbGet('/users/' + (currentUser&&currentUser.uid||''), function(err2, personal){
+        download({type:'all', shared: shared, personal: personal, exported: new Date().toISOString()});
+      });
+    });
+  }
+}
+
+function importBackup(input) {
+  var file = input.files[0]; if(!file) return;
+  var el = document.getElementById('import-result');
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var backup = JSON.parse(e.target.result);
+      if (!confirm('⚠️ Restore sẽ ghi đè dữ liệu hiện tại. Tiếp tục?')) return;
+      if (backup.type === 'shared' && backup.data) {
+        fbSet('/shared', backup.data, function(){ if(el) el.innerHTML='<span style="color:#22c55e">✅ Đã restore Shared Data!</span>'; fbLoadAll(function(){}); });
+      } else if (backup.type === 'personal' && backup.data && currentUser && currentUser.uid) {
+        fbSet('/users/' + currentUser.uid, backup.data, function(){ if(el) el.innerHTML='<span style="color:#22c55e">✅ Đã restore Personal Data!</span>'; });
+      } else if (backup.type === 'all') {
+        if (backup.shared) fbSet('/shared', backup.shared);
+        if (backup.personal && currentUser && currentUser.uid) fbSet('/users/'+currentUser.uid, backup.personal);
+        if(el) el.innerHTML='<span style="color:#22c55e">✅ Đã restore tất cả!</span>';
+        fbLoadAll(function(){});
+      } else { if(el) el.innerHTML='<span style="color:#ef4444">❌ File backup không hợp lệ.</span>'; }
+    } catch(ex) { if(el) el.innerHTML='<span style="color:#ef4444">❌ Lỗi đọc file JSON.</span>'; }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
 function renderStorageWidget(containerId) {
   var el = document.getElementById(containerId || 'storage-widget');
   if (!el) return;
