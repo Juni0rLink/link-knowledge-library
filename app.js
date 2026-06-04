@@ -142,6 +142,15 @@ function fbClearCache() {
 }
 
 // Save shared data to Firebase
+function fbSavePersonal() {
+  if (!currentUser || !currentUser.uid) return;
+  fbSet('/users/' + currentUser.uid + '/personalData', {
+    modules: personalModules,
+    files: personalFiles,
+    note: personalNote
+  });
+}
+
 function fbSaveNews()         { fbClearCache(); fbSet('/shared/news', newsItems); }
 function fbSaveSharedDocs()   { fbClearCache(); fbSet('/shared/sharedDocs', sharedDocs); }
 function fbSaveSharedSheets() { fbClearCache(); fbSet('/shared/sharedSheets', sharedSheets); }
@@ -512,6 +521,16 @@ function launchApp() {
     populateCategoryDropdown();
     if (isAdmin) { renderModuleGroups(); }
   });
+
+  // Load personal data from Firebase (per user)
+  if (isColleague && currentUser.uid) {
+    fbGet('/users/' + currentUser.uid + '/personalData', function(err, data) {
+      if (err || !data) return;
+      if (data.modules && Array.isArray(data.modules)) { personalModules = data.modules; renderPersonalModulesGrid(); }
+      if (data.files && Array.isArray(data.files)) { personalFiles = data.files; renderPersonalFiles(); }
+      if (data.note) { personalNote = data.note; var n=document.getElementById('personal-note'); if(n) n.value=data.note; }
+    });
+  }
 
   renderVideos();
   if (isColleague) {
@@ -1788,7 +1807,7 @@ function createPersonalSheet(){var name=prompt('Tên bảng tính:');if(!name)re
 function renderPersonalSheets(){var list=document.getElementById('personal-sheets-list');if(!list)return;if(!personalSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}list.innerHTML=personalSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.date+'</div></div><button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn">🗑️</button></div>';}).join('');}
 function uploadPersonalFile(input){var files=Array.from(input.files);files.forEach(function(f){var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),url:URL.createObjectURL(f)});});renderPersonalFiles();showToast('Đã upload '+files.length+' file','success');input.value='';}
 function renderPersonalFiles(){var list=document.getElementById('personal-files-list');if(!list)return;if(!personalFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p>';return;}list.innerHTML=personalFiles.map(function(f,i){return '<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📁</span><div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.date+'</div></div><a href="'+f.url+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none">⬇️</a><button onclick="personalFiles.splice('+i+',1);renderPersonalFiles()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>';}).join('');}
-function savePersonalNote(){var t=document.getElementById('personal-note');if(t){personalNote=t.value;showToast('Đã lưu ghi chú','success');}}
+function savePersonalNote(){var t=document.getElementById('personal-note');if(t){personalNote=t.value;fbSavePersonal();showToast('Đã lưu ghi chú','success');}}
 
 // ── SHARED DOCS & SHEETS ──
 function switchFilesTab(tab, el) {
@@ -1999,7 +2018,7 @@ function uploadPersonalFile(input) {
   var files = Array.from(input.files); if (!files.length) return;
   files.forEach(function(file) {
     uploadToCloud(file, function(err, f) {
-      if (!err) { personalFiles.push(f); renderPersonalFiles(); showToast('✅ Upload: ' + f.name, 'success'); }
+      if (!err) { personalFiles.push(f); fbSavePersonal(); renderPersonalFiles(); showToast('✅ Upload: ' + f.name, 'success'); }
       else { showToast('Lỗi upload: ' + file.name, 'error'); }
     });
   });
@@ -2111,9 +2130,9 @@ function createPersonalModule() {
   var newMod = {id: Date.now(), name: name, icon: '📌', notes: '', content: '', date: new Date().toLocaleDateString('vi-VN')};
   personalModules.push(newMod);
   var idx = personalModules.length - 1;
-  renderPersonalModulesGrid();
+  fbSavePersonal(); renderPersonalModulesGrid();
   showToast('Đã tạo module: ' + name, 'success');
-  showIconPicker('📌', function(ic){ personalModules[idx].icon = ic; renderPersonalModulesGrid(); });
+  showIconPicker('📌', function(ic){ personalModules[idx].icon = ic; fbSavePersonal(); renderPersonalModulesGrid(); });
 }
 
 function renderPersonalModulesGrid() {
@@ -2252,6 +2271,7 @@ function saveSubModule(mi, si) {
   if (c) item.content = c.innerHTML;
   if (nt) item.notes = nt.value;
   document.getElementById('pm-sub-modal').remove();
+  fbSavePersonal();
   var grid = document.getElementById('pm-subgrid');
   if (grid && window.buildPmSubGrid) grid.innerHTML = window.buildPmSubGrid(mi);
   showToast('Đã lưu: ' + item.name, 'success');
