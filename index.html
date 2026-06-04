@@ -2,8 +2,16 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>LINK Knowledge Library</title>
+<meta name="description" content="Nền tảng kiến thức kỹ thuật nội bộ LINK Group">
+<meta name="theme-color" content="#1d4ed8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LINK Library">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="logo.jpg">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -55,6 +63,7 @@
         <span class="user-name" id="user-name-display"></span>
         <span class="role-badge" id="role-badge-display"></span>
       </div>
+      <button id="pwa-install-btn" onclick="installPWA()" style="display:none;align-items:center;gap:6px;background:linear-gradient(135deg,#1d4ed8,#1e40af);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">📲 Cài đặt App</button>
       <button class="logout-btn" onclick="doLogout()">Đăng xuất</button>
     </div>
   </header>
@@ -363,6 +372,33 @@
 
 <div id="toast"></div>
 <script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/link-knowledge-library/sw.js')
+      .then(function(reg) { console.log('SW registered:', reg.scope); })
+      .catch(function(e) { console.warn('SW failed:', e); });
+  });
+}
+// PWA install prompt
+var deferredPrompt;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  var btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'flex';
+});
+window.addEventListener('appinstalled', function() {
+  var btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'none';
+  deferredPrompt = null;
+});
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
+}
+</script>
 
 <!-- CLAUDE AI CHAT -->
 <button id="claude-fab" onclick="toggleChat()" title="Hỏi Claude AI" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);display:none;align-items:center;justify-content:center;font-size:22px;z-index:800;transition:transform .2s">🤖</button>

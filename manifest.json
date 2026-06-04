@@ -5,23 +5,17 @@
   "start_url": "/link-knowledge-library/",
   "scope": "/link-knowledge-library/",
   "display": "standalone",
-  "background_color": "#1a2332",
-  "theme_color": "#1c69d4",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "theme_color": "#1d4ed8",
+  "background_color": "#f8f9fb",
+  "lang": "vi",
   "icons": [
-    {
-      "src": "logo.jpg",
-      "sizes": "192x192",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "logo.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    }
+    { "src": "logo.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any maskable" },
+    { "src": "logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
   ],
-  "categories": ["productivity", "education", "business"],
-  "lang": "vi"
+  "categories": ["education", "productivity"],
+  "shortcuts": [
+    { "name": "Thư viện chung", "url": "/link-knowledge-library/?page=files", "description": "Mở thư viện chung" },
+    { "name": "Tìm kiếm", "url": "/link-knowledge-library/?page=search", "description": "Tìm kiếm tài liệu" }
+  ]
 }
