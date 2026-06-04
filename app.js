@@ -507,10 +507,9 @@ function launchApp() {
   // Load shared data from Firebase then render
   fbLoadAll(function() {
     renderNews();
-    renderSharedDocs();
-    renderSharedSheets();
     renderSharedFiles();
     syncSidebarModules();
+    populateCategoryDropdown();
     if (isAdmin) { renderModuleGroups(); }
   });
 
