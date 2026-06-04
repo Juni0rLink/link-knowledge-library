@@ -295,16 +295,34 @@
       <div class="page" id="page-modules">
         <div class="page-header" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
           <div class="page-tag">Chỉ Admin & Owner</div>
-          <div class="page-title">🗂️ Quản lý Modules</div>
-          <div class="page-meta">Đổi tên, thêm module, nhóm module — bấm vào icon để đổi</div>
+          <div class="page-title">🗂️ Quản lý Nội dung</div>
+          <div class="page-meta">Quản lý modules, files, nội dung thư viện</div>
         </div>
-        <div id="module-groups-container"></div>
-        <div class="card" style="border-top-color:#0891b2">
-          <div class="card-title">➕ Tạo nhóm mới</div>
-          <div style="display:flex;gap:8px">
-            <input class="form-input" id="new-group-name" placeholder="Tên nhóm mới..." style="flex:1">
-            <button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="addGroup()">+ Tạo</button>
+        <div style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:16px;background:#fff;border-radius:10px 10px 0 0;overflow:hidden">
+          <div class="mgmt-tab active" onclick="switchMgmtTab('modules',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#0891b2;border-bottom:3px solid #0891b2;margin-bottom:-2px">📦 Cấu trúc Modules</div>
+          <div class="mgmt-tab" onclick="switchMgmtTab('files',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">📁 Quản lý Files</div>
+          <div class="mgmt-tab" onclick="switchMgmtTab('modulefiles',this)" style="padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">🔗 Files trong Module</div>
+        </div>
+        <div id="mgmt-tab-modules">
+          <div id="module-groups-container"></div>
+          <div class="card" style="border-top-color:#0891b2">
+            <div class="card-title">➕ Tạo nhóm mới</div>
+            <div style="display:flex;gap:8px">
+              <input class="form-input" id="new-group-name" placeholder="Tên nhóm mới..." style="flex:1">
+              <button class="btn btn-primary" style="width:auto;padding:0 16px" onclick="addGroup()">+ Tạo</button>
+            </div>
           </div>
+        </div>
+        <div id="mgmt-tab-files" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:700;color:#374151">Toàn bộ files trong thư viện chung</div>
+            <span id="mgmt-file-count" style="font-size:12px;color:#888"></span>
+          </div>
+          <div id="mgmt-files-list"></div>
+        </div>
+        <div id="mgmt-tab-modulefiles" style="display:none">
+          <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">Files đã upload vào từng module</div>
+          <div id="mgmt-module-files-list"></div>
         </div>
       </div>
 

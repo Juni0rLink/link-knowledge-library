@@ -1043,6 +1043,95 @@ var moduleGroups = [
     { id:503, icon:'🔲', name:'Safety Gates SG07–SG12' },
   ]},
 ];
+function switchMgmtTab(tab, el) {
+  document.querySelectorAll('.mgmt-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
+  el.style.color='#0891b2'; el.style.borderBottomColor='#0891b2';
+  ['modules','files','modulefiles'].forEach(function(t){var d=document.getElementById('mgmt-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
+  if(tab==='files') renderMgmtFiles();
+  if(tab==='modulefiles') renderMgmtModuleFiles();
+}
+
+function renderMgmtFiles() {
+  var list = document.getElementById('mgmt-files-list'); if(!list) return;
+  var count = document.getElementById('mgmt-file-count');
+  if(count) count.textContent = sharedFiles.length + ' files';
+  if(!sharedFiles.length){list.innerHTML='<p style="color:#aaa;text-align:center;padding:20px">Chưa có file nào.</p>';return;}
+  var cats={};
+  sharedFiles.forEach(function(f,i){var cat=f.category||'Khác';if(!cats[cat])cats[cat]=[];cats[cat].push({f:f,i:i});});
+  list.innerHTML = Object.keys(cats).map(function(cat){
+    return '<div style="margin-bottom:16px">'
+      +'<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;padding:6px 10px;background:#f1f5f9;border-radius:6px;margin-bottom:6px">'+cat+' ('+cats[cat].length+')</div>'
+      + cats[cat].map(function(x){
+          var f=x.f, i=x.i;
+          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:4px">'
+            +'<span style="font-size:18px">'+(f.icon||'📄')+'</span>'
+            +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+(f.name||f.file||'')+'</div>'
+            +'<div style="font-size:11px;color:#94a3b8">'+(f.author||'')+(f.date?' · '+f.date:'')+(f.size?' · '+f.size:'')+'</div></div>'
+            +'<select onchange="changeFileCategory('+i+',this.value)" style="border:1px solid #e5e7eb;border-radius:6px;padding:4px 6px;font-size:11px;color:#475569">'
+            + moduleGroups.map(function(g){return '<option value="'+g.name+'"'+(f.category===g.name?' selected':'')+'>'+g.name+'</option>';}).join('')
+            +'<option value="Training"'+(f.category==='Training'?' selected':'')+'>Training</option>'
+            +'<option value="Khác"'+(f.category==='Khác'?' selected':'')+'>Khác</option>'
+            +'</select>'
+            +'<button onclick="deleteSharedFileByIndex('+i+')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;margin-left:4px">🗑️ Xóa</button>'
+            +'</div>';
+        }).join('')
+      +'</div>';
+  }).join('');
+}
+
+function changeFileCategory(index, newCat) {
+  if (sharedFiles[index]) { sharedFiles[index].category = newCat; fbSaveSharedFiles(); fbClearCache(); showToast('Đã đổi phân vùng','success'); }
+}
+
+function deleteSharedFileByIndex(index) {
+  var f = sharedFiles[index]; if (!f) return;
+  if (!confirm('Xóa file "' + (f.name||f.file) + '"?')) return;
+  sharedFiles.splice(index, 1);
+  fbSaveSharedFiles(); fbClearCache(); renderMgmtFiles();
+  showToast('Đã xóa: ' + (f.name||f.file), 'error');
+}
+
+function renderMgmtModuleFiles() {
+  var list = document.getElementById('mgmt-module-files-list'); if(!list) return;
+  list.innerHTML = '<div style="color:#aaa;text-align:center;padding:16px">Đang tải...</div>';
+  fbGet('/moduleData', function(err, data) {
+    if (err || !data) { list.innerHTML='<div style="color:#aaa;text-align:center;padding:20px">Chưa có file nào trong module.</div>'; return; }
+    var html = '';
+    Object.keys(data).forEach(function(mid) {
+      var files = data[mid] && data[mid].files;
+      if (!files || !files.length) return;
+      var modName = mid;
+      moduleGroups.forEach(function(g){ (g.modules||[]).forEach(function(m){ if(String(m.id)===String(mid)) modName=m.name; }); });
+      html += '<div style="margin-bottom:16px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">'
+        +'<div style="padding:10px 14px;background:#f8f9fb;border-bottom:1px solid #e5e7eb;font-weight:700;font-size:13px;color:#1e293b">📦 '+modName+'</div>'
+        + files.map(function(f, fi) {
+            return '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid #f5f5f5">'
+              +'<span style="font-size:16px">📎</span>'
+              +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div>'
+              +'<div style="font-size:11px;color:#94a3b8">'+f.author+' · '+f.date+'</div></div>'
+              +'<a href="'+f.url+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;text-decoration:none">👁️</a>'
+              +'<button onclick="deleteModuleFile(\''+mid+'\','+fi+')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:4px">🗑️</button>'
+              +'</div>';
+          }).join('')
+        +'</div>';
+    });
+    list.innerHTML = html || '<div style="color:#aaa;text-align:center;padding:20px">Chưa có file nào trong module.</div>';
+  });
+}
+
+function deleteModuleFile(mid, fi) {
+  fbGet('/moduleData/'+mid+'/files', function(err, files) {
+    if (!files) return;
+    var name = files[fi] && files[fi].name;
+    if (!confirm('Xóa file "'+name+'"?')) return;
+    files.splice(fi, 1);
+    fbSet('/moduleData/'+mid+'/files', files, function(){
+      showToast('Đã xóa: '+name, 'error');
+      renderMgmtModuleFiles();
+    });
+  });
+}
+
 function renderModuleGroups() {
   var c = document.getElementById('module-groups-container');
   if (!c) return;
@@ -1790,6 +1879,7 @@ function renderSharedFileList(){
   var list=document.getElementById('shared-files-list');
   if(!list)return;
   if(!sharedFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có file nào.</p>';return;}
+  var isAdmin2 = currentUser && ['owner','admin'].includes(currentUser.role);
   var cats={};
   sharedFiles.forEach(function(f){var cat=f.category||'Khác';if(!cats[cat])cats[cat]=[];cats[cat].push(f);});
   var html='';
@@ -1812,6 +1902,7 @@ function renderSharedFileList(){
           +'<div style="font-size:11px;color:#888;margin-top:1px">'+(f.author||'')+' · '+(f.date||'')+(f.size?' · '+f.size:'')+'</div></div>'
           +'<a href="'+viewUrl+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>'
           +'<a href="'+fileUrl+'" download style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>'
+          +(isAdmin2 ? '<button onclick="deleteSharedFile(\''+encodeURIComponent(JSON.stringify({name:f.name||f.file,id:f.id}))+'\',\''+encodeURIComponent(cat)+'\')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">🗑️</button>' : '')
           +'</div>';
       });
     }
@@ -1860,6 +1951,14 @@ function uploadSharedFile(input) {
     });
   });
   input.value = '';
+}
+
+function deleteSharedFile(encodedInfo, encodedCat) {
+  var info = JSON.parse(decodeURIComponent(encodedInfo));
+  if (!confirm('Xóa file "' + info.name + '"?')) return;
+  sharedFiles = sharedFiles.filter(function(f){ return (f.id !== info.id) && (f.name !== info.name) && (f.file !== info.name); });
+  fbSaveSharedFiles(); fbClearCache(); renderSharedFileList();
+  showToast('Đã xóa: ' + info.name, 'error');
 }
 
 function populateCategoryDropdown() {
