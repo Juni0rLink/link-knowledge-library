@@ -1269,9 +1269,7 @@ function uploadToCloudinaryLarge(file, onDone) {
   var CHUNK_SIZE = 6 * 1024 * 1024; // 6MB chunks
   var totalSize = file.size;
   var uploadId = 'lkl_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-  var isVideo = file.type.startsWith('video/');
-  var resType = isVideo ? 'video' : 'raw';
-  var endpoint = 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/' + resType + '/upload_large';
+  var endpoint = 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/auto/upload';
   var offset = 0;
   var sizeMB = (totalSize/1024/1024).toFixed(1);
 
