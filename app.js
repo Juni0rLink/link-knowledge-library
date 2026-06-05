@@ -3,6 +3,7 @@
 // FIREBASE CONFIG
 // ============================================================
 var FB_URL = 'https://link-knowledge-library-default-rtdb.asia-southeast1.firebasedatabase.app';
+var FB_STORAGE = 'https://firebasestorage.googleapis.com/v0/b/link-knowledge-library.appspot.com/o';
 var FB_API_KEY = 'AIzaSyBiRVWULX1TO_S3E31KAy5wK6k7aZdmhv0';
 var FB_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
 
@@ -1261,6 +1262,49 @@ function newsAiAssist() {
     +'</div></div>';
   document.body.appendChild(d);
   window._newsAiContext = { title: title, body: body };
+}
+
+// ── FIREBASE STORAGE UPLOAD (for files > 10MB) ──
+function uploadToFirebaseStorage(file, onDone) {
+  var token = sessionStorage.getItem('lkl_id_token');
+  if (!token) { onDone('Cần đăng nhập để upload file lớn'); return; }
+  var sizeMB = (file.size/1024/1024).toFixed(1);
+  showToast('☁️ File '+sizeMB+'MB → upload Firebase Storage...', 'warning');
+
+  var path = 'uploads/' + (currentUser ? currentUser.uid : 'shared') + '/' + Date.now() + '_' + file.name;
+  var encodedPath = encodeURIComponent(path);
+  var uploadUrl = FB_STORAGE + '/' + encodedPath + '?uploadType=media';
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', uploadUrl);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+  xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+  xhr.upload.onprogress = function(e) {
+    if (e.lengthComputable) {
+      var pct = Math.round(e.loaded/e.total*100);
+      showToast('☁️ Firebase Storage: '+pct+'%', 'warning');
+    }
+  };
+  xhr.onload = function() {
+    try {
+      var res = JSON.parse(xhr.responseText);
+      if (xhr.status === 200) {
+        // Build download URL
+        var dlUrl = FB_STORAGE + '/' + encodedPath + '?alt=media&token=' + token;
+        onDone(null, {
+          id: path, name: file.name, url: dlUrl,
+          type: file.type, size: file.size,
+          date: new Date().toLocaleDateString('vi-VN'),
+          author: currentUser ? currentUser.name : '',
+          storage: 'firebase', cloudinary: false
+        });
+      } else {
+        onDone('Firebase Storage error: ' + (res.error && res.error.message || xhr.status));
+      }
+    } catch(e) { onDone('Parse error: ' + xhr.status); }
+  };
+  xhr.onerror = function(){ onDone('Network error khi upload Firebase Storage'); };
+  xhr.send(file);
 }
 
 // ── RAG: auto-inject relevant context from search index ──
@@ -2901,13 +2945,12 @@ function showDuplicateDialog(file, dupInfo, onReplace, onKeepBoth, onCancel) {
 }
 
 function uploadToCloud(file, onDone) {
-  // Cloudinary free plan: raw files max 10MB, images max 10MB, video max 100MB
   var isVideo = file.type.startsWith('video/');
-  var maxBytes = isVideo ? 100*1024*1024 : 10*1024*1024;
-  if (file.size > maxBytes) {
-    var sizeMB = (file.size/1024/1024).toFixed(1);
-    var limitMB = isVideo ? 100 : 10;
-    onDone('File quá lớn: '+sizeMB+'MB (giới hạn '+limitMB+'MB). Hãy nén file trước tại ilovepdf.com hoặc liên hệ Admin để upload vào repo.');
+  var cloudinaryLimit = isVideo ? 100*1024*1024 : 10*1024*1024;
+
+  // If file > 10MB → use Firebase Storage instead of Cloudinary
+  if (file.size > cloudinaryLimit) {
+    uploadToFirebaseStorage(file, onDone);
     return;
   }
   var fd = new FormData();
