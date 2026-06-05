@@ -1109,7 +1109,7 @@ function callAI(prompt, systemMsg, cb) {
     fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
       headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-haiku-20240307',max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'claude-haiku-20241022',max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
     }).then(function(r){return r.json();}).then(function(d){
       if(d.error) cb(null,'Claude error: '+d.error.message);
       else cb((d.content&&d.content[0]&&d.content[0].text)||'');
