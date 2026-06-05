@@ -592,30 +592,87 @@ function newChatSession() {
   var msgs = document.getElementById('claude-msgs'); if(msgs) msgs.innerHTML = '';
 }
 
+function getChatStorageSize() {
+  try {
+    var raw = localStorage.getItem('chat_sessions') || '[]';
+    var bytes = new Blob([raw]).size;
+    return bytes < 1024 ? bytes + ' B' : bytes < 1048576 ? (bytes/1024).toFixed(1) + ' KB' : (bytes/1048576).toFixed(2) + ' MB';
+  } catch(e) { return '?'; }
+}
+
 function showChatSessions() {
   var sessions = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
   var ex = document.getElementById('chat-sessions-modal'); if(ex) ex.remove();
   var d = document.createElement('div');
   d.id = 'chat-sessions-modal';
   d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  var storageSize = getChatStorageSize();
   var listHtml = sessions.length ? sessions.map(function(s,i){
     var cfg = AI_PROVIDERS[s.provider] || AI_PROVIDERS.claude;
     var msgCount = s.history ? s.history.length : 0;
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;cursor:pointer;background:#fff" onclick="loadChatSession(\''+s.id+'\')">'
+    var sizeKB = Math.round(JSON.stringify(s).length / 1024);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;cursor:pointer;background:#fff;transition:background .1s" onmouseover="this.style.background=\'#f8f9fb\'" onmouseout="this.style.background=\'#fff\'" onclick="loadChatSession(\''+s.id+'\')">'
       +'<span style="font-size:18px">'+cfg.icon+'</span>'
       +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.title+'</div>'
-      +'<div style="font-size:11px;color:#94a3b8">'+msgCount+' tin · '+new Date(s.updated).toLocaleString('vi-VN')+'</div></div>'
-      +'<button onclick="event.stopPropagation();deleteChatSession(\''+s.id+'\')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer">🗑️</button>'
+      +'<div style="font-size:11px;color:#94a3b8">'+msgCount+' tin · ~'+sizeKB+'KB · '+new Date(s.updated).toLocaleString('vi-VN')+'</div></div>'
+      +'<button onclick="event.stopPropagation();exportSingleSession(\''+s.id+'\')" style="background:#dbeafe;color:#1d4ed8;border:none;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer" title="Export JSON">⬇️</button>'
+      +'<button onclick="event.stopPropagation();deleteChatSession(\''+s.id+'\')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;margin-left:4px">🗑️</button>'
       +'</div>';
   }).join('') : '<p style="color:#aaa;text-align:center;padding:20px">Chưa có cuộc chat nào được lưu.</p>';
-  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:460px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.25)">'
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:460px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25)">'
     +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center;border-radius:14px 14px 0 0">'
     +'<span style="color:#fff;font-weight:700;flex:1">📋 Lịch sử cuộc chat</span>'
     +'<button onclick="document.getElementById(\'chat-sessions-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
     +'</div>'
-    +'<div style="padding:14px">'+listHtml+'</div>'
+    // Storage info + actions
+    +'<div style="padding:10px 14px;background:#f8f9fb;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+    +'<span style="font-size:12px;color:#555">💾 Đang dùng: <strong>'+storageSize+'</strong> / ~5MB</span>'
+    +'<div style="flex:1"></div>'
+    +'<label style="background:#dcfce7;color:#166534;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">📂 Import JSON<input type="file" accept=".json" style="display:none" onchange="importChatSessions(this)"></label>'
+    +'<button onclick="exportAllSessions()" style="background:#dbeafe;color:#1d4ed8;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">📤 Export tất cả</button>'
+    +'</div>'
+    +'<div style="overflow-y:auto;padding:12px">'+listHtml+'</div>'
     +'</div>';
   document.body.appendChild(d);
+}
+
+function exportAllSessions() {
+  var sessions = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+  if (!sessions.length) { showToast('Chưa có session nào', 'warning'); return; }
+  var blob = new Blob([JSON.stringify({version:1, exported: new Date().toISOString(), sessions: sessions}, null, 2)], {type:'application/json'});
+  var a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = 'chat-history-' + new Date().toISOString().slice(0,10) + '.json'; a.click();
+  showToast('✅ Đã export ' + sessions.length + ' sessions', 'success');
+}
+
+function exportSingleSession(sid) {
+  var sessions = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+  var s = sessions.find(function(x){ return x.id === sid; }); if(!s) return;
+  var blob = new Blob([JSON.stringify({version:1, exported: new Date().toISOString(), sessions:[s]}, null, 2)], {type:'application/json'});
+  var a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = (s.title||'chat').replace(/[^a-z0-9]/gi,'_') + '.json'; a.click();
+}
+
+function importChatSessions(input) {
+  var file = input.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      var incoming = data.sessions || (Array.isArray(data) ? data : []);
+      if (!incoming.length) { showToast('File không có sessions hợp lệ', 'error'); return; }
+      var existing = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+      // Merge — avoid duplicates by id
+      incoming.forEach(function(s) {
+        if (!existing.find(function(x){ return x.id === s.id; })) existing.unshift(s);
+      });
+      localStorage.setItem('chat_sessions', JSON.stringify(existing.slice(0,20)));
+      showToast('✅ Đã import ' + incoming.length + ' sessions', 'success');
+      showChatSessions();
+    } catch(ex) { showToast('File JSON không hợp lệ', 'error'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
 }
 
 function loadChatSession(sid) {
