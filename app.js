@@ -971,6 +971,28 @@ function newsAiAssist() {
   window._newsAiContext = { title: title, body: body };
 }
 
+// ── RAG: auto-inject relevant context from search index ──
+function ragInject(prompt, systemMsg, cb) {
+  if (!searchIndex || !searchIndex.length) {
+    cb(prompt, systemMsg); return;
+  }
+  var words = prompt.toLowerCase().split(/\s+/).filter(function(w){ return w.length > 2; });
+  if (!words.length) { cb(prompt, systemMsg); return; }
+  var scored = searchIndex.map(function(item) {
+    var t = item.text.toLowerCase();
+    var score = words.reduce(function(s, w){ return s + ((t.match(new RegExp(w,'gi'))||[]).length * 2); }, 0);
+    return { item: item, score: score };
+  }).filter(function(x){ return x.score > 0; })
+    .sort(function(a,b){ return b.score - a.score; })
+    .slice(0, 5);
+  if (!scored.length) { cb(prompt, systemMsg); return; }
+  var context = scored.map(function(r){
+    return '['+r.item.source+' - '+r.item.page+']\n'+r.item.text;
+  }).join('\n\n---\n\n');
+  var ragSystem = systemMsg + '\n\n=== TÀI LIỆU THAM KHẢO ===\n' + context + '\n\nHãy trả lời dựa trên tài liệu trên khi liên quan. Trích dẫn nguồn cụ thể nếu có.';
+  cb(prompt, ragSystem);
+}
+
 // ── UNIVERSAL AI CALL ──
 function callAI(prompt, systemMsg, cb) {
   var provider = localStorage.getItem('ai-provider') || 'claude';

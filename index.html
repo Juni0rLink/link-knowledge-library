@@ -569,17 +569,61 @@ function selectProvider(p) {
   // Show/hide model selector for OpenRouter
   var modelRow = document.getElementById('openrouter-model-row');
   if (modelRow) modelRow.style.display = p==='openrouter' ? 'block' : 'none';
-  // Pre-fill if key exists
+  // Pre-fill: localStorage first, then Firebase
   var saved = localStorage.getItem(cfg.keyName);
+  if (!saved && typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
+    fbGet('/users/'+currentUser.uid+'/apiKeys/'+p, function(err, data) {
+      if (!err && data && data.k) {
+        var key = atob(data.k); // simple base64 decode
+        localStorage.setItem(cfg.keyName, key);
+        var i = document.getElementById('claude-api-key'); if(i) i.value = key;
+      }
+    });
+  }
   if (inp && saved) inp.value = saved;
+  // Free providers: show "không cần key" hint
+  if (p === 'gemini' || p === 'openrouter') {
+    var freeKey = localStorage.getItem(cfg.keyName);
+    if (!freeKey) {
+      // Show option to use shared key from Firebase if admin set one
+      fbGet('/shared/aiKeys/'+p, function(err, data){
+        if (!err && data && data.k) {
+          var sharedKey = atob(data.k);
+          localStorage.setItem(cfg.keyName, sharedKey);
+          var i = document.getElementById('claude-api-key');
+          if (i) i.value = sharedKey;
+          if (hint) hint.innerHTML += '<br><span style="color:#22c55e;font-weight:700">✅ Đã có key chung từ Admin — bấm Bắt đầu ngay</span>';
+        }
+      });
+    }
+  }
 }
 
 function saveApiKey() {
   var cfg = AI_PROVIDERS[currentProvider];
   var key = document.getElementById('claude-api-key').value.trim();
   if (!key) { alert('Vui lòng nhập API key'); return; }
+  // Save to localStorage (device)
   localStorage.setItem(cfg.keyName, key);
   localStorage.setItem('ai-provider', currentProvider);
+  // Save to Firebase per-user (private) — base64 obfuscation
+  if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
+    var isPrivate = (currentProvider === 'claude' || currentProvider === 'gpt');
+    if (isPrivate) {
+      // Private: store under user's own node
+      fbSet('/users/'+currentUser.uid+'/apiKeys/'+currentProvider, { k: btoa(key), updated: Date.now() });
+    } else {
+      // Free/shared providers: admin can also set shared key
+      var isAdmin = currentUser.role === 'owner' || currentUser.role === 'admin';
+      if (isAdmin) {
+        if (confirm('Lưu key này làm key chung cho mọi người dùng không?')) {
+          fbSet('/shared/aiKeys/'+currentProvider, { k: btoa(key), updated: Date.now() });
+          showToast('✅ Đã lưu key chung cho mọi user', 'success');
+        }
+      }
+      fbSet('/users/'+currentUser.uid+'/apiKeys/'+currentProvider, { k: btoa(key), updated: Date.now() });
+    }
+  }
   initChat();
 }
 
