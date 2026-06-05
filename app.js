@@ -2137,9 +2137,11 @@ function openPersonalNoteItem(idx) {
     +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'insertOrderedList\')">1.</button>'
     +'<button class="btn-sm" onclick="var u=prompt(\'URL:\');if(u)document.execCommand(\'createLink\',false,u)">🔗</button>'
     +'<div style="flex:1"></div>'
-    +'<button onclick="publishNoteToShared('+idx+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">📤 Public</button>'
+    +'<button onclick="noteAiAssist('+idx+')" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">✨ AI</button>'
+    +'<button onclick="publishNoteToShared('+idx+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:3px">📤 Public</button>'
     +'<button onclick="exportNoteWord('+idx+')" style="background:#2b5797;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:3px">📄 Word</button>'
     +'<button onclick="exportNotePDF('+idx+')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:3px">📕 PDF</button>'
+    +'<button onclick="exportNotePptx('+idx+')" style="background:#d97706;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:3px">📊 PPTX</button>'
     +'</div>'
     // Editor
     +'<div id="pnote-editor" contenteditable="true" style="flex:1;overflow-y:auto;padding:18px;outline:none;font-size:14px;line-height:1.8;min-height:320px;max-height:500px"><p style="color:#aaa">⏳ Đang tải...</p></div>'
@@ -2202,6 +2204,85 @@ function exportNotePDF(idx) {
     +'<h1>'+note.title+'</h1><p style="color:#888;font-size:12px">'+note.date+' · '+(currentUser?currentUser.name:'')+'</p>'
     +content+'</body></html>');
   w.document.close();
+}
+
+function exportNotePptx(idx) {
+  var note = personalNotes[idx]; if (!note) return;
+  var ed = document.getElementById('pnote-editor');
+  var content = ed ? ed.innerHTML : '';
+  showToast('⏳ AI đang tạo cấu trúc slide...', 'warning');
+  var prompt = 'Tạo cấu trúc bài thuyết trình PowerPoint từ nội dung sau. Trả về JSON:\n'
+    +'{"title":"Tên bài","slides":[{"heading":"Tiêu đề slide","bullets":["điểm 1","điểm 2"]}]}\n\n'
+    +'Nội dung: '+content.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()+'\nTiêu đề: '+note.title+'\nTạo 5-8 slides.';
+  callAI(prompt, 'Bạn là chuyên gia tạo slide. Chỉ trả về JSON thuần.', function(text, err) {
+    if (err) { showToast('Lỗi AI: '+err,'error'); return; }
+    try {
+      var json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+      exportToPptx(json.title||note.title, currentUser?currentUser.name:'', null, true, json.slides);
+    } catch(e) {
+      exportToPptx(note.title, currentUser?currentUser.name:'', content, false);
+    }
+  });
+}
+
+function noteAiAssist(idx) {
+  var note = personalNotes[idx]; if (!note) return;
+  var ed = document.getElementById('pnote-editor');
+  var content = ed ? ed.innerHTML.replace(/<[^>]+>/g,' ').trim() : '';
+  var ex = document.getElementById('note-ai-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'note-ai-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:500px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center">'
+    +'<span style="color:#fff;font-weight:700;flex:1">✨ AI Hỗ trợ viết — '+note.title+'</span>'
+    +'<button onclick="document.getElementById(\'note-ai-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="padding:16px">'
+    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<button onclick="runNoteAI(\'write\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">✍️ Viết bài hoàn chỉnh từ tiêu đề</button>'
+    +'<button onclick="runNoteAI(\'improve\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">✨ Cải thiện văn phong nội dung hiện tại</button>'
+    +'<button onclick="runNoteAI(\'expand\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">📝 Mở rộng và thêm chi tiết</button>'
+    +'<button onclick="runNoteAI(\'structure\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">📋 Tạo cấu trúc đề mục rõ ràng</button>'
+    +'<button onclick="runNoteAI(\'technical\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">🔧 Viết theo phong cách kỹ thuật LINK Group</button>'
+    +'</div>'
+    +'<div id="note-ai-result" style="display:none;margin-top:12px">'
+    +'<div id="note-ai-output" style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;max-height:200px;overflow-y:auto"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'
+    +'<button onclick="applyNoteAI()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">✅ Áp dụng vào bài viết</button>'
+    +'<button onclick="document.getElementById(\'note-ai-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:7px;padding:7px 14px;font-size:12px;cursor:pointer">Đóng</button>'
+    +'</div></div>'
+    +'</div></div>';
+  document.body.appendChild(d);
+  window._noteAiCtx = { idx: idx, title: note.title, content: content };
+}
+
+function runNoteAI(mode, idx) {
+  var ctx = window._noteAiCtx || {};
+  var outputEl = document.getElementById('note-ai-output');
+  var resultEl = document.getElementById('note-ai-result');
+  if (!outputEl) return;
+  resultEl.style.display = 'block'; outputEl.innerHTML = '⏳ Đang xử lý...';
+  var prompts = {
+    write:     'Viết một bài viết đầy đủ, chuyên nghiệp về chủ đề: "'+ctx.title+'"',
+    improve:   'Cải thiện văn phong và cấu trúc của nội dung sau:\n'+ctx.content,
+    expand:    'Mở rộng và thêm chi tiết cho nội dung:\n'+ctx.content,
+    structure: 'Tổ chức lại nội dung sau thành cấu trúc đề mục rõ ràng (H2, H3, gạch đầu dòng):\n'+ctx.content,
+    technical: 'Viết lại theo phong cách tài liệu kỹ thuật chuyên nghiệp cho kỹ thuật viên BMW/SiCar:\n'+ctx.content
+  };
+  callAI(prompts[mode], 'Bạn là chuyên gia viết tài liệu kỹ thuật cho LINK Group. Viết bằng tiếng Việt, chuyên nghiệp, rõ ràng.', function(text, err) {
+    if (err) { outputEl.textContent = err; return; }
+    outputEl.innerHTML = (text||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    window._noteAiResult = text;
+  });
+}
+
+function applyNoteAI() {
+  var result = window._noteAiResult; if (!result) return;
+  var ed = document.getElementById('pnote-editor'); if (!ed) return;
+  ed.innerHTML = result.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');
+  document.getElementById('note-ai-modal').remove();
+  showToast('✅ Đã áp dụng nội dung AI', 'success');
 }
 
 // ── SHARED DOCS & SHEETS ──
