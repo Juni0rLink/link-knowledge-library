@@ -1627,7 +1627,8 @@ function loadModuleExtras(id) {
     var isAdmin = currentUser && ['owner','admin'].includes(currentUser.role);
     el.innerHTML = list.map(function(c, ci) {
       var cfg = ROLE_CFG[c.role] || ROLE_CFG.colleague;
-      var canDelete = isAdmin || (currentUser && c.author === currentUser.name);
+      var emailPrefix = currentUser && currentUser.email ? currentUser.email.split('@')[0] : '';
+      var canDelete = isAdmin || (currentUser && (c.author === currentUser.name || c.author === emailPrefix));
       return '<div style="background:#f8f9fb;border-left:3px solid #1d4ed8;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:8px">'
         +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'
         +'<span style="font-weight:700;font-size:12px;color:#1d4ed8">'+c.author+'</span>'
