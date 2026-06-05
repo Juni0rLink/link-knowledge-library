@@ -910,9 +910,64 @@ function renderNews() {
       + '</div>'
       + '<div style="font-weight:700;font-size:15px;margin-bottom:6px;color:#1e293b">' + n.title + '</div>'
       + '<div style="font-size:13px;color:#475569;line-height:1.7">' + n.body + '</div>'
+      + '<div style="margin-top:10px;display:flex;gap:8px;align-items:center">'
+      + '<button onclick="newsAskAI(\''+encodeURIComponent(JSON.stringify({title:n.title,body:n.body.replace(/<[^>]+>/g,\' \')}))+\'\')" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer">🤖 Hỏi AI về bài này</button>'
+      + '</div>'
       + '</div>';
   }).join('') || '<div style="text-align:center;padding:40px;color:#aaa">Chưa có thông báo nào.</div>';
 }
+
+function newsAskAI(encodedData) {
+  var data = JSON.parse(decodeURIComponent(encodedData));
+  var ex = document.getElementById('news-ai-ask-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'news-ai-ask-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:560px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden;display:flex;flex-direction:column;max-height:80vh">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center">'
+    +'<span style="color:#fff;font-weight:700;flex:1">🤖 AI — '+data.title+'</span>'
+    +'<button onclick="document.getElementById(\'news-ai-ask-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div id="news-ask-msgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:100px;max-height:300px"></div>'
+    +'<div style="padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px">'
+    +'<textarea id="news-ask-inp" rows="2" placeholder="Hỏi AI về bài viết này..." style="flex:1;border:1px solid #ddd;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;resize:none" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendNewsAskAI();}"></textarea>'
+    +'<button onclick="sendNewsAskAI()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700">Gửi</button>'
+    +'</div>'
+    +'<div style="padding:4px 12px 8px;display:flex;gap:6px;flex-wrap:wrap">'
+    +'<button onclick="quickNewsQ(\'Tóm tắt bài viết này\')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer">Tóm tắt</button>'
+    +'<button onclick="quickNewsQ(\'Ý nghĩa của bài viết này là gì?\')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer">Ý nghĩa</button>'
+    +'<button onclick="quickNewsQ(\'Tôi cần làm gì sau bài viết này?\')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer">Hành động</button>'
+    +'</div></div>';
+  document.body.appendChild(d);
+  window._newsAskCtx = data;
+  // Auto greet
+  appendNewsAskMsg('ai', '💬 Tôi đã đọc bài: <strong>'+data.title+'</strong>. Bạn muốn hỏi gì?');
+  setTimeout(function(){ var i=document.getElementById('news-ask-inp'); if(i) i.focus(); }, 100);
+}
+
+function appendNewsAskMsg(role, text) {
+  var msgs = document.getElementById('news-ask-msgs'); if(!msgs) return;
+  var d = document.createElement('div');
+  d.style.cssText = 'padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.6;max-width:90%;'+(role==='user'?'background:#7c3aed;color:#fff;align-self:flex-end':'background:#f3f4f6;color:#1e293b;align-self:flex-start');
+  d.innerHTML = text; msgs.appendChild(d); msgs.scrollTop = 9999;
+}
+
+function sendNewsAskAI() {
+  var inp = document.getElementById('news-ask-inp');
+  var q = inp ? inp.value.trim() : ''; if(!q) return;
+  if(inp) inp.value = '';
+  appendNewsAskMsg('user', q);
+  var ctx = window._newsAskCtx || {};
+  var sysMsg = 'Bạn là trợ lý giúp hiểu nội dung thông báo nội bộ LINK Group. Nội dung bài: Tiêu đề: "'+ctx.title+'". Nội dung: '+ctx.body+'. Trả lời ngắn gọn bằng tiếng Việt.';
+  appendNewsAskMsg('ai', '⏳ Đang xử lý...');
+  callAI(q, sysMsg, function(text, err) {
+    var msgs = document.getElementById('news-ask-msgs');
+    if(msgs) { var last = msgs.lastChild; if(last) last.remove(); }
+    appendNewsAskMsg('ai', err ? '❌ '+err : (text||''));
+  });
+}
+
+function quickNewsQ(q) { var i=document.getElementById('news-ask-inp'); if(i){i.value=q;sendNewsAskAI();} }
 
 function deleteNews(id) {
   var n = newsItems.find(function(x){ return String(x.id) === String(id); });
@@ -2154,7 +2209,8 @@ function openPersonalNoteItem(idx) {
     +'<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value);this.value=\'p\'"><option value="p">Đoạn</option><option value="h2">H2</option><option value="h3">H3</option></select>'
     +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'insertUnorderedList\')">•</button>'
     +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'insertOrderedList\')">1.</button>'
-    +'<button class="btn-sm" onclick="var u=prompt(\'URL:\');if(u)document.execCommand(\'createLink\',false,u)">🔗</button>'
+    +'<button class="btn-sm" onclick="var u=prompt(\'URL link:\');if(u)document.execCommand(\'createLink\',false,u)">🔗</button>'
+    +'<button class="btn-sm" onclick="insertNoteImage()" title="Chèn ảnh">🖼️</button>'
     +'<div style="flex:1"></div>'
     +'<button onclick="noteAiAssist('+idx+')" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">✨ AI</button>'
     +'<button onclick="publishNoteToShared('+idx+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:3px">📤 Public</button>'
@@ -2242,6 +2298,55 @@ function exportNotePptx(idx) {
       exportToPptx(note.title, currentUser?currentUser.name:'', content, false);
     }
   });
+}
+
+function insertNoteImage() {
+  var ex = document.getElementById('note-img-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'note-img-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:420px;width:100%;padding:20px;box-shadow:0 16px 48px rgba(0,0,0,.25)">'
+    +'<div style="font-weight:700;font-size:15px;margin-bottom:14px">🖼️ Chèn ảnh</div>'
+    // Upload from device
+    +'<div style="border:2px dashed #c4b5fd;border-radius:10px;padding:16px;text-align:center;background:#faf5ff;cursor:pointer;margin-bottom:12px" onclick="document.getElementById(\'note-img-file\').click()">'
+    +'<div style="font-size:28px;margin-bottom:6px">📁</div>'
+    +'<p style="font-size:13px;font-weight:700;color:#7c3aed;margin-bottom:2px">Upload từ máy</p>'
+    +'<p style="font-size:11px;color:#888">JPG, PNG, GIF...</p>'
+    +'</div>'
+    +'<input type="file" id="note-img-file" accept="image/*" style="display:none" onchange="uploadNoteImage(this)">'
+    // URL
+    +'<div style="display:flex;gap:8px;margin-bottom:12px">'
+    +'<input id="note-img-url" type="text" placeholder="Hoặc dán URL ảnh..." style="flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px;outline:none">'
+    +'<button onclick="insertNoteImageByUrl()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer">Chèn</button>'
+    +'</div>'
+    +'<div id="note-img-progress" style="display:none;font-size:12px;color:#7c3aed;margin-bottom:8px">⏳ Đang upload...</div>'
+    +'<button onclick="document.getElementById(\'note-img-modal\').remove()" style="width:100%;background:#f3f4f6;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer">Hủy</button>'
+    +'</div>';
+  document.body.appendChild(d);
+}
+
+function insertNoteImageByUrl() {
+  var url = document.getElementById('note-img-url').value.trim(); if(!url) return;
+  var ed = document.getElementById('pnote-editor'); if(!ed) return;
+  ed.focus();
+  document.execCommand('insertHTML', false, '<img src="'+url+'" style="max-width:100%;border-radius:8px;margin:8px 0;display:block">');
+  document.getElementById('note-img-modal').remove();
+}
+
+function uploadNoteImage(input) {
+  var file = input.files[0]; if(!file) return;
+  var prog = document.getElementById('note-img-progress');
+  if(prog) prog.style.display = 'block';
+  uploadToCloud(file, function(err, f) {
+    if(prog) prog.style.display = 'none';
+    if(err) { showToast('Lỗi upload: '+err,'error'); return; }
+    var ed = document.getElementById('pnote-editor'); if(!ed) return;
+    ed.focus();
+    document.execCommand('insertHTML', false, '<img src="'+f.url+'" style="max-width:100%;border-radius:8px;margin:8px 0;display:block" alt="'+file.name+'">');
+    document.getElementById('note-img-modal').remove();
+    showToast('✅ Đã chèn ảnh', 'success');
+  });
+  input.value = '';
 }
 
 function noteAiAssist(idx) {
