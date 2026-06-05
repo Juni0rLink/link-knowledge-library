@@ -1765,8 +1765,11 @@ function showAddStaticFileDialog() {
     +'<div style="font-size:12px;color:#888;margin-bottom:16px">File đã có trong thư mục content/ (dùng add-file.bat để copy trước)</div>'
     +'<div style="display:flex;flex-direction:column;gap:10px">'
     +'<div><div style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px">Tên file trong content/ *</div>'
-    +'<input id="sf-filename" class="form-input" placeholder="VD: DE_TIA-UWCCBMWOEM_EN_01_V180003.pdf" style="font-size:13px">'
-    +'<div style="font-size:11px;color:#aaa;margin-top:2px">Nhập đúng tên file (phân biệt hoa thường)</div></div>'
+    +'<div style="display:flex;gap:6px">'
+    +'<input id="sf-filename" class="form-input" placeholder="VD: DE_TIA-UWCCBMWOEM_EN_01_V180003.pdf" style="flex:1;font-size:13px">'
+    +'<label style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:7px;padding:0 12px;cursor:pointer;display:flex;align-items:center;font-size:12px;font-weight:600;color:#555;white-space:nowrap">📂 Chọn<input type="file" style="display:none" onchange="(function(f){if(f){document.getElementById(\'sf-filename\').value=f.name;document.getElementById(\'sf-name\').value=f.name.replace(/\\.[^.]+$/,\'\').replace(/[_-]/g,\' \');sfDetectSize(f);}}).call(this,this.files[0])"></label>'
+    +'</div>'
+    +'<div id="sf-size-hint" style="font-size:11px;color:#aaa;margin-top:2px">Chọn file để tự điền tên (file cần đã được copy vào content/ qua bat script)</div></div>'
     +'<div><div style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px">Tên hiển thị *</div>'
     +'<input id="sf-name" class="form-input" placeholder="VD: WinCC Unified OEM Manual V18" style="font-size:13px"></div>'
     +'<div><div style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px">Phân vùng / Module</div>'
@@ -1781,6 +1784,21 @@ function showAddStaticFileDialog() {
     +'<button onclick="document.getElementById(\'add-static-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer">Hủy</button>'
     +'</div></div>';
   document.body.appendChild(d);
+}
+
+function sfDetectSize(file) {
+  var hint = document.getElementById('sf-size-hint');
+  if (!hint) return;
+  var mb = (file.size/1024/1024).toFixed(1);
+  var ext = file.name.split('.').pop().toLowerCase();
+  var iconMap = {pdf:'📕', docx:'📝', doc:'📝', xlsx:'📊', xls:'📊', pptx:'📋', ppt:'📋'};
+  hint.innerHTML = (iconMap[ext]||'📄') + ' ' + file.name + ' · <strong>' + mb + 'MB</strong> · '
+    + (file.size > 10*1024*1024
+      ? '<span style="color:#f59e0b">⚠️ File lớn >10MB — cần dùng add-file.bat trước</span>'
+      : '<span style="color:#22c55e">✅ Kích thước OK</span>');
+  // Also update size in form
+  var sizeEl = document.getElementById('sf-size');
+  if (sizeEl) sizeEl.value = '~' + mb + 'MB';
 }
 
 function previewStaticFile() {
