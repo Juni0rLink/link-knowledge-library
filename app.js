@@ -1264,6 +1264,41 @@ function newsAiAssist() {
   window._newsAiContext = { title: title, body: body };
 }
 
+// ── PDF COMPRESSION (browser-side, before upload) ──
+function compressPDF(file, targetMB, onDone) {
+  if (typeof PDFLib === 'undefined') {
+    onDone(null, file); // fallback: no compression
+    return;
+  }
+  showToast('🗜️ Đang nén PDF...', 'warning');
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    PDFLib.PDFDocument.load(e.target.result).then(function(pdfDoc) {
+      // Remove metadata, flatten fields, optimize
+      pdfDoc.setTitle('');
+      pdfDoc.setAuthor('');
+      pdfDoc.setSubject('');
+      pdfDoc.setKeywords([]);
+      pdfDoc.setCreator('LINK Library');
+      pdfDoc.setProducer('LINK Library');
+      return pdfDoc.save({ useObjectStreams: true });
+    }).then(function(bytes) {
+      var compressed = new Blob([bytes], {type: 'application/pdf'});
+      var pct = Math.round(compressed.size / file.size * 100);
+      var origMB = (file.size/1024/1024).toFixed(1);
+      var compMB = (compressed.size/1024/1024).toFixed(1);
+      showToast('🗜️ Nén xong: '+origMB+'MB → '+compMB+'MB ('+pct+'%)', 'success');
+      // Create new File object with compressed data
+      var compressedFile = new File([compressed], file.name, {type: 'application/pdf'});
+      onDone(null, compressedFile);
+    }).catch(function(err) {
+      showToast('Không thể nén PDF: ' + err.message, 'warning');
+      onDone(null, file); // fallback: use original
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 // ── CLOUDINARY CHUNKED UPLOAD (files > 10MB, up to 5GB, free plan) ──
 function uploadToCloudinaryLarge(file, onDone) {
   var CHUNK_SIZE = 6 * 1024 * 1024; // 6MB chunks
@@ -2996,8 +3031,22 @@ function showDuplicateDialog(file, dupInfo, onReplace, onKeepBoth, onCancel) {
 }
 
 function uploadToCloud(file, onDone) {
-  // Large files (>10MB) → use chunked upload_large API (free plan, up to 5GB)
-  if (file.size > 10 * 1024 * 1024) {
+  var TEN_MB = 10 * 1024 * 1024;
+  // If PDF > 10MB → try compress first, then upload
+  if (file.size > TEN_MB && file.type === 'application/pdf') {
+    compressPDF(file, 9, function(err, compressedFile) {
+      if (compressedFile.size <= TEN_MB) {
+        // Compression successful → upload normally
+        uploadToCloud(compressedFile, onDone);
+      } else {
+        // Still too large → chunked upload
+        uploadToCloudinaryLarge(compressedFile, onDone);
+      }
+    });
+    return;
+  }
+  // Non-PDF large files → chunked upload
+  if (file.size > TEN_MB) {
     uploadToCloudinaryLarge(file, onDone);
     return;
   }
