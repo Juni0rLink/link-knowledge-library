@@ -1264,6 +1264,59 @@ function newsAiAssist() {
   window._newsAiContext = { title: title, body: body };
 }
 
+// ── CLOUDINARY CHUNKED UPLOAD (files > 10MB, up to 5GB, free plan) ──
+function uploadToCloudinaryLarge(file, onDone) {
+  var CHUNK_SIZE = 6 * 1024 * 1024; // 6MB chunks
+  var totalSize = file.size;
+  var uploadId = 'lkl_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  var isVideo = file.type.startsWith('video/');
+  var resType = isVideo ? 'video' : 'raw';
+  var endpoint = 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/' + resType + '/upload_large';
+  var offset = 0;
+  var sizeMB = (totalSize/1024/1024).toFixed(1);
+
+  showToast('☁️ Upload '+sizeMB+'MB (chunked)...', 'warning');
+
+  function uploadChunk() {
+    var chunk = file.slice(offset, offset + CHUNK_SIZE);
+    var fd = new FormData();
+    fd.append('file', chunk);
+    fd.append('upload_preset', UPLOAD_PRESET);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint);
+    xhr.setRequestHeader('X-Unique-Upload-Id', uploadId);
+    xhr.setRequestHeader('Content-Range', 'bytes ' + offset + '-' + (Math.min(offset + CHUNK_SIZE, totalSize) - 1) + '/' + totalSize);
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) {
+        var overallPct = Math.round((offset + e.loaded) / totalSize * 100);
+        showToast('☁️ Upload: ' + overallPct + '% (' + sizeMB + 'MB)', 'warning');
+      }
+    };
+    xhr.onload = function() {
+      try {
+        var res = JSON.parse(xhr.responseText);
+        if (xhr.status === 200) {
+          // Final chunk done
+          onDone(null, { id: res.public_id, name: file.name, url: res.secure_url,
+            type: file.type, size: res.bytes || totalSize,
+            date: new Date().toLocaleDateString('vi-VN'),
+            author: currentUser ? currentUser.name : '', cloudinary: true });
+        } else if (xhr.status === 206) {
+          // Partial - continue next chunk
+          offset += CHUNK_SIZE;
+          if (offset < totalSize) uploadChunk();
+        } else {
+          onDone('Upload error: ' + (res.error && res.error.message || xhr.status));
+        }
+      } catch(e) { onDone('Parse error: ' + xhr.status); }
+    };
+    xhr.onerror = function(){ onDone('Network error'); };
+    xhr.send(fd);
+  }
+  uploadChunk();
+}
+
 // ── FIREBASE STORAGE UPLOAD (for files > 10MB) ──
 function uploadToFirebaseStorage(file, onDone) {
   var token = sessionStorage.getItem('lkl_id_token');
@@ -2945,12 +2998,9 @@ function showDuplicateDialog(file, dupInfo, onReplace, onKeepBoth, onCancel) {
 }
 
 function uploadToCloud(file, onDone) {
-  var isVideo = file.type.startsWith('video/');
-  var cloudinaryLimit = isVideo ? 100*1024*1024 : 10*1024*1024;
-
-  // If file > 10MB → use Firebase Storage instead of Cloudinary
-  if (file.size > cloudinaryLimit) {
-    uploadToFirebaseStorage(file, onDone);
+  // Large files (>10MB) → use chunked upload_large API (free plan, up to 5GB)
+  if (file.size > 10 * 1024 * 1024) {
+    uploadToCloudinaryLarge(file, onDone);
     return;
   }
   var fd = new FormData();
