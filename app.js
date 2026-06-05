@@ -192,6 +192,12 @@ function fbSaveModules()      { fbClearCache(); fbSet('/shared/moduleGroups', mo
 function fbSavePublicFiles()  { fbClearCache(); fbSet('/shared/publicFiles', publicFiles); }
 function fbSaveTrash()        { fbSet('/shared/trash', trash); }
 
+function moveToTrash(type, data, onDone) {
+  trash.push({ type: type, data: data, deletedBy: currentUser ? currentUser.name : '?', deletedAt: new Date().toLocaleString('vi-VN') });
+  fbSaveTrash(); updateTrashBadge();
+  if (onDone) onDone();
+}
+
 // ============================================================
 // DATA
 // ============================================================
@@ -1356,10 +1362,11 @@ function changeFileCategory(index, newCat) {
 
 function deleteSharedFileByIndex(index) {
   var f = sharedFiles[index]; if (!f) return;
-  if (!confirm('Xóa file "' + (f.name||f.file) + '"?')) return;
+  if (!confirm('Đưa "' + (f.name||f.file) + '" vào thùng rác?')) return;
+  moveToTrash('file', f);
   sharedFiles.splice(index, 1);
   fbSaveSharedFiles(); fbClearCache(); renderMgmtFiles();
-  showToast('Đã xóa: ' + (f.name||f.file), 'error');
+  showToast('Đã chuyển vào thùng rác', 'error');
 }
 
 function renderMgmtModuleFiles() {
@@ -1393,11 +1400,12 @@ function renderMgmtModuleFiles() {
 function deleteModuleFile(mid, fi) {
   fbGet('/moduleData/'+mid+'/files', function(err, files) {
     if (!files) return;
-    var name = files[fi] && files[fi].name;
-    if (!confirm('Xóa file "'+name+'"?')) return;
+    var f = files[fi];
+    if (!confirm('Đưa "'+( f && f.name)+'" vào thùng rác?')) return;
+    if (f) moveToTrash('modulefile', Object.assign({}, f, { _moduleId: mid }));
     files.splice(fi, 1);
     fbSet('/moduleData/'+mid+'/files', files, function(){
-      showToast('Đã xóa: '+name, 'error');
+      showToast('Đã chuyển vào thùng rác', 'error');
       renderMgmtModuleFiles();
     });
   });
@@ -1471,19 +1479,21 @@ function addModule(gid) {
 
 function deleteModule(gid, mid) {
   var g = moduleGroups.find(function(g){return g.id===gid;});
-  var m = g && g.modules.find(function(m){return m.id===mid;});
-  if (!confirm('Xóa module "' + (m?m.name:'') + '"?')) return;
-  g.modules = g.modules.filter(function(m){return m.id!==mid;});
-  renderModuleGroups(); syncSidebarModules();
-  showToast('Đã xóa module', 'error');
+  var m = g && (g.modules||[]).find(function(m){return m.id===mid;});
+  if (!confirm('Đưa module "' + (m?m.name:'') + '" vào thùng rác?')) return;
+  if (m) moveToTrash('module', { id: mid, name: m.name, icon: m.icon, groupId: gid, groupName: g.name });
+  g.modules = (g.modules||[]).filter(function(m){return m.id!==mid;});
+  fbSaveModules(); renderModuleGroups(); syncSidebarModules();
+  showToast('Đã chuyển vào thùng rác', 'error');
 }
 
 function deleteGroup(gid) {
   var g = moduleGroups.find(function(g){return g.id===gid;});
-  if (!confirm('Xóa nhóm "' + (g?g.name:'') + '" và toàn bộ modules?')) return;
+  if (!confirm('Đưa nhóm "' + (g?g.name:'') + '" vào thùng rác?')) return;
+  if (g) moveToTrash('group', { id: gid, name: g.name, icon: g.icon, modules: g.modules||[] });
   moduleGroups = moduleGroups.filter(function(g){return g.id!==gid;});
-  renderModuleGroups(); syncSidebarModules();
-  showToast('Đã xóa nhóm', 'error');
+  fbSaveModules(); renderModuleGroups(); syncSidebarModules();
+  showToast('Đã chuyển vào thùng rác', 'error');
 }
 
 function addGroup() {
@@ -2059,7 +2069,7 @@ function savePersonalDoc(i){var c=document.getElementById('doc-content-'+i);if(c
 function createPersonalSheet(){var name=prompt('Tên bảng tính:');if(!name)return;personalSheets.push({id:Date.now(),name:name,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:{}});renderPersonalSheets();showToast('Đã tạo: '+name,'success');}
 function renderPersonalSheets(){var list=document.getElementById('personal-sheets-list');if(!list)return;if(!personalSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}list.innerHTML=personalSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.date+'</div></div><button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn">🗑️</button></div>';}).join('');}
 function uploadPersonalFile(input){var files=Array.from(input.files);files.forEach(function(f){var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),url:URL.createObjectURL(f)});});renderPersonalFiles();showToast('Đã upload '+files.length+' file','success');input.value='';}
-function renderPersonalFiles(){var list=document.getElementById('personal-files-list');if(!list)return;if(!personalFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p>';return;}list.innerHTML=personalFiles.map(function(f,i){return '<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📁</span><div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.date+'</div></div><a href="'+f.url+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none">⬇️</a><button onclick="personalFiles.splice('+i+',1);renderPersonalFiles()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>';}).join('');}
+function renderPersonalFiles(){var list=document.getElementById('personal-files-list');if(!list)return;if(!personalFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p>';return;}list.innerHTML=personalFiles.map(function(f,i){return '<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📁</span><div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.date+'</div></div><a href="'+f.url+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none">⬇️</a><button onclick="moveToTrash(\'personalfile\',personalFiles['+i+'],function(){personalFiles.splice('+i+',1);fbSavePersonal();renderPersonalFiles();})" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>';}).join('');}
 function savePersonalNote() {
   var editor = document.getElementById('personal-note-editor');
   if (editor) personalNote = editor.innerHTML;
@@ -2318,10 +2328,12 @@ function uploadSharedFile(input) {
 
 function deleteSharedFile(encodedInfo, encodedCat) {
   var info = JSON.parse(decodeURIComponent(encodedInfo));
-  if (!confirm('Xóa file "' + info.name + '"?')) return;
+  if (!confirm('Đưa "' + info.name + '" vào thùng rác?')) return;
+  var f = sharedFiles.find(function(x){ return (x.id === info.id) || (x.name === info.name); });
+  if (f) moveToTrash('file', f);
   sharedFiles = sharedFiles.filter(function(f){ return (f.id !== info.id) && (f.name !== info.name) && (f.file !== info.name); });
   fbSaveSharedFiles(); fbClearCache(); renderSharedFileList();
-  showToast('Đã xóa: ' + info.name, 'error');
+  showToast('Đã chuyển vào thùng rác', 'error');
 }
 
 function populateCategoryDropdown() {
@@ -2494,7 +2506,7 @@ function renderPersonalModulesGrid() {
       +'<div style="font-size:11px;color:#aaa;margin-bottom:10px">'+m.date+'</div>'
       +'<div style="display:flex;gap:6px">'
       +'<button onclick="openPersonalModule('+i+')" style="flex:1;background:#ede9fe;color:#7c3aed;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">✏️ Mở</button>'
-      +'<button onclick="event.stopPropagation();personalModules.splice('+i+',1);renderPersonalModulesGrid()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer">🗑️</button>'
+      +'<button onclick="event.stopPropagation();moveToTrash(\'personalmodule\',personalModules['+i+'],function(){personalModules.splice('+i+',1);fbSavePersonal();renderPersonalModulesGrid();})" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer">🗑️</button>'
       +'</div></div>';
   }).join('');
 }
@@ -2914,7 +2926,9 @@ function renderTrash() {
   }
   list.innerHTML = trash.map(function(item, i) {
     var label = (item.data && item.data.name) ? item.data.name : (item.type || 'Item');
-    var icon = item.type === 'file' ? '📁' : item.type === 'doc' ? '📝' : item.type === 'sheet' ? '📊' : '🗑️';
+    var iconMap = { file:'📁', doc:'📝', sheet:'📊', news:'📢', group:'📚', module:'📦', personalmodule:'🗂️', personalfile:'📁', modulefile:'📎' };
+    var icon = iconMap[item.type] || '🗑️';
+    var label = (item.data && (item.data.title || item.data.name)) || 'Item';
     return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #f5f5f5">'
       + '<span style="font-size:20px">' + icon + '</span>'
       + '<div style="flex:1">'
@@ -2933,6 +2947,17 @@ function restoreTrash(i) {
   else if (item.type === 'doc') { sharedDocs.push(item.data); fbSaveSharedDocs(); }
   else if (item.type === 'sheet') { sharedSheets.push(item.data); fbSaveSharedSheets(); }
   else if (item.type === 'news') { newsItems.unshift(item.data); fbSaveNews(); }
+  else if (item.type === 'group') { moduleGroups.push(item.data); fbSaveModules(); }
+  else if (item.type === 'module') {
+    var g = moduleGroups.find(function(x){ return x.id === item.data.groupId; });
+    if (g) { if (!g.modules) g.modules = []; g.modules.push(item.data); fbSaveModules(); }
+  }
+  else if (item.type === 'personalmodule') { personalModules.push(item.data); fbSavePersonal(); renderPersonalModulesGrid(); }
+  else if (item.type === 'personalfile') { personalFiles.push(item.data); fbSavePersonal(); renderPersonalFiles(); }
+  else if (item.type === 'modulefile') {
+    var mid = item.data._moduleId;
+    if (mid) { fbGet('/moduleData/'+mid+'/files', function(e2, files){ var arr = files||[]; arr.push(item.data); fbSet('/moduleData/'+mid+'/files', arr); }); }
+  }
   trash.splice(i, 1);
   fbSet('/shared/trash', trash);
   showToast('Đã khôi phục: ' + (item.data && (item.data.name || item.data.title) ? (item.data.name || item.data.title) : 'item'), 'success');
