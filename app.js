@@ -230,11 +230,7 @@ var DEFAULT_SHARED_FILES = [
 ];
 var sharedFiles = DEFAULT_SHARED_FILES.slice();
 
-const USERS = {
-  'owner@bmw.com':  { password: 'owner123',  name: 'Nguyễn Tuấn Phong', role: 'owner' },
-  'admin@bmw.com':  { password: 'admin123',  name: 'Tran Thi B',    role: 'admin' },
-  'editor@bmw.com': { password: 'editor123', name: 'Le Van C',       role: 'colleague' },
-};
+const USERS = {}; // No hardcoded accounts — all auth via Firebase
 
 const ROLE_CFG = {
   owner:     { label: '👑 Owner',     cls: 'role-owner',     color: '#fbbf24', desc: 'Toàn quyền tuyệt đối trên platform' },
