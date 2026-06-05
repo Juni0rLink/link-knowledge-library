@@ -2039,7 +2039,6 @@ function uploadToCloudinary(input) {
     var fd = new FormData();
     fd.append('file', file);
     fd.append('upload_preset', UPLOAD_PRESET);
-    fd.append('folder', 'link-library');
     var isVideo = file.type.startsWith('video/');
     var isImage = file.type.startsWith('image/');
       var endpoint = 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/auto/upload';
@@ -2905,7 +2904,6 @@ function uploadToCloud(file, onDone) {
   var fd = new FormData();
   fd.append('file', file);
   fd.append('upload_preset', UPLOAD_PRESET);
-  fd.append('folder', 'link-library');
   var xhr = new XMLHttpRequest();
   xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/auto/upload');
   xhr.onload = function() {
