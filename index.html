@@ -466,23 +466,45 @@ function installPWA() {
 }
 </script>
 
-<!-- CLAUDE AI CHAT -->
-<button id="claude-fab" onclick="toggleChat()" title="Hỏi Claude AI" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);display:none;align-items:center;justify-content:center;font-size:22px;z-index:800;transition:transform .2s">🤖</button>
-<div id="claude-panel" style="display:none;position:fixed;bottom:88px;right:24px;width:380px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:900;flex-direction:column;max-height:520px;border:1px solid #e5e7eb;overflow:hidden">
-  <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 16px;display:flex;align-items:center;gap:10px">
-    <span style="font-size:20px">🤖</span>
-    <div style="flex:1"><div style="color:#fff;font-weight:700;font-size:14px">Claude AI Assistant</div><div style="color:#c4b5fd;font-size:11px">Hỗ trợ kỹ thuật BMW GSC</div></div>
+<!-- AI CHAT (multi-provider) -->
+<button id="claude-fab" onclick="toggleChat()" title="Hỏi AI Assistant" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);display:none;align-items:center;justify-content:center;font-size:22px;z-index:800;transition:transform .2s">🤖</button>
+<div id="claude-panel" style="display:none;position:fixed;bottom:88px;right:24px;width:400px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:900;flex-direction:column;max-height:560px;border:1px solid #e5e7eb;overflow:hidden">
+  <!-- Header -->
+  <div id="ai-panel-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:12px 16px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:20px" id="ai-provider-icon">🤖</span>
+    <div style="flex:1">
+      <div style="color:#fff;font-weight:700;font-size:14px" id="ai-provider-name">AI Assistant</div>
+      <div style="color:#c4b5fd;font-size:11px">Hỗ trợ kỹ thuật LINK Group</div>
+    </div>
     <button onclick="toggleChat()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
   </div>
+  <!-- Provider setup -->
   <div id="claude-setup" style="padding:16px">
-    <div style="font-size:13px;color:#555;margin-bottom:10px">🔑 Nhập Anthropic API key của bạn để sử dụng Claude AI:</div>
-    <input id="claude-api-key" type="password" placeholder="sk-ant-..." style="width:100%;border:2px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;margin-bottom:8px;font-family:monospace">
-    <div style="font-size:11px;color:#888;margin-bottom:10px">Key được lưu trong trình duyệt của bạn, không chia sẻ cho ai.</div>
-    <button onclick="saveApiKey()" style="width:100%;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">Bắt đầu dùng Claude</button>
-    <div style="text-align:center;margin-top:8px;font-size:11px;color:#aaa">Tạo API key miễn phí tại <a href="https://console.anthropic.com" target="_blank" style="color:#7c3aed">console.anthropic.com</a></div>
+    <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">🔑 Chọn AI Provider</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <button onclick="selectProvider('claude')" id="btn-claude" style="padding:10px 6px;border:2px solid #7c3aed;border-radius:10px;background:#ede9fe;cursor:pointer;font-size:11px;font-weight:700;color:#7c3aed">
+        <div style="font-size:18px;margin-bottom:4px">🟣</div>Claude
+      </button>
+      <button onclick="selectProvider('gpt')" id="btn-gpt" style="padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;background:#f9fafb;cursor:pointer;font-size:11px;font-weight:700;color:#888">
+        <div style="font-size:18px;margin-bottom:4px">🟢</div>GPT-4
+      </button>
+      <button onclick="selectProvider('gemini')" id="btn-gemini" style="padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;background:#f9fafb;cursor:pointer;font-size:11px;font-weight:700;color:#888">
+        <div style="font-size:18px;margin-bottom:4px">🔵</div>Gemini
+      </button>
+    </div>
+    <div id="ai-key-section">
+      <input id="claude-api-key" type="password" placeholder="Nhập API key..." style="width:100%;border:2px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;margin-bottom:6px;font-family:monospace;box-sizing:border-box">
+      <div id="ai-key-hint" style="font-size:11px;color:#888;margin-bottom:10px"></div>
+      <button onclick="saveApiKey()" style="width:100%;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">🚀 Bắt đầu</button>
+    </div>
   </div>
+  <!-- Chat -->
   <div id="claude-chat" style="display:none;flex-direction:column;flex:1;min-height:0">
-    <div id="claude-msgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;max-height:320px;min-height:200px"></div>
+    <div style="background:#f8f9fb;padding:6px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:6px">
+      <span id="chat-provider-badge" style="font-size:11px;font-weight:700;background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:20px"></span>
+      <button onclick="clearApiKey()" style="font-size:11px;color:#888;background:none;border:none;cursor:pointer;margin-left:auto;text-decoration:underline">Đổi provider</button>
+    </div>
+    <div id="claude-msgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;max-height:300px;min-height:180px"></div>
     <div style="border-top:1px solid #eee;padding:10px 12px;display:flex;gap:8px;align-items:flex-end">
       <textarea id="claude-input" rows="2" placeholder="Hỏi về GSC, E-STOP, SAS..." style="flex:1;border:1px solid #ddd;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;resize:none;font-family:'Segoe UI',Arial" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendClaude();}"></textarea>
       <button onclick="sendClaude()" id="claude-send-btn" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:13px;flex-shrink:0">Gửi</button>
@@ -491,18 +513,86 @@ function installPWA() {
       <button onclick="quickQ('E-STOP zone là gì?')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#555">E-STOP zone?</button>
       <button onclick="quickQ('Cách tạo SAS file trong GSC')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#555">Tạo SAS file</button>
       <button onclick="quickQ('MDB là gì trong GSC?')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#555">MDB là gì?</button>
-      <button onclick="clearApiKey()" style="background:#fee2e2;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#ef4444;margin-left:auto">Đổi API key</button>
     </div>
   </div>
 </div>
 
 <script>
-var SYSTEM_PROMPT = "Bạn là trợ lý kỹ thuật chuyên về BMW GSC (Group Standard Controls). Hỗ trợ kỹ thuật viên về: TIA Portal V18, WinCC Unified, SAS, SiVArc, Safety (E-STOP, Zone concept), Software structure, Phase concept, Type management. Trả lời ngắn gọn, chính xác bằng tiếng Việt. Dùng ví dụ thực tế từ BMW GSC khi cần.";
+var SYSTEM_PROMPT = "Bạn là trợ lý kỹ thuật chuyên về BMW GSC và SiCar. Hỗ trợ về: TIA Portal V18, WinCC Unified, SAS, Safety (E-STOP, Zone concept), Phase concept, Type management. Trả lời ngắn gọn, chính xác bằng tiếng Việt.";
 var chatHistory = [];
+
+// ── MULTI-PROVIDER AI ──
+var AI_PROVIDERS = {
+  claude:  { name:'Claude',  icon:'🟣', color:'#7c3aed', placeholder:'sk-ant-...', hint:'Tạo key tại console.anthropic.com', keyName:'claude-api-key' },
+  gpt:     { name:'GPT-4o',  icon:'🟢', color:'#10a37f', placeholder:'sk-...',    hint:'Tạo key tại platform.openai.com', keyName:'openai-api-key' },
+  gemini:  { name:'Gemini',  icon:'🔵', color:'#4285f4', placeholder:'AIza...',   hint:'Tạo key tại aistudio.google.com (miễn phí)',  keyName:'gemini-api-key' },
+};
+var currentProvider = localStorage.getItem('ai-provider') || 'claude';
+
+function selectProvider(p) {
+  currentProvider = p;
+  localStorage.setItem('ai-provider', p);
+  var cfg = AI_PROVIDERS[p];
+  // Update button styles
+  Object.keys(AI_PROVIDERS).forEach(function(k){
+    var btn = document.getElementById('btn-'+k);
+    if (!btn) return;
+    btn.style.border = k===p ? '2px solid '+AI_PROVIDERS[k].color : '2px solid #e5e7eb';
+    btn.style.background = k===p ? (k==='claude'?'#ede9fe':k==='gpt'?'#d1fae5':'#dbeafe') : '#f9fafb';
+    btn.style.color = k===p ? AI_PROVIDERS[k].color : '#888';
+  });
+  var inp = document.getElementById('claude-api-key');
+  if (inp) inp.placeholder = cfg.placeholder;
+  var hint = document.getElementById('ai-key-hint');
+  if (hint) hint.innerHTML = '💡 '+cfg.hint;
+  // Pre-fill if key exists
+  var saved = localStorage.getItem(cfg.keyName);
+  if (inp && saved) inp.value = saved;
+}
+
+function saveApiKey() {
+  var cfg = AI_PROVIDERS[currentProvider];
+  var key = document.getElementById('claude-api-key').value.trim();
+  if (!key) { alert('Vui lòng nhập API key'); return; }
+  localStorage.setItem(cfg.keyName, key);
+  localStorage.setItem('ai-provider', currentProvider);
+  initChat();
+}
+
+function clearApiKey() {
+  document.getElementById('claude-setup').style.display = 'block';
+  document.getElementById('claude-chat').style.display = 'none';
+  chatHistory = [];
+  // Re-init provider selector
+  selectProvider(currentProvider);
+}
+
+function initChat() {
+  var cfg = AI_PROVIDERS[currentProvider];
+  document.getElementById('claude-setup').style.display = 'none';
+  document.getElementById('claude-chat').style.display = 'flex';
+  var badge = document.getElementById('chat-provider-badge');
+  if (badge) badge.textContent = cfg.icon + ' ' + cfg.name;
+  var header = document.getElementById('ai-panel-header');
+  if (header) header.style.background = 'linear-gradient(135deg,'+cfg.color+','+cfg.color+'cc)';
+  var icon = document.getElementById('ai-provider-icon');
+  if (icon) icon.textContent = cfg.icon;
+  var name = document.getElementById('ai-provider-name');
+  if (name) name.textContent = cfg.name + ' Assistant';
+  var sendBtn = document.getElementById('claude-send-btn');
+  if (sendBtn) sendBtn.style.background = cfg.color;
+}
+
 function toggleChat() {
   var panel = document.getElementById('claude-panel');
   var fab = document.getElementById('claude-fab');
   var isOpen = panel.style.display === 'flex';
+  if (!isOpen) {
+    // Check if any provider has a key saved
+    var saved = localStorage.getItem(AI_PROVIDERS[currentProvider].keyName);
+    if (saved) initChat();
+    else selectProvider(currentProvider);
+  }
   panel.style.display = isOpen ? 'none' : 'flex';
   panel.style.flexDirection = isOpen ? '' : 'column';
   fab.style.transform = isOpen ? '' : 'scale(1.1)';

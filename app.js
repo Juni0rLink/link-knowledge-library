@@ -590,6 +590,10 @@ function launchApp() {
   updateNewsDot();
   renderNews();
 
+  // Show AI FAB after login
+  var fab = document.getElementById('claude-fab');
+  if (fab && isColleague) { fab.style.display = 'flex'; }
+
   if (isColleague) {
     setTimeout(function(){ if(typeof renderStorageWidget === 'function') renderStorageWidget('home-storage-widget'); }, 500);
   }
@@ -967,8 +971,47 @@ function newsAiAssist() {
   window._newsAiContext = { title: title, body: body };
 }
 
+// ── UNIVERSAL AI CALL ──
+function callAI(prompt, systemMsg, cb) {
+  var provider = localStorage.getItem('ai-provider') || 'claude';
+  var sysMsg = systemMsg || 'Bạn là trợ lý kỹ thuật nội bộ LINK Group. Trả lời bằng tiếng Việt, súc tích, chính xác.';
+
+  if (provider === 'claude') {
+    var key = localStorage.getItem('claude-api-key'); if (!key) { cb(null, 'Chưa có Claude API key'); return; }
+    fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-20240307',max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.error) cb(null,'Claude error: '+d.error.message);
+      else cb((d.content&&d.content[0]&&d.content[0].text)||'');
+    }).catch(function(e){cb(null,'Lỗi kết nối Claude: '+e.message);});
+
+  } else if (provider === 'gpt') {
+    var key = localStorage.getItem('openai-api-key'); if (!key) { cb(null, 'Chưa có OpenAI API key'); return; }
+    fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+      body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1000,messages:[{role:'system',content:sysMsg},{role:'user',content:prompt}]})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.error) cb(null,'GPT error: '+d.error.message);
+      else cb((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'');
+    }).catch(function(e){cb(null,'Lỗi kết nối GPT: '+e.message);});
+
+  } else if (provider === 'gemini') {
+    var key = localStorage.getItem('gemini-api-key'); if (!key) { cb(null, 'Chưa có Gemini API key'); return; }
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:sysMsg+'\n\n'+prompt}]}]})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.error) cb(null,'Gemini error: '+d.error.message);
+      else cb((d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text)||'');
+    }).catch(function(e){cb(null,'Lỗi kết nối Gemini: '+e.message);});
+  }
+}
+
 function runNewsAI(mode) {
-  var apiKey = localStorage.getItem('claude-api-key');
   var ctx = window._newsAiContext || {};
   var outputEl = document.getElementById('news-ai-output');
   var resultEl = document.getElementById('news-ai-result');
@@ -982,17 +1025,11 @@ function runNewsAI(mode) {
     title: 'Gợi ý 3 tiêu đề hay và thu hút cho bài viết sau. Nội dung: '+ctx.body
   };
   window._newsAiMode = mode;
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-    body: JSON.stringify({ model: 'claude-haiku-20240307', max_tokens: 800,
-      system: 'Bạn là trợ lý viết nội dung kỹ thuật nội bộ cho LINK Group. Viết bằng tiếng Việt, chuyên nghiệp, súc tích.',
-      messages: [{ role: 'user', content: prompts[mode] }] })
-  }).then(function(r){ return r.json(); }).then(function(d) {
-    var text = d.content && d.content[0] && d.content[0].text || 'Không có kết quả.';
-    outputEl.innerHTML = text.replace(/\n/g,'<br>');
+  callAI(prompts[mode], 'Bạn là trợ lý viết nội dung kỹ thuật nội bộ cho LINK Group. Viết bằng tiếng Việt, chuyên nghiệp, súc tích.', function(text, err) {
+    if (err) { outputEl.textContent = err; return; }
+    outputEl.innerHTML = (text||'Không có kết quả.').replace(/\n/g,'<br>');
     window._newsAiResult = text;
-  }).catch(function(e){ outputEl.textContent = 'Lỗi kết nối Claude API: ' + e.message; });
+  });
 }
 
 function applyNewsAI() {
