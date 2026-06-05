@@ -1295,25 +1295,24 @@ function callAI(prompt, systemMsg, cb) {
     fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
       headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-3-5-haiku-latest',max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:localStorage.getItem('claude-working-model')||'claude-3-5-haiku-latest',max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
     }).then(function(r){return r.json();}).then(function(d){
-      if(d.error) {
-        // Try fallback model if current fails
-        if(d.error.message && d.error.message.includes('model')) {
-          var fallback = 'claude-3-haiku-20240307';
-          fetch('https://api.anthropic.com/v1/messages', {
-            method:'POST',
-            headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-            body:JSON.stringify({model:fallback,max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
-          }).then(function(r2){return r2.json();}).then(function(d2){
-            if(d2.error) cb(null,'Claude error: '+d2.error.message);
-            else cb((d2.content&&d2.content[0]&&d2.content[0].text)||'');
-          }).catch(function(e2){cb(null,'Lỗi Claude: '+e2.message);});
-        } else {
-          cb(null,'Claude error: '+d.error.message);
-        }
+      if(d.error && (d.error.message||'').toLowerCase().includes('model')) {
+        // Model not found — try fallback list
+        tryClaudeModels(key, sysMsg, prompt, [
+          'claude-3-haiku-20240307',
+          'claude-3-5-sonnet-20241022',
+          'claude-sonnet-4-5',
+          'claude-opus-4-5'
+        ], cb);
+      } else if(d.error) {
+        cb(null, 'Claude error: '+d.error.message);
+      } else {
+        // Save working model for next time
+        var workingModel = 'claude-3-5-haiku-latest';
+        localStorage.setItem('claude-working-model', workingModel);
+        cb((d.content&&d.content[0]&&d.content[0].text)||'');
       }
-      else cb((d.content&&d.content[0]&&d.content[0].text)||'');
     }).catch(function(e){cb(null,'Lỗi kết nối Claude: '+e.message);});
 
   } else if (provider === 'gpt') {
@@ -1326,6 +1325,26 @@ function callAI(prompt, systemMsg, cb) {
       if(d.error) cb(null,'GPT error: '+d.error.message);
       else cb((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'');
     }).catch(function(e){cb(null,'Lỗi kết nối GPT: '+e.message);});
+
+function tryClaudeModels(key, sysMsg, prompt, models, cb) {
+  if (!models.length) { cb(null, 'Không tìm thấy model Claude hoạt động. Vui lòng kiểm tra API key.'); return; }
+  var model = models[0];
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:model,max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.error && (d.error.message||'').toLowerCase().includes('model')) {
+      tryClaudeModels(key, sysMsg, prompt, models.slice(1), cb);
+    } else if(d.error) {
+      cb(null, 'Claude error ('+model+'): '+d.error.message);
+    } else {
+      localStorage.setItem('claude-working-model', model);
+      showToast('✅ Claude dùng model: '+model, 'success');
+      cb((d.content&&d.content[0]&&d.content[0].text)||'');
+    }
+  }).catch(function(){ tryClaudeModels(key, sysMsg, prompt, models.slice(1), cb); });
+}
 
   } else if (provider === 'openrouter') {
     var key = localStorage.getItem('openrouter-api-key'); if (!key) { cb(null, 'Chưa có OpenRouter API key'); return; }
