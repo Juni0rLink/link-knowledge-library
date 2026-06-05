@@ -192,8 +192,20 @@ function fbSaveModules()      { fbClearCache(); fbSet('/shared/moduleGroups', mo
 function fbSavePublicFiles()  { fbClearCache(); fbSet('/shared/publicFiles', publicFiles); }
 function fbSaveTrash()        { fbSet('/shared/trash', trash); }
 
+var _trashLock = false;
 function moveToTrash(type, data, onDone) {
-  trash.push({ type: type, data: data, deletedBy: currentUser ? currentUser.name : '?', deletedAt: new Date().toLocaleString('vi-VN') });
+  if (_trashLock) return; // prevent double-fire
+  _trashLock = true;
+  setTimeout(function(){ _trashLock = false; }, 1000);
+  // Dedup: don't add if same name+type in last 5 seconds
+  var now = Date.now();
+  var label = data && (data.title || data.name) || '';
+  var dup = trash.find(function(t){
+    return t.type === type && (t.data && (t.data.title||t.data.name)) === label && (now - new Date(t._ts||0)) < 5000;
+  });
+  if (dup) { if (onDone) onDone(); return; }
+  var entry = { type: type, data: data, deletedBy: currentUser ? currentUser.name : '?', deletedAt: new Date().toLocaleString('vi-VN'), _ts: now };
+  trash.push(entry);
   fbSaveTrash(); updateTrashBadge();
   if (onDone) onDone();
 }
