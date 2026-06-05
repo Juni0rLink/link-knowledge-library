@@ -911,14 +911,15 @@ function renderNews() {
       + '<div style="font-weight:700;font-size:15px;margin-bottom:6px;color:#1e293b">' + n.title + '</div>'
       + '<div style="font-size:13px;color:#475569;line-height:1.7">' + n.body + '</div>'
       + '<div style="margin-top:10px;display:flex;gap:8px;align-items:center">'
-      + '<button onclick="newsAskAI(\''+encodeURIComponent(JSON.stringify({title:n.title,body:n.body.replace(/<[^>]+>/g,\' \')}))+\'\')" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer">🤖 Hỏi AI về bài này</button>'
+      + '<button onclick="newsAskAI(this,\''+n.id+'\')" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer">🤖 Hỏi AI về bài này</button>'
       + '</div>'
       + '</div>';
   }).join('') || '<div style="text-align:center;padding:40px;color:#aaa">Chưa có thông báo nào.</div>';
 }
 
-function newsAskAI(encodedData) {
-  var data = JSON.parse(decodeURIComponent(encodedData));
+function newsAskAI(btn, id) {
+  var item = newsItems.find(function(x){ return String(x.id) === String(id); });
+  var data = item ? { title: item.title, body: item.body.replace(/<[^>]+>/g,' ') } : { title:'', body:'' };
   var ex = document.getElementById('news-ai-ask-modal'); if(ex) ex.remove();
   var d = document.createElement('div');
   d.id = 'news-ai-ask-modal';
