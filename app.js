@@ -2041,8 +2041,7 @@ function uploadToCloudinary(input) {
     fd.append('folder', 'link-library');
     var isVideo = file.type.startsWith('video/');
     var isImage = file.type.startsWith('image/');
-    var resType = isVideo ? 'video' : (isImage ? 'image' : 'raw');
-    var endpoint = 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/' + resType + '/upload';
+      var endpoint = 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/auto/upload';
     var xhr = new XMLHttpRequest();
     xhr.open('POST', endpoint);
     xhr.upload.onprogress = function(e) {
@@ -2902,15 +2901,12 @@ function showDuplicateDialog(file, dupInfo, onReplace, onKeepBoth, onCancel) {
 }
 
 function uploadToCloud(file, onDone) {
-  var isVideo = file.type.startsWith('video/');
-  var isImage = file.type.startsWith('image/');
-  var resType = isVideo ? 'video' : isImage ? 'image' : 'raw';
   var fd = new FormData();
   fd.append('file', file);
   fd.append('upload_preset', UPLOAD_PRESET);
   fd.append('folder', 'link-library');
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/' + resType + '/upload');
+  xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/auto/upload');
   xhr.onload = function() {
     if (xhr.status === 200) {
       var res = JSON.parse(xhr.responseText);
