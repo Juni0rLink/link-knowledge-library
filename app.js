@@ -1984,7 +1984,7 @@ function postModuleComment(moduleId) {
 // CLOUDINARY UPLOAD
 // ============================================================
 var CLOUD_NAME = 'draqjeguw';
-var UPLOAD_PRESET = 'ml_default';
+var UPLOAD_PRESET = 'fkrodeht';
 var cloudFiles = [];
 
 // ============================================================
