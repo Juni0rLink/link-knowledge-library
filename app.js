@@ -392,6 +392,65 @@ function doChangePassword() {
   });
 }
 
+function renderAiKeysList() {
+  var el = document.getElementById('ai-keys-list'); if (!el) return;
+  var providers = [
+    { id: 'claude',      name: 'Claude (Anthropic)', icon: '🟣', keyName: 'claude-api-key',      storage: 'localStorage', url: 'https://console.anthropic.com' },
+    { id: 'gpt',         name: 'GPT-4o (OpenAI)',    icon: '🟢', keyName: 'openai-api-key',       storage: 'localStorage', url: 'https://platform.openai.com/api-keys' },
+    { id: 'openrouter',  name: 'OpenRouter',          icon: '🌐', keyName: 'openrouter-api-key',   storage: 'firebase',     url: 'https://openrouter.ai/keys' },
+    { id: 'gemini',      name: 'Gemini (Google)',     icon: '🔵', keyName: 'gemini-api-key',       storage: 'firebase',     url: 'https://aistudio.google.com/app/apikey' },
+  ];
+  el.innerHTML = providers.map(function(p) {
+    var key = localStorage.getItem(p.keyName) || '';
+    var hasKey = !!key;
+    var masked = hasKey ? key.slice(0,8) + '••••••••' + key.slice(-4) : '';
+    var storageLabel = p.storage === 'localStorage'
+      ? '<span style="background:#fee2e2;color:#dc2626;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700">🔒 Thiết bị này</span>'
+      : '<span style="background:#dbeafe;color:#1d4ed8;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700">☁️ Firebase</span>';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f5f5f5">'
+      +'<span style="font-size:20px">'+p.icon+'</span>'
+      +'<div style="flex:1">'
+      +'<div style="font-weight:700;font-size:13px;color:#1e293b">'+p.name+'</div>'
+      +'<div style="font-size:11px;color:#94a3b8;margin-top:2px;display:flex;gap:6px;align-items:center">'
+      + storageLabel
+      +(hasKey
+        ? '<span style="font-family:monospace;font-size:11px;color:#475569">'+masked+'</span>'
+        : '<span style="color:#ef4444">Chưa nhập key</span>')
+      +'</div>'
+      +'</div>'
+      +(hasKey
+        ? '<button onclick="showFullKey(\''+p.keyName+'\')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer" title="Xem key">👁️</button>'
+        +'<button onclick="clearProviderKey(\''+p.keyName+'\')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:4px" title="Xóa key">🗑️</button>'
+        : '<a href="'+p.url+'" target="_blank" style="background:#1d4ed8;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer">+ Lấy key</a>')
+      +'</div>';
+  }).join('');
+}
+
+function showFullKey(keyName) {
+  var key = localStorage.getItem(keyName);
+  if (!key) { showToast('Chưa có key', 'warning'); return; }
+  var ex = document.getElementById('show-key-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'show-key-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:20px;max-width:480px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.25)">'
+    +'<div style="font-weight:700;font-size:14px;margin-bottom:10px">🔑 API Key</div>'
+    +'<div style="background:#1e293b;color:#a3e635;font-family:monospace;font-size:12px;padding:12px;border-radius:8px;word-break:break-all;user-select:all;cursor:text;margin-bottom:12px">'+key+'</div>'
+    +'<div style="font-size:11px;color:#888;margin-bottom:14px">Bấm vào key để chọn tất cả, sau đó Ctrl+C để copy.</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="navigator.clipboard.writeText(\''+key+'\');showToast(\'Đã copy!\',\'success\')" style="flex:1;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:8px;font-size:13px;font-weight:700;cursor:pointer">📋 Copy</button>'
+    +'<button onclick="document.getElementById(\'show-key-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">Đóng</button>'
+    +'</div></div>';
+  document.body.appendChild(d);
+}
+
+function clearProviderKey(keyName) {
+  if (!confirm('Xóa key này khỏi thiết bị?')) return;
+  localStorage.removeItem(keyName);
+  renderAiKeysList();
+  showToast('Đã xóa key', 'error');
+}
+
 function renderProfileCard() {
   if (!currentUser) return;
   var n = document.getElementById('profile-name-display');
@@ -777,7 +836,7 @@ function showPage(id, el) {
   if (id === 'files') { renderSharedDocs(); renderSharedSheets(); renderSharedFileList(); renderPublicModulesGrid(); }
   if (id === 'myfiles') { renderPersonalDocs(); renderPersonalSheets(); renderPersonalFiles(); }
   if (id === 'admin') { renderRegRequests(); loadFirebaseMembers(); }
-  if (id === 'settings') { renderProfileCard(); }
+  if (id === 'settings') { renderProfileCard(); renderAiKeysList(); }
 }
 
 // ============================================================
