@@ -2564,14 +2564,22 @@ function openSubModule(mi, si) {
     +'<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value);this.value=\'p\'"><option value="p">Đoạn văn</option><option value="h2">H2</option><option value="h3">H3</option></select>'
     +'<button class="btn-sm" onclick="document.execCommand(\'insertUnorderedList\')">• List</button>'
     +'<button class="btn-sm" onclick="document.execCommand(\'insertOrderedList\')">1. List</button>'
+    +'<div style="flex:1"></div>'
+    +'<button onclick="subModuleAI('+mi+','+si+')" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">✨ AI</button>'
     +'</div>'
-    +'<div id="sub-content-ed" contenteditable="true" style="flex:1;overflow-y:auto;padding:18px;outline:none;font-size:14px;line-height:1.8;min-height:260px;max-height:380px">'
+    +'<div id="sub-content-ed" contenteditable="true" style="flex:1;overflow-y:auto;padding:18px;outline:none;font-size:14px;line-height:1.8;min-height:260px;max-height:340px">'
     +'<p style="color:#aaa">⏳ Đang tải nội dung...</p>'
     +'</div>'
-    +'<div style="border-top:1px solid #e5e7eb;padding:10px 18px">'
+    +'<div style="border-top:1px solid #e5e7eb;padding:8px 18px">'
     +'<textarea id="sub-notes-inp" rows="2" style="width:100%;border:1px solid #e5e7eb;border-radius:7px;padding:7px;font-size:12px;outline:none;resize:none" placeholder="📎 Ghi chú nhanh...">'+( item.notes||'')+'</textarea>'
     +'</div>'
-    +'<div style="padding:10px 18px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">'
+    +'<div style="padding:10px 18px;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:8px">'
+    +'<div style="font-size:11px;font-weight:700;color:#555">Xuất file:</div>'
+    +'<button onclick="exportSubModule(\'word\','+mi+','+si+')" style="background:#2b5797;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">📄 Word</button>'
+    +'<button onclick="exportSubModule(\'pdf\','+mi+','+si+')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">📕 PDF</button>'
+    +'<button onclick="exportSubModule(\'pptx\','+mi+','+si+')" style="background:#d97706;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">📊 PPTX</button>'
+    +'<button onclick="aiExportSubModule('+mi+','+si+')" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">✨ AI → PPTX</button>'
+    +'<div style="flex:1"></div>'
     +'<button onclick="document.getElementById(\'pm-sub-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer">Hủy</button>'
     +'<button onclick="saveSubModule('+mi+','+si+')" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer">💾 Lưu</button>'
     +'</div></div>';
@@ -2582,6 +2590,182 @@ function openSubModule(mi, si) {
     ed.innerHTML = html || '<p style="color:#aaa">Soạn thảo nội dung...</p>';
     ed.addEventListener('focus', function(){ if(ed.querySelector('p[style*="color:#aaa"]')) ed.innerHTML=''; }, {once:true});
   });
+}
+
+// ── PERSONAL AI ASSIST ──
+function getPersonalContext(mi) {
+  var m = personalModules[mi]; if (!m) return '';
+  var ctx = 'Module: ' + m.name + '\n';
+  if (m.items && m.items.length) {
+    ctx += 'Các mục: ' + m.items.map(function(it){ return it.name + (it.notes?' ('+it.notes+')':''); }).join(', ');
+  }
+  if (personalNote) ctx += '\nGhi chú cá nhân: ' + personalNote.replace(/<[^>]+>/g,' ').slice(0,500);
+  return ctx;
+}
+
+function subModuleAI(mi, si) {
+  var item = personalModules[mi] && personalModules[mi].items && personalModules[mi].items[si];
+  if (!item) return;
+  var ed = document.getElementById('sub-content-ed');
+  var currentContent = ed ? ed.innerHTML.replace(/<[^>]+>/g,' ').trim() : '';
+  var ex = document.getElementById('sub-ai-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'sub-ai-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:500px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center">'
+    +'<span style="color:#fff;font-weight:700;flex:1">✨ AI Hỗ trợ — '+item.name+'</span>'
+    +'<button onclick="document.getElementById(\'sub-ai-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="padding:16px">'
+    +'<div style="font-size:12px;color:#555;margin-bottom:10px">AI sẽ dựa trên nội dung module cá nhân của bạn:</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<button onclick="runSubAI(\'write\','+mi+','+si+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">✍️ Viết bài từ tiêu đề + ghi chú</button>'
+    +'<button onclick="runSubAI(\'improve\','+mi+','+si+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">✨ Cải thiện nội dung hiện tại</button>'
+    +'<button onclick="runSubAI(\'expand\','+mi+','+si+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">📝 Mở rộng chi tiết hơn</button>'
+    +'<button onclick="runSubAI(\'bullets\','+mi+','+si+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">• Chuyển thành danh sách có cấu trúc</button>'
+    +'</div>'
+    +'<div id="sub-ai-result" style="display:none;margin-top:12px">'
+    +'<div id="sub-ai-output" style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;max-height:200px;overflow-y:auto"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'
+    +'<button id="sub-ai-apply-btn" onclick="applySubAI()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">✅ Áp dụng</button>'
+    +'<button onclick="document.getElementById(\'sub-ai-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:7px;padding:7px 14px;font-size:12px;cursor:pointer">Đóng</button>'
+    +'</div></div>'
+    +'</div></div>';
+  document.body.appendChild(d);
+  window._subAiCtx = { mi: mi, si: si, content: currentContent, personalCtx: getPersonalContext(mi) };
+}
+
+function runSubAI(mode, mi, si) {
+  var ctx = window._subAiCtx || {};
+  var outputEl = document.getElementById('sub-ai-output');
+  var resultEl = document.getElementById('sub-ai-result');
+  if (!outputEl) return;
+  resultEl.style.display = 'block'; outputEl.innerHTML = '⏳ Đang xử lý...';
+  var item = personalModules[mi] && personalModules[mi].items && personalModules[mi].items[si];
+  var notes = item ? (item.notes||'') : '';
+  var prompts = {
+    write: 'Dựa trên thông tin sau, viết một bài viết hoàn chỉnh bằng tiếng Việt:\nTiêu đề: '+( item?item.name:'')+ '\nGhi chú: '+notes+'\nBối cảnh module: '+ctx.personalCtx,
+    improve: 'Cải thiện văn phong và cấu trúc của nội dung sau, giữ nguyên ý nghĩa:\n'+ctx.content+'\nBối cảnh: '+ctx.personalCtx,
+    expand: 'Mở rộng và thêm chi tiết cho nội dung sau:\n'+ctx.content+'\nBối cảnh: '+ctx.personalCtx,
+    bullets: 'Chuyển nội dung sau thành danh sách có cấu trúc rõ ràng với các đề mục chính và phụ:\n'+ctx.content
+  };
+  var sysMsg = 'Bạn là trợ lý viết nội dung kỹ thuật chuyên nghiệp cho kỹ thuật viên BMW/SiCar tại LINK Group. Viết bằng tiếng Việt, chuyên nghiệp, có cấu trúc.';
+  window._subAiMode = mode;
+  callAI(prompts[mode], sysMsg, function(text, err) {
+    if (err) { outputEl.textContent = err; return; }
+    outputEl.innerHTML = (text||'').replace(/\n/g,'<br>');
+    window._subAiResult = text;
+  });
+}
+
+function applySubAI() {
+  var result = window._subAiResult; if (!result) return;
+  var ed = document.getElementById('sub-content-ed'); if (!ed) return;
+  ed.innerHTML = result.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');
+  document.getElementById('sub-ai-modal').remove();
+  showToast('✅ Đã áp dụng nội dung AI', 'success');
+}
+
+// ── EXPORT ──
+function exportSubModule(format, mi, si) {
+  var item = personalModules[mi] && personalModules[mi].items && personalModules[mi].items[si];
+  var title = item ? item.name : 'document';
+  var ed = document.getElementById('sub-content-ed');
+  var content = ed ? ed.innerHTML : '';
+  var m = personalModules[mi];
+  var modName = m ? m.name : '';
+
+  if (format === 'word') {
+    var html = '<html><body style="font-family:Arial,sans-serif;margin:40px;line-height:1.6">'
+      +'<h1 style="color:#1d4ed8">'+modName+'</h1><h2>'+title+'</h2>'+content+'</body></html>';
+    var blob = new Blob(['﻿'+html], {type:'application/msword'});
+    var a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=title+'.doc'; a.click();
+    showToast('✅ Đã xuất Word!','success');
+
+  } else if (format === 'pdf') {
+    var w = window.open('','_blank');
+    w.document.write('<html><head><title>'+title+'</title><style>body{font-family:Arial,sans-serif;margin:40px;line-height:1.6}h1{color:#7c3aed}@media print{.no-print{display:none}}</style></head><body>'
+      +'<div class="no-print" style="position:fixed;top:10px;right:10px"><button onclick="window.print()" style="background:#dc2626;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">🖨️ In / Lưu PDF</button></div>'
+      +'<h1>'+modName+'</h1><h2>'+title+'</h2>'+content
+      +'</body></html>');
+    w.document.close();
+
+  } else if (format === 'pptx') {
+    exportToPptx(title, modName, content, false);
+  }
+}
+
+function aiExportSubModule(mi, si) {
+  var item = personalModules[mi] && personalModules[mi].items && personalModules[mi].items[si];
+  var ed = document.getElementById('sub-content-ed');
+  var content = ed ? ed.innerHTML.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim() : '';
+  var title = item ? item.name : 'Bài trình bày';
+  if (!content) { showToast('Chưa có nội dung để xuất','warning'); return; }
+  showToast('⏳ AI đang tạo cấu trúc slide...','warning');
+  var prompt = 'Tạo cấu trúc bài thuyết trình PowerPoint từ nội dung sau. Trả về JSON theo format:\n'
+    +'{"title":"Tên slide","slides":[{"heading":"Tiêu đề slide","bullets":["điểm 1","điểm 2","điểm 3"]}]}\n\n'
+    +'Nội dung: '+content+'\nTên bài: '+title+'\nTạo 5-8 slides logic, súc tích.';
+  callAI(prompt, 'Bạn là chuyên gia tạo slide thuyết trình. Chỉ trả về JSON thuần, không có text thêm.', function(text, err) {
+    if (err) { showToast('Lỗi AI: '+err,'error'); return; }
+    try {
+      var jsonStr = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+      var data = JSON.parse(jsonStr);
+      exportToPptx(data.title||title, personalModules[mi]?personalModules[mi].name:'', null, true, data.slides);
+    } catch(e) {
+      showToast('AI tạo JSON không hợp lệ — xuất text thường','warning');
+      exportToPptx(title, personalModules[mi]?personalModules[mi].name:'', text, false);
+    }
+  });
+}
+
+function exportToPptx(title, subtitle, htmlContent, isAI, slides) {
+  if (typeof PptxGenJS === 'undefined') { showToast('Đang tải thư viện PPTX...','warning'); return; }
+  var pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
+  var PURPLE = '7c3aed', WHITE = 'FFFFFF', GRAY = '374151', LIGHT = 'F3F4F6';
+
+  // Title slide
+  var titleSlide = pptx.addSlide();
+  titleSlide.background = { color: PURPLE };
+  titleSlide.addText(title, { x:0.5, y:1.5, w:12, h:1.2, fontSize:36, bold:true, color:WHITE, align:'center' });
+  titleSlide.addText(subtitle || 'LINK Knowledge Library', { x:0.5, y:3, w:12, h:0.6, fontSize:18, color:'C4B5FD', align:'center' });
+  titleSlide.addText(new Date().toLocaleDateString('vi-VN'), { x:0.5, y:4.5, w:12, h:0.4, fontSize:12, color:'A78BFA', align:'center' });
+
+  if (isAI && slides && slides.length) {
+    slides.forEach(function(sl, i) {
+      var s = pptx.addSlide();
+      s.addShape(pptx.ShapeType.rect, { x:0, y:0, w:13.33, h:1.1, fill:{ color:PURPLE } });
+      s.addText(sl.heading||('Slide '+(i+1)), { x:0.4, y:0.15, w:12.5, h:0.8, fontSize:22, bold:true, color:WHITE });
+      if (sl.bullets && sl.bullets.length) {
+        var bulletText = sl.bullets.map(function(b){ return {text:'• '+b, options:{breakLine:true, fontSize:16, color:GRAY, paraSpaceAfter:6}}; });
+        s.addText(bulletText, { x:0.5, y:1.3, w:12.3, h:4.5, valign:'top' });
+      }
+    });
+  } else if (htmlContent) {
+    // Parse HTML into text paragraphs
+    var tmp = document.createElement('div'); tmp.innerHTML = htmlContent;
+    var paras = [];
+    tmp.querySelectorAll('h2,h3,p,li').forEach(function(el){
+      var txt = el.textContent.trim(); if (!txt) return;
+      paras.push({ text: txt, isHead: el.tagName==='H2'||el.tagName==='H3' });
+    });
+    // Group into slides of ~5 items each
+    for (var i=0; i<paras.length; i+=5) {
+      var chunk = paras.slice(i, i+5);
+      var s = pptx.addSlide();
+      s.addShape(pptx.ShapeType.rect, { x:0, y:0, w:13.33, h:1.1, fill:{ color: '1d4ed8' } });
+      var headingText = chunk[0].isHead ? chunk[0].text : (title + ' — phần '+(Math.floor(i/5)+1));
+      s.addText(headingText, { x:0.4, y:0.15, w:12.5, h:0.8, fontSize:22, bold:true, color:WHITE });
+      var bodyItems = chunk.filter(function(p,idx){ return !(idx===0&&chunk[0].isHead); });
+      if (bodyItems.length) {
+        s.addText(bodyItems.map(function(p){ return {text:'• '+p.text, options:{breakLine:true, fontSize:15, color:GRAY, paraSpaceAfter:8}}; }), { x:0.5, y:1.3, w:12.3, h:4.5, valign:'top' });
+      }
+    }
+  }
+
+  pptx.writeFile({ fileName: title.replace(/[^a-zA-Z0-9\s]/g,'_')+'.pptx' });
+  showToast('✅ Đã xuất PPTX: '+title,'success');
 }
 
 function saveSubModule(mi, si) {
