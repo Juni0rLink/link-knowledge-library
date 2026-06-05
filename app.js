@@ -502,6 +502,26 @@ function doLogout() {
 document.addEventListener('DOMContentLoaded', function() {
   var passEl = document.getElementById('login-pass');
   if (passEl) passEl.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+
+  // Ctrl+Click to open links inside contenteditable editors
+  document.addEventListener('click', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      var a = e.target.closest('a');
+      if (a && a.href && a.closest('[contenteditable]')) {
+        e.preventDefault();
+        window.open(a.href, '_blank');
+      }
+    }
+  });
+
+  // Also show tooltip hint on links inside editors
+  document.addEventListener('mouseover', function(e) {
+    var a = e.target.closest('a');
+    if (a && a.closest('[contenteditable]') && !a.title) {
+      a.title = '🔗 Ctrl+Click để mở link';
+      a.style.cursor = 'pointer';
+    }
+  });
 });
 
 // ============================================================
