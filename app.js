@@ -246,7 +246,6 @@ const ROLE_CFG = {
 let currentUser = null;
 let loginAttempts = 0;
 let lockUntil = 0;
-const MAX_ATTEMPTS = 3;
 
 let pendingRegs = [];
 
