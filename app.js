@@ -2901,6 +2901,15 @@ function showDuplicateDialog(file, dupInfo, onReplace, onKeepBoth, onCancel) {
 }
 
 function uploadToCloud(file, onDone) {
+  // Cloudinary free plan: raw files max 10MB, images max 10MB, video max 100MB
+  var isVideo = file.type.startsWith('video/');
+  var maxBytes = isVideo ? 100*1024*1024 : 10*1024*1024;
+  if (file.size > maxBytes) {
+    var sizeMB = (file.size/1024/1024).toFixed(1);
+    var limitMB = isVideo ? 100 : 10;
+    onDone('File quá lớn: '+sizeMB+'MB (giới hạn '+limitMB+'MB). Hãy nén file trước tại ilovepdf.com hoặc liên hệ Admin để upload vào repo.');
+    return;
+  }
   var fd = new FormData();
   fd.append('file', file);
   fd.append('upload_preset', UPLOAD_PRESET);
