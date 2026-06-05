@@ -1285,6 +1285,27 @@ function ragInject(prompt, systemMsg, cb) {
   cb(prompt, ragSystem);
 }
 
+// ── CLAUDE MODEL FALLBACK (must be outside callAI) ──
+function tryClaudeModels(key, sysMsg, prompt, models, cb) {
+  if (!models.length) { cb(null, 'Không tìm thấy model Claude hoạt động. Kiểm tra API key tại console.anthropic.com'); return; }
+  var model = models[0];
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:model,max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.error && (d.error.message||'').toLowerCase().includes('model')) {
+      tryClaudeModels(key, sysMsg, prompt, models.slice(1), cb);
+    } else if(d.error) {
+      cb(null, 'Claude ('+model+'): '+d.error.message);
+    } else {
+      localStorage.setItem('claude-working-model', model);
+      showToast('✅ Claude: '+model, 'success');
+      cb((d.content&&d.content[0]&&d.content[0].text)||'');
+    }
+  }).catch(function(){ tryClaudeModels(key, sysMsg, prompt, models.slice(1), cb); });
+}
+
 // ── UNIVERSAL AI CALL ──
 function callAI(prompt, systemMsg, cb) {
   var provider = localStorage.getItem('ai-provider') || 'claude';
@@ -1325,26 +1346,6 @@ function callAI(prompt, systemMsg, cb) {
       if(d.error) cb(null,'GPT error: '+d.error.message);
       else cb((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'');
     }).catch(function(e){cb(null,'Lỗi kết nối GPT: '+e.message);});
-
-function tryClaudeModels(key, sysMsg, prompt, models, cb) {
-  if (!models.length) { cb(null, 'Không tìm thấy model Claude hoạt động. Vui lòng kiểm tra API key.'); return; }
-  var model = models[0];
-  fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:model,max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
-  }).then(function(r){return r.json();}).then(function(d){
-    if(d.error && (d.error.message||'').toLowerCase().includes('model')) {
-      tryClaudeModels(key, sysMsg, prompt, models.slice(1), cb);
-    } else if(d.error) {
-      cb(null, 'Claude error ('+model+'): '+d.error.message);
-    } else {
-      localStorage.setItem('claude-working-model', model);
-      showToast('✅ Claude dùng model: '+model, 'success');
-      cb((d.content&&d.content[0]&&d.content[0].text)||'');
-    }
-  }).catch(function(){ tryClaudeModels(key, sysMsg, prompt, models.slice(1), cb); });
-}
 
   } else if (provider === 'openrouter') {
     var key = localStorage.getItem('openrouter-api-key'); if (!key) { cb(null, 'Chưa có OpenRouter API key'); return; }
