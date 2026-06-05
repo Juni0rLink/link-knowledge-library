@@ -186,26 +186,12 @@
             <div id="personal-files-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p></div>
           </div>
           <div id="personal-tab-notes" style="display:none">
-            <div class="card">
-              <div class="card-title">💬 Ghi chú cá nhân</div>
-              <div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap;border-radius:8px 8px 0 0;border:1px solid #e5e7eb;border-bottom:none">
-                <button class="btn-sm" onclick="document.execCommand('bold')"><b>B</b></button>
-                <button class="btn-sm" onclick="document.execCommand('italic')"><i>I</i></button>
-                <button class="btn-sm" onclick="document.execCommand('underline')"><u>U</u></button>
-                <select class="btn-sm" onchange="document.execCommand('formatBlock',false,this.value);this.value='p'">
-                  <option value="p">Đoạn văn</option><option value="h2">Tiêu đề lớn</option><option value="h3">Tiêu đề nhỏ</option>
-                </select>
-                <button class="btn-sm" onclick="document.execCommand('insertUnorderedList')">• List</button>
-                <button class="btn-sm" onclick="document.execCommand('insertOrderedList')">1. List</button>
-                <button class="btn-sm" onclick="insertPersonalNoteLink()">🔗</button>
-                <button class="btn-sm" onclick="document.execCommand('insertHorizontalRule')">─</button>
-                <button onclick="savePersonalNote()" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto">💾 Lưu</button>
-              </div>
-              <div id="personal-note-editor" contenteditable="true"
-                style="min-height:200px;padding:14px;border:1px solid #e5e7eb;border-radius:0 0 8px 8px;font-size:14px;outline:none;line-height:1.8;background:#fff"
-                placeholder="Ghi chú tự do — chỉ bạn mới thấy..."></div>
-              <textarea id="personal-note" style="display:none"></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div style="font-size:13px;font-weight:700;color:#374151">💬 Ghi chú cá nhân</div>
+              <button onclick="createPersonalNoteItem()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">+ Bài viết mới</button>
             </div>
+            <div id="personal-notes-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:30px">Chưa có ghi chú nào.</p></div>
+            <textarea id="personal-note" style="display:none"></textarea>
           </div>
         </div>
       </div>

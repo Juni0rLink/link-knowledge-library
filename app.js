@@ -2074,23 +2074,134 @@ function createPersonalSheet(){var name=prompt('Tên bảng tính:');if(!name)re
 function renderPersonalSheets(){var list=document.getElementById('personal-sheets-list');if(!list)return;if(!personalSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}list.innerHTML=personalSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.date+'</div></div><button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn">🗑️</button></div>';}).join('');}
 function uploadPersonalFile(input){var files=Array.from(input.files);files.forEach(function(f){var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),url:URL.createObjectURL(f)});});renderPersonalFiles();showToast('Đã upload '+files.length+' file','success');input.value='';}
 function renderPersonalFiles(){var list=document.getElementById('personal-files-list');if(!list)return;if(!personalFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p>';return;}list.innerHTML=personalFiles.map(function(f,i){return '<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📁</span><div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.date+'</div></div><a href="'+f.url+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none">⬇️</a><button onclick="moveToTrash(\'personalfile\',personalFiles['+i+'],function(){personalFiles.splice('+i+',1);fbSavePersonal();renderPersonalFiles();})" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>';}).join('');}
-function savePersonalNote() {
-  var editor = document.getElementById('personal-note-editor');
-  if (editor) personalNote = editor.innerHTML;
-  fbSavePersonal();
-  showToast('Đã lưu ghi chú','success');
+function savePersonalNote() { fbSavePersonal(); }
+
+function loadPersonalNoteEditor() { renderPersonalNotesList(); }
+
+// ── PERSONAL NOTES (multi-note system) ──
+var personalNotes = []; // { id, title, date }
+
+function renderPersonalNotesList() {
+  var list = document.getElementById('personal-notes-list'); if (!list) return;
+  // Load notes metadata from Firebase
+  if (!currentUser || !currentUser.uid) return;
+  fbGet('/users/' + currentUser.uid + '/notesMeta', function(err, data) {
+    var notes = (!err && Array.isArray(data)) ? data : [];
+    personalNotes = notes;
+    if (!notes.length) { list.innerHTML = '<p style="color:#aaa;font-style:italic;text-align:center;padding:30px">Chưa có ghi chú nào. Bấm "+ Bài viết mới" để tạo.</p>'; return; }
+    list.innerHTML = notes.map(function(n, i) {
+      return '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px">'
+        +'<span style="font-size:20px">💬</span>'
+        +'<div style="flex:1;cursor:pointer" onclick="openPersonalNoteItem('+i+')">'
+        +'<div style="font-weight:700;font-size:13px;color:#1e293b">'+n.title+'</div>'
+        +'<div style="font-size:11px;color:#94a3b8">'+n.date+'</div>'
+        +'</div>'
+        +'<button onclick="openPersonalNoteItem('+i+')" style="background:#ede9fe;color:#7c3aed;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">✏️ Mở</button>'
+        +'<button onclick="moveToTrash(\'personalnote\',personalNotes['+i+'],function(){personalNotes.splice('+i+',1);saveNotesMeta();renderPersonalNotesList();})" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer">🗑️</button>'
+        +'</div>';
+    }).join('');
+  });
 }
 
-function insertPersonalNoteLink() {
-  var url = prompt('Nhập URL:'); if (!url) return;
-  var text = prompt('Tên hiển thị:') || url;
-  document.execCommand('insertHTML', false, '<a href="'+url+'" target="_blank" style="color:#1d4ed8">'+text+'</a>');
+function saveNotesMeta() {
+  if (!currentUser || !currentUser.uid) return;
+  fbSet('/users/' + currentUser.uid + '/notesMeta', personalNotes);
 }
 
-// Load personal note into rich text editor
-function loadPersonalNoteEditor() {
-  var editor = document.getElementById('personal-note-editor');
-  if (editor && personalNote) editor.innerHTML = personalNote;
+function createPersonalNoteItem() {
+  var title = prompt('Tiêu đề bài viết:'); if (!title) return;
+  var note = { id: Date.now(), title: title, date: new Date().toLocaleDateString('vi-VN') };
+  personalNotes.push(note);
+  saveNotesMeta();
+  openPersonalNoteItem(personalNotes.length - 1);
+}
+
+function openPersonalNoteItem(idx) {
+  var note = personalNotes[idx]; if (!note) return;
+  var ex = document.getElementById('pnote-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'pnote-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;width:100%;max-width:720px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:14px 18px;display:flex;align-items:center;gap:10px">'
+    +'<input id="pnote-title" value="'+note.title+'" style="flex:1;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:15px;font-weight:700;outline:none">'
+    +'<button onclick="document.getElementById(\'pnote-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    // Toolbar
+    +'<div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:5px 10px;display:flex;gap:3px;flex-wrap:wrap;align-items:center">'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'bold\')"><b>B</b></button>'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'italic\')"><i>I</i></button>'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'underline\')"><u>U</u></button>'
+    +'<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value);this.value=\'p\'"><option value="p">Đoạn</option><option value="h2">H2</option><option value="h3">H3</option></select>'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'insertUnorderedList\')">•</button>'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'insertOrderedList\')">1.</button>'
+    +'<button class="btn-sm" onclick="var u=prompt(\'URL:\');if(u)document.execCommand(\'createLink\',false,u)">🔗</button>'
+    +'<div style="flex:1"></div>'
+    +'<button onclick="publishNoteToShared('+idx+')" style="background:#0891b2;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">📤 Public</button>'
+    +'<button onclick="exportNoteWord('+idx+')" style="background:#2b5797;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:3px">📄 Word</button>'
+    +'<button onclick="exportNotePDF('+idx+')" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:3px">📕 PDF</button>'
+    +'</div>'
+    // Editor
+    +'<div id="pnote-editor" contenteditable="true" style="flex:1;overflow-y:auto;padding:18px;outline:none;font-size:14px;line-height:1.8;min-height:320px;max-height:500px"><p style="color:#aaa">⏳ Đang tải...</p></div>'
+    // Footer
+    +'<div style="padding:10px 18px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">'
+    +'<button onclick="document.getElementById(\'pnote-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer">Hủy</button>'
+    +'<button onclick="savePersonalNoteItem('+idx+')" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer">💾 Lưu</button>'
+    +'</div></div>';
+  document.body.appendChild(d);
+  // Load content
+  fbGet('/users/'+currentUser.uid+'/noteContent/'+note.id, function(err, data) {
+    var ed = document.getElementById('pnote-editor'); if (!ed) return;
+    ed.innerHTML = (!err && data && data.html) ? data.html : '<p style="color:#aaa">Bắt đầu viết...</p>';
+    ed.addEventListener('focus', function(){ if(ed.querySelector('p[style*="color:#aaa"]')) ed.innerHTML=''; }, {once:true});
+  });
+}
+
+function savePersonalNoteItem(idx) {
+  var note = personalNotes[idx]; if (!note) return;
+  var titleInp = document.getElementById('pnote-title');
+  var ed = document.getElementById('pnote-editor');
+  if (titleInp) { note.title = titleInp.value || note.title; note.date = new Date().toLocaleDateString('vi-VN'); }
+  if (ed && currentUser && currentUser.uid) {
+    fbSet('/users/'+currentUser.uid+'/noteContent/'+note.id, { html: ed.innerHTML, updated: Date.now() });
+  }
+  saveNotesMeta();
+  document.getElementById('pnote-modal').remove();
+  renderPersonalNotesList();
+  showToast('Đã lưu: ' + note.title, 'success');
+}
+
+function publishNoteToShared(idx) {
+  var note = personalNotes[idx]; if (!note) return;
+  var ed = document.getElementById('pnote-editor');
+  var content = ed ? ed.innerHTML : '';
+  if (!content.trim()) { showToast('Nội dung trống, không thể public', 'warning'); return; }
+  if (!confirm('Public bài viết "'+note.title+'" lên Thư viện chung?')) return;
+  sharedDocs.push({ id: Date.now(), name: note.title, content: content, date: new Date().toLocaleDateString('vi-VN'), author: currentUser ? currentUser.name : '', comments: [] });
+  fbSaveSharedDocs(); fbClearCache();
+  showToast('✅ Đã public lên Thư viện chung!', 'success');
+}
+
+function exportNoteWord(idx) {
+  var note = personalNotes[idx]; if (!note) return;
+  var ed = document.getElementById('pnote-editor');
+  var content = ed ? ed.innerHTML : '';
+  var html = '<html><body style="font-family:Arial,sans-serif;margin:40px;line-height:1.6"><h1 style="color:#7c3aed">'+note.title+'</h1>'+content+'</body></html>';
+  var blob = new Blob(['﻿'+html], {type:'application/msword'});
+  var a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=note.title+'.doc'; a.click();
+  showToast('✅ Đã xuất Word!', 'success');
+}
+
+function exportNotePDF(idx) {
+  var note = personalNotes[idx]; if (!note) return;
+  var ed = document.getElementById('pnote-editor');
+  var content = ed ? ed.innerHTML : '';
+  var w = window.open('','_blank');
+  w.document.write('<html><head><title>'+note.title+'</title><style>body{font-family:Arial,sans-serif;margin:40px;line-height:1.6}h1{color:#7c3aed}@media print{.noprint{display:none}}</style></head><body>'
+    +'<div class="noprint" style="position:fixed;top:10px;right:10px"><button onclick="window.print()" style="background:#dc2626;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">🖨️ In / Lưu PDF</button></div>'
+    +'<h1>'+note.title+'</h1><p style="color:#888;font-size:12px">'+note.date+' · '+(currentUser?currentUser.name:'')+'</p>'
+    +content+'</body></html>');
+  w.document.close();
 }
 
 // ── SHARED DOCS & SHEETS ──
