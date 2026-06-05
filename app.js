@@ -892,16 +892,133 @@ function renderNews() {
   }).join('') || '<p style="color:#aaa">Chưa có thông báo.</p>';
 }
 
+function insertNewsLink() {
+  var url = prompt('Nhập URL:'); if (!url) return;
+  var text = prompt('Tên hiển thị:') || url;
+  document.getElementById('news-body-editor').focus();
+  document.execCommand('insertHTML', false, '<a href="'+url+'" target="_blank" style="color:#1d4ed8;text-decoration:underline">'+text+'</a>');
+}
+
+function insertNewsImage() {
+  var url = prompt('URL ảnh (hoặc link Cloudinary):'); if (!url) return;
+  document.getElementById('news-body-editor').focus();
+  document.execCommand('insertHTML', false, '<img src="'+url+'" style="max-width:100%;border-radius:8px;margin:8px 0">');
+}
+
+function previewNews() {
+  var title = document.getElementById('news-title-inp').value.trim() || '(Chưa có tiêu đề)';
+  var body = document.getElementById('news-body-editor').innerHTML;
+  var type = document.getElementById('news-type-sel').value;
+  var typeLabel = {update:'🔄 Update', new:'✨ Tính năng mới', alert:'⚠️ Quan trọng'}[type] || type;
+  var ex = document.getElementById('news-preview-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'news-preview-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.25)">'
+    +'<div style="background:linear-gradient(135deg,#d97706,#b45309);padding:14px 18px;display:flex;align-items:center;gap:8px;border-radius:14px 14px 0 0">'
+    +'<span style="color:#fff;font-weight:700;flex:1">👁️ Xem trước bài viết</span>'
+    +'<button onclick="document.getElementById(\'news-preview-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="padding:20px">'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+    +'<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">'+typeLabel+'</span>'
+    +'<span style="font-size:11px;color:#aaa">'+new Date().toLocaleDateString('vi-VN')+' · '+(currentUser?currentUser.name:'')+'</span>'
+    +'</div>'
+    +'<div style="font-weight:700;font-size:18px;margin-bottom:12px;color:#1e293b">'+title+'</div>'
+    +'<div style="font-size:14px;line-height:1.8;color:#374151">'+body+'</div>'
+    +'</div>'
+    +'<div style="padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">'
+    +'<button onclick="document.getElementById(\'news-preview-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">Đóng</button>'
+    +'<button onclick="document.getElementById(\'news-preview-modal\').remove();postNews()" style="background:#d97706;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer">📢 Đăng ngay</button>'
+    +'</div></div>';
+  document.body.appendChild(d);
+}
+
+function newsAiAssist() {
+  var apiKey = localStorage.getItem('claude-api-key');
+  if (!apiKey) { showToast('Cần nhập Claude API key — bấm 🤖 ở góc phải', 'warning'); return; }
+  var title = document.getElementById('news-title-inp').value.trim();
+  var body = document.getElementById('news-body-editor').innerHTML.replace(/<[^>]+>/g,' ').trim();
+  var ex = document.getElementById('news-ai-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'news-ai-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:520px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center">'
+    +'<span style="color:#fff;font-weight:700;flex:1">✨ Claude AI hỗ trợ viết</span>'
+    +'<button onclick="document.getElementById(\'news-ai-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="padding:16px">'
+    +'<div style="font-size:12px;color:#666;margin-bottom:10px">Chọn kiểu hỗ trợ:</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<button onclick="runNewsAI(\'improve\')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">✨ Cải thiện văn phong & chính tả</button>'
+    +'<button onclick="runNewsAI(\'expand\')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">📝 Viết đầy đủ hơn từ outline</button>'
+    +'<button onclick="runNewsAI(\'summarize\')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">📋 Tóm tắt ngắn gọn</button>'
+    +'<button onclick="runNewsAI(\'title\')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">💡 Gợi ý tiêu đề hay hơn</button>'
+    +'</div>'
+    +'<div id="news-ai-result" style="margin-top:12px;display:none">'
+    +'<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">Kết quả:</div>'
+    +'<div id="news-ai-output" style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;max-height:200px;overflow-y:auto"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'
+    +'<button id="news-ai-apply" onclick="applyNewsAI()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">✅ Áp dụng</button>'
+    +'<button onclick="document.getElementById(\'news-ai-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:7px;padding:7px 14px;font-size:12px;cursor:pointer">Đóng</button>'
+    +'</div></div>'
+    +'</div></div>';
+  document.body.appendChild(d);
+  window._newsAiContext = { title: title, body: body };
+}
+
+function runNewsAI(mode) {
+  var apiKey = localStorage.getItem('claude-api-key');
+  var ctx = window._newsAiContext || {};
+  var outputEl = document.getElementById('news-ai-output');
+  var resultEl = document.getElementById('news-ai-result');
+  if (!outputEl) return;
+  resultEl.style.display = 'block';
+  outputEl.innerHTML = '⏳ Đang xử lý...';
+  var prompts = {
+    improve: 'Cải thiện văn phong, chính tả và trình bày của bài viết này. Giữ nguyên nội dung chính. Tiêu đề: "'+ctx.title+'". Nội dung: '+ctx.body,
+    expand: 'Viết đầy đủ và chi tiết hơn dựa trên outline này. Tiêu đề: "'+ctx.title+'". Outline: '+ctx.body,
+    summarize: 'Tóm tắt bài viết này trong 2-3 câu ngắn gọn. Tiêu đề: "'+ctx.title+'". Nội dung: '+ctx.body,
+    title: 'Gợi ý 3 tiêu đề hay và thu hút cho bài viết sau. Nội dung: '+ctx.body
+  };
+  window._newsAiMode = mode;
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: 'claude-haiku-20240307', max_tokens: 800,
+      system: 'Bạn là trợ lý viết nội dung kỹ thuật nội bộ cho LINK Group. Viết bằng tiếng Việt, chuyên nghiệp, súc tích.',
+      messages: [{ role: 'user', content: prompts[mode] }] })
+  }).then(function(r){ return r.json(); }).then(function(d) {
+    var text = d.content && d.content[0] && d.content[0].text || 'Không có kết quả.';
+    outputEl.innerHTML = text.replace(/\n/g,'<br>');
+    window._newsAiResult = text;
+  }).catch(function(e){ outputEl.textContent = 'Lỗi kết nối Claude API: ' + e.message; });
+}
+
+function applyNewsAI() {
+  var result = window._newsAiResult; if (!result) return;
+  var mode = window._newsAiMode;
+  if (mode === 'title') {
+    document.getElementById('news-title-inp').value = result.split('\n')[0].replace(/^[0-9.\-\*]+\s*/,'').replace(/"/g,'');
+  } else {
+    document.getElementById('news-body-editor').innerHTML = result.replace(/\n/g,'<br>');
+  }
+  document.getElementById('news-ai-modal').remove();
+  showToast('✅ Đã áp dụng gợi ý AI', 'success');
+}
+
 function postNews() {
   var title = document.getElementById('news-title-inp').value.trim();
-  var body  = document.getElementById('news-body-inp').value.trim();
+  var editor = document.getElementById('news-body-editor');
+  var body  = editor ? editor.innerHTML : document.getElementById('news-body-inp').value.trim();
   var type  = document.getElementById('news-type-sel').value;
   var pin   = document.getElementById('news-pin').checked;
-  if (!title || !body) { showToast('Vui lòng nhập tiêu đề và nội dung', 'warning'); return; }
+  if (!title || !body || body === '<br>') { showToast('Vui lòng nhập tiêu đề và nội dung', 'warning'); return; }
   newsItems.unshift({ id: Date.now(), title: title, body: body, type: type, pinned: pin,
     date: new Date().toLocaleDateString('vi-VN'), author: currentUser.name, isNew: true });
   document.getElementById('news-title-inp').value = '';
-  document.getElementById('news-body-inp').value = '';
+  if (editor) editor.innerHTML = '';
   document.getElementById('news-pin').checked = false;
   fbSet('/shared/news', newsItems);
   renderNews();
@@ -1836,6 +1953,7 @@ function switchPersonalTab(tab, el) {
   el.style.color='#7c3aed';el.style.borderBottomColor='#7c3aed';
   ['modules','files','notes'].forEach(function(t){var d=document.getElementById('personal-tab-'+t);if(d)d.style.display=t===tab?'block':'none';});
   if(tab==='modules') renderPersonalModulesGrid();
+  if(tab==='notes') loadPersonalNoteEditor();
 }
 function createPersonalDoc(){var name=prompt('Tên tài liệu:');if(!name)return;personalDocs.push({id:Date.now(),name:name,content:'<p>Bắt đầu soạn thảo...</p>',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:''});renderPersonalDocs();showToast('Đã tạo: '+name,'success');}
 function renderPersonalDocs(){var list=document.getElementById('personal-docs-list');if(!list)return;if(!personalDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}list.innerHTML=personalDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.date+'</div></div><button onclick="editPersonalDoc('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Sửa</button><button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>'+'<div id="doc-editor-'+i+'" style="display:none;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px"><div contenteditable="true" id="doc-content-'+i+'" style="min-height:120px;padding:12px;outline:none;font-size:13px">'+doc.content+'</div><button onclick="savePersonalDoc('+i+')" style="margin:8px;background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer">💾 Lưu</button></div>';}).join('');}
@@ -1845,7 +1963,24 @@ function createPersonalSheet(){var name=prompt('Tên bảng tính:');if(!name)re
 function renderPersonalSheets(){var list=document.getElementById('personal-sheets-list');if(!list)return;if(!personalSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}list.innerHTML=personalSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.date+'</div></div><button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn">🗑️</button></div>';}).join('');}
 function uploadPersonalFile(input){var files=Array.from(input.files);files.forEach(function(f){var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),url:URL.createObjectURL(f)});});renderPersonalFiles();showToast('Đã upload '+files.length+' file','success');input.value='';}
 function renderPersonalFiles(){var list=document.getElementById('personal-files-list');if(!list)return;if(!personalFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p>';return;}list.innerHTML=personalFiles.map(function(f,i){return '<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📁</span><div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div><div style="font-size:11px;color:#888">'+f.size+' · '+f.date+'</div></div><a href="'+f.url+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none">⬇️</a><button onclick="personalFiles.splice('+i+',1);renderPersonalFiles()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>';}).join('');}
-function savePersonalNote(){var t=document.getElementById('personal-note');if(t){personalNote=t.value;fbSavePersonal();showToast('Đã lưu ghi chú','success');}}
+function savePersonalNote() {
+  var editor = document.getElementById('personal-note-editor');
+  if (editor) personalNote = editor.innerHTML;
+  fbSavePersonal();
+  showToast('Đã lưu ghi chú','success');
+}
+
+function insertPersonalNoteLink() {
+  var url = prompt('Nhập URL:'); if (!url) return;
+  var text = prompt('Tên hiển thị:') || url;
+  document.execCommand('insertHTML', false, '<a href="'+url+'" target="_blank" style="color:#1d4ed8">'+text+'</a>');
+}
+
+// Load personal note into rich text editor
+function loadPersonalNoteEditor() {
+  var editor = document.getElementById('personal-note-editor');
+  if (editor && personalNote) editor.innerHTML = personalNote;
+}
 
 // ── SHARED DOCS & SHEETS ──
 function switchFilesTab(tab, el) {

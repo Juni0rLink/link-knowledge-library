@@ -172,9 +172,24 @@
           </div>
           <div id="personal-tab-notes" style="display:none">
             <div class="card">
-              <div class="card-title">💬 Ghi chú nhanh</div>
-              <textarea id="personal-note" style="width:100%;height:200px;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;resize:vertical;line-height:1.7" placeholder="Ghi chú tự do — chỉ bạn mới thấy..."></textarea>
-              <button onclick="savePersonalNote()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px">💾 Lưu ghi chú</button>
+              <div class="card-title">💬 Ghi chú cá nhân</div>
+              <div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap;border-radius:8px 8px 0 0;border:1px solid #e5e7eb;border-bottom:none">
+                <button class="btn-sm" onclick="document.execCommand('bold')"><b>B</b></button>
+                <button class="btn-sm" onclick="document.execCommand('italic')"><i>I</i></button>
+                <button class="btn-sm" onclick="document.execCommand('underline')"><u>U</u></button>
+                <select class="btn-sm" onchange="document.execCommand('formatBlock',false,this.value);this.value='p'">
+                  <option value="p">Đoạn văn</option><option value="h2">Tiêu đề lớn</option><option value="h3">Tiêu đề nhỏ</option>
+                </select>
+                <button class="btn-sm" onclick="document.execCommand('insertUnorderedList')">• List</button>
+                <button class="btn-sm" onclick="document.execCommand('insertOrderedList')">1. List</button>
+                <button class="btn-sm" onclick="insertPersonalNoteLink()">🔗</button>
+                <button class="btn-sm" onclick="document.execCommand('insertHorizontalRule')">─</button>
+                <button onclick="savePersonalNote()" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto">💾 Lưu</button>
+              </div>
+              <div id="personal-note-editor" contenteditable="true"
+                style="min-height:200px;padding:14px;border:1px solid #e5e7eb;border-radius:0 0 8px 8px;font-size:14px;outline:none;line-height:1.8;background:#fff"
+                placeholder="Ghi chú tự do — chỉ bạn mới thấy..."></div>
+              <textarea id="personal-note" style="display:none"></textarea>
             </div>
           </div>
         </div>
@@ -295,14 +310,37 @@
           <div class="page-title">📢 News & Changelog</div>
           <div class="page-meta">Thông báo từ Admin — cập nhật tính năng, nội dung mới</div>
         </div>
-        <div id="news-compose" style="display:none;background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid var(--orange)">
-          <div class="card-title">✍️ Đăng thông báo</div>
-          <input id="news-title-inp" class="form-input" type="text" placeholder="Tiêu đề..." style="margin-bottom:10px">
-          <textarea id="news-body-inp" class="form-input" rows="3" placeholder="Nội dung..." style="resize:none"></textarea>
-          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-            <select class="form-input" id="news-type-sel" style="width:140px"><option value="update">Update</option><option value="new">Tính năng mới</option><option value="alert">Quan trọng</option></select>
-            <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="news-pin"> Ghim</label>
-            <button class="btn btn-primary" style="width:auto;padding:0 16px;margin-left:auto" onclick="postNews()">Đăng</button>
+        <div id="news-compose" style="display:none;background:#fff;border-radius:12px;padding:0;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-top:4px solid var(--orange);overflow:hidden">
+          <div style="padding:16px 20px 0">
+            <div class="card-title" style="margin-bottom:12px">✍️ Soạn thông báo</div>
+            <input id="news-title-inp" class="form-input" type="text" placeholder="Tiêu đề bài viết..." style="margin-bottom:10px;font-size:15px;font-weight:600">
+          </div>
+          <!-- Rich text toolbar -->
+          <div style="background:#f8f9fb;padding:6px 12px;display:flex;gap:4px;flex-wrap:wrap;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;align-items:center">
+            <button class="btn-sm" onclick="document.execCommand('bold')"><b>B</b></button>
+            <button class="btn-sm" onclick="document.execCommand('italic')"><i>I</i></button>
+            <button class="btn-sm" onclick="document.execCommand('underline')"><u>U</u></button>
+            <select class="btn-sm" onchange="document.execCommand('formatBlock',false,this.value);this.value='p'">
+              <option value="p">Đoạn văn</option><option value="h2">H2</option><option value="h3">H3</option>
+            </select>
+            <button class="btn-sm" onclick="document.execCommand('insertUnorderedList')">• List</button>
+            <button class="btn-sm" onclick="document.execCommand('insertOrderedList')">1. List</button>
+            <button class="btn-sm" onclick="insertNewsLink()" title="Chèn link">🔗</button>
+            <button class="btn-sm" onclick="insertNewsImage()" title="Chèn ảnh">🖼️</button>
+            <div style="width:1px;height:20px;background:#e5e7eb;margin:0 4px"></div>
+            <button onclick="previewNews()" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">👁️ Xem trước</button>
+            <button onclick="newsAiAssist()" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">✨ Claude AI</button>
+          </div>
+          <!-- Editor -->
+          <div id="news-body-editor" contenteditable="true"
+            style="min-height:140px;padding:16px 20px;font-size:14px;outline:none;line-height:1.8"
+            placeholder="Nội dung bài viết..."></div>
+          <textarea id="news-body-inp" style="display:none"></textarea>
+          <!-- Footer -->
+          <div style="padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select class="form-input" id="news-type-sel" style="width:140px"><option value="update">🔄 Update</option><option value="new">✨ Tính năng mới</option><option value="alert">⚠️ Quan trọng</option></select>
+            <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="news-pin"> 📌 Ghim</label>
+            <button class="btn btn-primary" style="width:auto;padding:0 20px;margin-left:auto" onclick="postNews()">📢 Đăng bài</button>
           </div>
         </div>
         <div id="news-list"></div>
