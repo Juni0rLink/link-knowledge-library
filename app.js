@@ -2538,7 +2538,7 @@ function renderPublicModulesGrid() {
     html += '<div onclick="showPublicGroupDetail('+g.id+')" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer">'
       +'<div style="font-size:28px;margin-bottom:8px">'+g.icon+'</div>'
       +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+g.name+'</div>'
-      +'<div style="font-size:11px;color:#aaa">'+((g.modules||[]).length)+' modules</div>'
+      +'<div style="font-size:11px;color:#aaa">'+((g.modules||[]).length)+' modules'+(sharedFiles.filter(function(f){return (f.category||'').toLowerCase()===g.name.toLowerCase();}).length?' · '+sharedFiles.filter(function(f){return (f.category||'').toLowerCase()===g.name.toLowerCase();}).length+' files':'')+'</div>'
       +'</div>';
   });
   grid.innerHTML = html;
@@ -2547,6 +2547,8 @@ function renderPublicModulesGrid() {
 function showPublicGroupDetail(gid) {
   var g = moduleGroups.find(function(x){return x.id===gid;}); if(!g) return;
   var container = document.getElementById('public-modules-grid'); if(!container) return;
+
+  // Sub-modules cards
   var modsHtml = '';
   (g.modules||[]).forEach(function(m){
     var docs = MODULE_DOCS[m.id]; var fc = docs ? docs.files.length : 0;
@@ -2561,17 +2563,53 @@ function showPublicGroupDetail(gid) {
       +(hasDocs?'<span style="font-size:10px;background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:8px;font-weight:700">Có nội dung</span>':'')
       +'</div></div>';
   });
+
+  // Uploaded files matching this group name (from sharedFiles)
+  var matchedFiles = sharedFiles.filter(function(f){
+    return (f.category||'').toLowerCase() === g.name.toLowerCase();
+  });
+  var filesHtml = '';
+  if (matchedFiles.length) {
+    filesHtml = '<div style="grid-column:1/-1;margin-top:16px">'
+      +'<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">📁 Files đã upload ('+matchedFiles.length+')</div>'
+      +'<div style="display:flex;flex-direction:column;gap:6px">';
+    matchedFiles.forEach(function(f){
+      var fileUrl = f.url || (CONTENT_BASE + encodeURIComponent(f.file||''));
+      var ext = (f.name||f.file||'').split('.').pop().toLowerCase();
+      var isOffice = ['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext) >= 0;
+      var viewUrl = isOffice ? 'https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl) : fileUrl;
+      filesHtml += '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border:1px solid #e5e7eb;border-radius:8px">'
+        +'<span style="font-size:20px">'+(f.icon||getSharedFileIcon(f.name||f.file||''))+'</span>'
+        +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+(f.name||f.file||'')+'</div>'
+        +'<div style="font-size:11px;color:#94a3b8">'+(f.author||'')+' · '+(f.date||'')+'</div></div>'
+        +'<a href="'+viewUrl+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>'
+        +'<a href="'+fileUrl+'" download style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>'
+        +'</div>';
+    });
+    filesHtml += '</div></div>';
+  }
+
+  var mods = g.modules||[];
   container.innerHTML = '<div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-bottom:4px">'
     +'<button onclick="renderPublicModulesGrid()" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600">&larr; Quay lại</button>'
     +'<span style="font-size:15px;font-weight:700;color:#1e293b">'+g.icon+' '+g.name+'</span>'
-    +'<span style="font-size:12px;color:#aaa;margin-left:4px">'+g.modules.length+' modules</span>'
+    +'<span style="font-size:12px;color:#aaa;margin-left:4px">'+mods.length+' modules · '+matchedFiles.length+' files</span>'
     +'</div>'
-    +'<div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">'
-    +modsHtml+'</div>';
-  g.modules.forEach(function(m){
+    +(modsHtml ? '<div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">'+modsHtml+'</div>' : '')
+    +filesHtml
+    +((!mods.length && !matchedFiles.length) ? '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#aaa">Chưa có nội dung. Thêm module hoặc upload file vào phân vùng "'+g.name+'".</div>' : '');
+
+  mods.forEach(function(m){
     var el = document.getElementById('pubmod-'+m.id);
     if(el) el.addEventListener('click', function(){showModulePage(m.id, m.name, gid, null);});
   });
+
+  // Auto-update card count in grid
+  var card = document.querySelector('[onclick*="showPublicGroupDetail('+gid+')"]');
+  if (card) {
+    var countEl = card.querySelector('div:last-child');
+    if (countEl) countEl.textContent = mods.length + ' modules · ' + matchedFiles.length + ' files';
+  }
 }
 
 // ============================================================
