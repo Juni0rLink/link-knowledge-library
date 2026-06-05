@@ -1173,7 +1173,7 @@ function callAI(prompt, systemMsg, cb) {
     fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
       headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-haiku-20241022',max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'claude-3-5-haiku-20241022',max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
     }).then(function(r){return r.json();}).then(function(d){
       if(d.error) cb(null,'Claude error: '+d.error.message);
       else cb((d.content&&d.content[0]&&d.content[0].text)||'');
@@ -2426,39 +2426,129 @@ function uploadNoteImage(input) {
   input.value = '';
 }
 
+// ── SHARED AI WRITING ASSISTANT (multi-select + clarification) ──
+var AI_STYLES = [
+  { id:'write',     label:'✍️ Viết bài từ tiêu đề',       desc:'Tạo bài hoàn chỉnh' },
+  { id:'improve',   label:'✨ Cải thiện văn phong',        desc:'Sửa ngữ pháp, câu chữ' },
+  { id:'expand',    label:'📝 Mở rộng chi tiết',           desc:'Thêm ví dụ, giải thích' },
+  { id:'structure', label:'📋 Tạo cấu trúc đề mục',       desc:'H2, H3, gạch đầu dòng' },
+  { id:'technical', label:'🔧 Phong cách kỹ thuật',        desc:'Chuẩn LINK Group / BMW' },
+  { id:'summary',   label:'📌 Tóm tắt ngắn gọn',          desc:'Rút gọn nội dung' },
+  { id:'ebook',     label:'📖 Định dạng E-book',            desc:'Chương, mục, intro' },
+];
+
+function openAiWritingAssist(ctx, applyFn, modalId) {
+  var ex = document.getElementById(modalId||'ai-writing-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = modalId || 'ai-writing-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px';
+  var stylesHtml = AI_STYLES.map(function(s){
+    return '<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#fff;transition:background .1s" onmouseover="this.style.background=\'#f8f9fb\'" onmouseout="this.style.background=\'#fff\'">'
+      +'<input type="checkbox" value="'+s.id+'" style="width:15px;height:15px;cursor:pointer" class="ai-style-cb">'
+      +'<div><div style="font-size:13px;font-weight:600">'+s.label+'</div><div style="font-size:11px;color:#94a3b8">'+s.desc+'</div></div>'
+      +'</label>';
+  }).join('');
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center">'
+    +'<span style="color:#fff;font-weight:700;flex:1">✨ AI Hỗ trợ viết — '+ctx.title+'</span>'
+    +'<button onclick="document.getElementById(\''+(modalId||'ai-writing-modal')+'\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="overflow-y:auto;padding:16px;flex:1">'
+    // Step 1: styles
+    +'<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px">1. Chọn phong cách (có thể chọn nhiều):</div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">'+stylesHtml+'</div>'
+    // Step 2: clarification
+    +'<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">2. Yêu cầu thêm (tuỳ chọn):</div>'
+    +'<textarea id="ai-extra-req" rows="2" placeholder="VD: Viết theo quan điểm kỹ thuật viên, dùng bullet points, tập trung vào an toàn..." style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;resize:none;box-sizing:border-box;margin-bottom:4px"></textarea>'
+    +'<div style="font-size:11px;color:#aaa;margin-bottom:14px">AI sẽ hỏi bạn nếu cần thêm thông tin</div>'
+    // Result
+    +'<div id="ai-writing-result" style="display:none">'
+    +'<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px">Kết quả:</div>'
+    +'<div id="ai-writing-output" style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;max-height:220px;overflow-y:auto"></div>'
+    +'</div>'
+    +'</div>'
+    +'<div style="padding:12px 16px;border-top:1px solid #e5e7eb;display:flex;gap:8px">'
+    +'<button onclick="runAiWritingAssist()" style="flex:1;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">🚀 Thực thi</button>'
+    +'<button id="ai-writing-apply-btn" onclick="" style="display:none;background:#22c55e;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer">✅ Áp dụng</button>'
+    +'<button onclick="document.getElementById(\''+(modalId||'ai-writing-modal')+'\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer">Đóng</button>'
+    +'</div>'
+    +'</div>';
+  document.body.appendChild(d);
+  window._aiWritingCtx = ctx;
+  window._aiWritingApply = applyFn;
+  window._aiWritingModalId = modalId || 'ai-writing-modal';
+}
+
+function runAiWritingAssist() {
+  var ctx = window._aiWritingCtx || {};
+  var cbs = document.querySelectorAll('.ai-style-cb:checked');
+  var selectedModes = Array.from(cbs).map(function(cb){ return cb.value; });
+  if (!selectedModes.length) { showToast('Chọn ít nhất 1 phong cách', 'warning'); return; }
+  var extraReq = (document.getElementById('ai-extra-req')||{}).value || '';
+  var outputEl = document.getElementById('ai-writing-output');
+  var resultEl = document.getElementById('ai-writing-result');
+  var applyBtn = document.getElementById('ai-writing-apply-btn');
+  if (!outputEl) return;
+  resultEl.style.display = 'block';
+  outputEl.innerHTML = '⏳ Đang xử lý ' + selectedModes.length + ' yêu cầu...';
+  if (applyBtn) applyBtn.style.display = 'none';
+
+  var styleDescMap = {};
+  AI_STYLES.forEach(function(s){ styleDescMap[s.id] = s.label; });
+  var styleInstructions = selectedModes.map(function(m){ return styleDescMap[m]; }).join(' + ');
+
+  var prompt = 'Thực hiện các yêu cầu sau cho bài viết:\n'
+    +'Tiêu đề: "'+ctx.title+'"\n'
+    +'Nội dung hiện tại: '+ctx.content+'\n\n'
+    +'Yêu cầu: '+styleInstructions+(extraReq ? '\nYêu cầu bổ sung: '+extraReq : '')+'\n\n'
+    +'Nếu bạn cần thêm thông tin để hoàn thành tốt hơn, hãy đặt câu hỏi ngắn gọn trước rồi đưa ra kết quả.';
+
+  callAI(prompt, 'Bạn là chuyên gia viết tài liệu kỹ thuật cho LINK Group. Viết bằng tiếng Việt, chuyên nghiệp, cấu trúc rõ ràng.', function(text, err) {
+    if (err) { outputEl.textContent = err; return; }
+    outputEl.innerHTML = (text||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    window._aiWritingResult = text;
+    if (applyBtn) {
+      applyBtn.style.display = 'block';
+      applyBtn.onclick = function() {
+        if (window._aiWritingApply) window._aiWritingApply(text);
+        document.getElementById(window._aiWritingModalId).remove();
+        showToast('✅ Đã áp dụng', 'success');
+      };
+    }
+  });
+}
+
 function noteAiAssist(idx) {
   var note = personalNotes[idx]; if (!note) return;
   var ed = document.getElementById('pnote-editor');
   var content = ed ? ed.innerHTML.replace(/<[^>]+>/g,' ').trim() : '';
-  var ex = document.getElementById('note-ai-modal'); if(ex) ex.remove();
-  var d = document.createElement('div');
-  d.id = 'note-ai-modal';
-  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px';
-  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:500px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden">'
-    +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center">'
-    +'<span style="color:#fff;font-weight:700;flex:1">✨ AI Hỗ trợ viết — '+note.title+'</span>'
-    +'<button onclick="document.getElementById(\'note-ai-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
-    +'</div>'
-    +'<div style="padding:16px">'
-    +'<div style="display:flex;flex-direction:column;gap:8px">'
-    +'<button onclick="runNoteAI(\'write\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">✍️ Viết bài hoàn chỉnh từ tiêu đề</button>'
-    +'<button onclick="runNoteAI(\'improve\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">✨ Cải thiện văn phong nội dung hiện tại</button>'
-    +'<button onclick="runNoteAI(\'expand\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">📝 Mở rộng và thêm chi tiết</button>'
-    +'<button onclick="runNoteAI(\'structure\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">📋 Tạo cấu trúc đề mục rõ ràng</button>'
-    +'<button onclick="runNoteAI(\'technical\','+idx+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">🔧 Viết theo phong cách kỹ thuật LINK Group</button>'
-    +'</div>'
-    +'<div id="note-ai-result" style="display:none;margin-top:12px">'
-    +'<div id="note-ai-output" style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;max-height:200px;overflow-y:auto"></div>'
-    +'<div style="display:flex;gap:8px;margin-top:10px">'
-    +'<button onclick="applyNoteAI()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">✅ Áp dụng vào bài viết</button>'
-    +'<button onclick="document.getElementById(\'note-ai-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:7px;padding:7px 14px;font-size:12px;cursor:pointer">Đóng</button>'
-    +'</div></div>'
-    +'</div></div>';
-  document.body.appendChild(d);
+  openAiWritingAssist(
+    { title: note.title, content: content },
+    function(text) {
+      var ed2 = document.getElementById('pnote-editor');
+      if(ed2) ed2.innerHTML = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    },
+    'note-ai-modal'
+  );
   window._noteAiCtx = { idx: idx, title: note.title, content: content };
 }
 
 function runNoteAI(mode, idx) {
+  // Legacy fallback - redirect to new system
+  noteAiAssist(idx);
+}
+
+function applyNoteAI() {
+  // Legacy fallback
+  var result = window._aiWritingResult||window._noteAiResult; if(!result) return;
+  var ed = document.getElementById('pnote-editor'); if(!ed) return;
+  ed.innerHTML = result.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  var modal = document.getElementById('note-ai-modal')||document.getElementById('ai-writing-modal');
+  if(modal) modal.remove();
+  showToast('✅ Đã áp dụng','success');
+}
+
+function _legacyRunNoteAI(mode, idx) {
   var ctx = window._noteAiCtx || {};
   var outputEl = document.getElementById('note-ai-output');
   var resultEl = document.getElementById('note-ai-result');
@@ -2471,7 +2561,7 @@ function runNoteAI(mode, idx) {
     structure: 'Tổ chức lại nội dung sau thành cấu trúc đề mục rõ ràng (H2, H3, gạch đầu dòng):\n'+ctx.content,
     technical: 'Viết lại theo phong cách tài liệu kỹ thuật chuyên nghiệp cho kỹ thuật viên BMW/SiCar:\n'+ctx.content
   };
-  callAI(prompts[mode], 'Bạn là chuyên gia viết tài liệu kỹ thuật cho LINK Group. Viết bằng tiếng Việt, chuyên nghiệp, rõ ràng.', function(text, err) {
+  callAI(prompts[mode], 'Bạn là chuyên gia viết tài liệu kỹ thuật cho LINK Group.', function(text, err) {
     if (err) { outputEl.textContent = err; return; }
     outputEl.innerHTML = (text||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     window._noteAiResult = text;
@@ -3041,33 +3131,16 @@ function subModuleAI(mi, si) {
   var item = personalModules[mi] && personalModules[mi].items && personalModules[mi].items[si];
   if (!item) return;
   var ed = document.getElementById('sub-content-ed');
-  var currentContent = ed ? ed.innerHTML.replace(/<[^>]+>/g,' ').trim() : '';
-  var ex = document.getElementById('sub-ai-modal'); if(ex) ex.remove();
-  var d = document.createElement('div');
-  d.id = 'sub-ai-modal';
-  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px';
-  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:500px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden">'
-    +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center">'
-    +'<span style="color:#fff;font-weight:700;flex:1">✨ AI Hỗ trợ — '+item.name+'</span>'
-    +'<button onclick="document.getElementById(\'sub-ai-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
-    +'</div>'
-    +'<div style="padding:16px">'
-    +'<div style="font-size:12px;color:#555;margin-bottom:10px">AI sẽ dựa trên nội dung module cá nhân của bạn:</div>'
-    +'<div style="display:flex;flex-direction:column;gap:8px">'
-    +'<button onclick="runSubAI(\'write\','+mi+','+si+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">✍️ Viết bài từ tiêu đề + ghi chú</button>'
-    +'<button onclick="runSubAI(\'improve\','+mi+','+si+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">✨ Cải thiện nội dung hiện tại</button>'
-    +'<button onclick="runSubAI(\'expand\','+mi+','+si+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">📝 Mở rộng chi tiết hơn</button>'
-    +'<button onclick="runSubAI(\'bullets\','+mi+','+si+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:13px;cursor:pointer;text-align:left">• Chuyển thành danh sách có cấu trúc</button>'
-    +'</div>'
-    +'<div id="sub-ai-result" style="display:none;margin-top:12px">'
-    +'<div id="sub-ai-output" style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;max-height:200px;overflow-y:auto"></div>'
-    +'<div style="display:flex;gap:8px;margin-top:10px">'
-    +'<button id="sub-ai-apply-btn" onclick="applySubAI()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">✅ Áp dụng</button>'
-    +'<button onclick="document.getElementById(\'sub-ai-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:7px;padding:7px 14px;font-size:12px;cursor:pointer">Đóng</button>'
-    +'</div></div>'
-    +'</div></div>';
-  document.body.appendChild(d);
-  window._subAiCtx = { mi: mi, si: si, content: currentContent, personalCtx: getPersonalContext(mi) };
+  var content = ed ? ed.innerHTML.replace(/<[^>]+>/g,' ').trim() : '';
+  var personalCtx = getPersonalContext(mi);
+  openAiWritingAssist(
+    { title: item.name, content: content + '\nBối cảnh: ' + personalCtx },
+    function(text) {
+      var ed2 = document.getElementById('sub-content-ed');
+      if(ed2) ed2.innerHTML = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    },
+    'sub-ai-modal'
+  );
 }
 
 function runSubAI(mode, mi, si) {
