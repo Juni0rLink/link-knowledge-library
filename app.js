@@ -998,6 +998,20 @@ function callAI(prompt, systemMsg, cb) {
       else cb((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'');
     }).catch(function(e){cb(null,'Lỗi kết nối GPT: '+e.message);});
 
+  } else if (provider === 'openrouter') {
+    var key = localStorage.getItem('openrouter-api-key'); if (!key) { cb(null, 'Chưa có OpenRouter API key'); return; }
+    var modelSel = document.getElementById('openrouter-model');
+    var model = (modelSel && modelSel.value) || localStorage.getItem('openrouter-model') || 'meta-llama/llama-3.3-70b-instruct:free';
+    if (modelSel) localStorage.setItem('openrouter-model', model);
+    fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json','HTTP-Referer':'https://juni0rlink.github.io/link-knowledge-library','X-Title':'LINK Knowledge Library'},
+      body:JSON.stringify({model:model,max_tokens:1000,messages:[{role:'system',content:sysMsg},{role:'user',content:prompt}]})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.error) cb(null,'OpenRouter error: '+d.error.message);
+      else cb((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'');
+    }).catch(function(e){cb(null,'Lỗi kết nối OpenRouter: '+e.message);});
+
   } else if (provider === 'gemini') {
     var key = localStorage.getItem('gemini-api-key'); if (!key) { cb(null, 'Chưa có Gemini API key'); return; }
     fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key, {
