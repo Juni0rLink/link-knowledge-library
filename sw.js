@@ -1,9 +1,18 @@
-var CACHE = 'lkl-v1';
-var STATIC = [
+// Cache version — update this string on every deploy to bust all caches
+// GitHub Pages serves this file fresh (no-cache headers), so any change here
+// triggers a new SW installation and clears all old caches automatically.
+var CACHE = 'lkl-20260605-001';
+
+// Files that should ALWAYS be fresh from network (core app)
+var NETWORK_FIRST = [
   '/link-knowledge-library/',
   '/link-knowledge-library/index.html',
-  '/link-knowledge-library/style.css',
   '/link-knowledge-library/app.js',
+  '/link-knowledge-library/style.css',
+];
+
+// Files that can be cached (large static docs, rarely change)
+var CACHE_FIRST = [
   '/link-knowledge-library/logo.jpg',
   '/link-knowledge-library/search-index.json',
   '/link-knowledge-library/content/GSC Software structure.pptx',
@@ -27,58 +36,70 @@ var STATIC = [
   '/link-knowledge-library/content/MAN_00901_Manual_SG09.docx',
   '/link-knowledge-library/content/MAN_01001_Manual_SG10.docx',
   '/link-knowledge-library/content/MAN_01101_Manual_SG11.docx',
-  '/link-knowledge-library/content/MAN_01201_Manual_SG12.docx'
+  '/link-knowledge-library/content/MAN_01201_Manual_SG12.docx',
 ];
 
-// Install: cache all static assets
 self.addEventListener('install', function(e) {
   e.waitUntil(
     caches.open(CACHE).then(function(cache) {
-      return cache.addAll(STATIC);
+      return cache.addAll(CACHE_FIRST);
     }).then(function() { return self.skipWaiting(); })
   );
 });
 
-// Activate: delete old caches
 self.addEventListener('activate', function(e) {
   e.waitUntil(
+    // Delete ALL old caches
     caches.keys().then(function(keys) {
-      return Promise.all(keys.filter(function(k){ return k !== CACHE; }).map(function(k){ return caches.delete(k); }));
+      return Promise.all(keys.filter(function(k) { return k !== CACHE; }).map(function(k) {
+        console.log('[SW] Deleting old cache:', k);
+        return caches.delete(k);
+      }));
     }).then(function() { return self.clients.claim(); })
   );
 });
 
-// Fetch: cache-first for static, network-first for Firebase/Cloudinary
 self.addEventListener('fetch', function(e) {
   var url = e.request.url;
-
-  // Skip non-GET and cross-origin API calls (Firebase, Cloudinary)
   if (e.request.method !== 'GET') return;
-  if (url.includes('firebasedatabase.app') || url.includes('cloudinary.com') ||
-      url.includes('identitytoolkit') || url.includes('officeapps.live.com')) return;
 
-  e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      if (cached) {
-        // Serve from cache, refresh in background
-        fetch(e.request).then(function(fresh) {
-          caches.open(CACHE).then(function(cache){ cache.put(e.request, fresh); });
-        }).catch(function(){});
-        return cached;
-      }
-      // Not in cache: try network, cache on success
-      return fetch(e.request).then(function(res) {
+  // Skip Firebase, Cloudinary, external APIs
+  if (url.includes('firebasedatabase.app') || url.includes('cloudinary.com') ||
+      url.includes('identitytoolkit') || url.includes('officeapps.live.com') ||
+      url.includes('openrouter.ai') || url.includes('anthropic.com') ||
+      url.includes('openai.com') || url.includes('googleapis.com/v1beta')) return;
+
+  // NETWORK-FIRST for HTML, JS, CSS — always get latest
+  var isNetworkFirst = NETWORK_FIRST.some(function(p) { return url.includes(p); });
+  if (isNetworkFirst) {
+    e.respondWith(
+      fetch(e.request).then(function(res) {
         if (res && res.status === 200) {
           var clone = res.clone();
-          caches.open(CACHE).then(function(cache){ cache.put(e.request, clone); });
+          caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
         }
         return res;
       }).catch(function() {
-        // Offline fallback: return cached index.html for navigation
-        if (e.request.mode === 'navigate') {
-          return caches.match('/link-knowledge-library/index.html');
+        // Offline fallback: serve from cache
+        return caches.match(e.request).then(function(cached) {
+          return cached || caches.match('/link-knowledge-library/index.html');
+        });
+      })
+    );
+    return;
+  }
+
+  // CACHE-FIRST for static docs — serve from cache, refresh in background
+  e.respondWith(
+    caches.match(e.request).then(function(cached) {
+      var networkFetch = fetch(e.request).then(function(res) {
+        if (res && res.status === 200) {
+          var clone = res.clone();
+          caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
         }
-      });
+        return res;
+      }).catch(function() {});
+      return cached || networkFetch;
     })
   );
 });
