@@ -881,18 +881,38 @@ function sendInvite() {
 function renderNews() {
   var list = document.getElementById('news-list');
   if (!list) return;
+  var isAdmin = currentUser && ['owner','admin'].includes(currentUser.role);
   var sorted = newsItems.slice().sort(function(a, b) { return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0); });
+  var typeStyle = { update:'background:#dbeafe;color:#1d4ed8', new:'background:#dcfce7;color:#166534', alert:'background:#fee2e2;color:#dc2626' };
+  var typeLabel = { update:'🔄 Update', new:'✨ Mới', alert:'⚠️ Quan trọng' };
   list.innerHTML = sorted.map(function(n) {
-    return '<div class="news-item ' + (n.pinned ? 'pinned' : '') + '">' +
-      '<div class="news-header">' +
-      (n.pinned ? '<span>Ὄc</span>' : '') +
-      '<div class="news-title">' + n.title + '</div>' +
-      (n.isNew ? '<span class="tag tag-green" style="font-size:10px">MOI</span>' : '') +
-      '</div>' +
-      '<div class="news-body">' + n.body + '</div>' +
-      '<div style="margin-top:8px;font-size:11px;color:#aaa;">' + n.date + ' - ' + n.author + '</div>' +
-      '</div>';
-  }).join('') || '<p style="color:#aaa">Chưa có thông báo.</p>';
+    var ts = typeStyle[n.type] || typeStyle.update;
+    var tl = typeLabel[n.type] || n.type;
+    return '<div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid #e5e7eb' + (n.pinned?';border-left:4px solid #f59e0b':'') + '">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+      + (n.pinned ? '<span>📌</span>' : '')
+      + '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;'+ts+'">'+tl+'</span>'
+      + (n.isNew ? '<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px">MỚI</span>' : '')
+      + '<span style="font-size:11px;color:#aaa;margin-left:auto">'+n.date+' · '+n.author+'</span>'
+      + (isAdmin ? '<button onclick="togglePinNews(\''+n.id+'\')" style="background:#fef3c7;color:#92400e;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;margin-left:6px">'+(n.pinned?'Bỏ ghim':'📌 Ghim')+'</button>' : '')
+      + (isAdmin ? '<button onclick="deleteNews(\''+n.id+'\')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;margin-left:4px">🗑️</button>' : '')
+      + '</div>'
+      + '<div style="font-weight:700;font-size:15px;margin-bottom:6px;color:#1e293b">' + n.title + '</div>'
+      + '<div style="font-size:13px;color:#475569;line-height:1.7">' + n.body + '</div>'
+      + '</div>';
+  }).join('') || '<div style="text-align:center;padding:40px;color:#aaa">Chưa có thông báo nào.</div>';
+}
+
+function deleteNews(id) {
+  if (!confirm('Xóa thông báo này?')) return;
+  newsItems = newsItems.filter(function(n){ return String(n.id) !== String(id); });
+  fbSaveNews(); renderNews();
+  showToast('Đã xóa thông báo', 'error');
+}
+
+function togglePinNews(id) {
+  var n = newsItems.find(function(x){ return String(x.id) === String(id); });
+  if (n) { n.pinned = !n.pinned; fbSaveNews(); renderNews(); showToast(n.pinned?'Đã ghim':'Đã bỏ ghim','success'); }
 }
 
 function insertNewsLink() {
@@ -2557,15 +2577,14 @@ function openSubModule(mi, si) {
     +'<input id="sub-name-inp" value="'+item.name+'" style="flex:1;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:14px;font-weight:700;outline:none">'
     +'<button onclick="document.getElementById(\'pm-sub-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer">✕</button>'
     +'</div>'
-    +'<div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:5px 10px;display:flex;gap:3px;flex-wrap:wrap">'
-    +'<button class="btn-sm" onclick="document.execCommand(\'bold\')"><b>B</b></button>'
-    +'<button class="btn-sm" onclick="document.execCommand(\'italic\')"><i>I</i></button>'
-    +'<button class="btn-sm" onclick="document.execCommand(\'underline\')"><u>U</u></button>'
-    +'<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value);this.value=\'p\'"><option value="p">Đoạn văn</option><option value="h2">H2</option><option value="h3">H3</option></select>'
-    +'<button class="btn-sm" onclick="document.execCommand(\'insertUnorderedList\')">• List</button>'
-    +'<button class="btn-sm" onclick="document.execCommand(\'insertOrderedList\')">1. List</button>'
-    +'<div style="flex:1"></div>'
-    +'<button onclick="subModuleAI('+mi+','+si+')" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">✨ AI</button>'
+    +'<div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:5px 10px;display:flex;gap:3px;flex-wrap:wrap;align-items:center">'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'bold\')"><b>B</b></button>'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'italic\')"><i>I</i></button>'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'underline\')"><u>U</u></button>'
+    +'<select class="btn-sm" onchange="document.execCommand(\'formatBlock\',false,this.value);this.value=\'p\'"><option value="p">Đoạn</option><option value="h2">H2</option><option value="h3">H3</option></select>'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'insertUnorderedList\')">•</button>'
+    +'<button class="btn-sm" onmousedown="event.preventDefault();document.execCommand(\'insertOrderedList\')">1.</button>'
+    +'<button onclick="subModuleAI('+mi+','+si+')" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-left:auto">✨ AI</button>'
     +'</div>'
     +'<div id="sub-content-ed" contenteditable="true" style="flex:1;overflow-y:auto;padding:18px;outline:none;font-size:14px;line-height:1.8;min-height:260px;max-height:340px">'
     +'<p style="color:#aaa">⏳ Đang tải nội dung...</p>'
