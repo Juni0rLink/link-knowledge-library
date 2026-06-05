@@ -503,6 +503,59 @@ document.addEventListener('DOMContentLoaded', function() {
   var passEl = document.getElementById('login-pass');
   if (passEl) passEl.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
 
+  // ── SMART AUTO-UPDATE (idle 15 min) ──
+  var lastActivity = Date.now();
+  var IDLE_MS = 15 * 60 * 1000; // 15 minutes
+  var updatePending = false;
+
+  // Track activity
+  ['mousemove','keydown','click','scroll','touchstart'].forEach(function(evt) {
+    document.addEventListener(evt, function() { lastActivity = Date.now(); }, {passive: true});
+  });
+
+  // Listen for SW update available
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      updatePending = true;
+      console.log('[SW] New version available');
+    });
+    navigator.serviceWorker.ready.then(function(reg) {
+      // Poll for updates every 5 minutes
+      setInterval(function() { reg.update(); }, 5 * 60 * 1000);
+      reg.addEventListener('updatefound', function() {
+        var newWorker = reg.installing;
+        newWorker.addEventListener('statechange', function() {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            updatePending = true;
+          }
+        });
+      });
+    });
+  }
+
+  // Check idle every 60s
+  setInterval(function() {
+    if (!updatePending) return;
+    var idleTime = Date.now() - lastActivity;
+    if (idleTime < IDLE_MS) return; // user still active
+
+    // User idle 15+ min AND update available → auto-refresh
+    saveStateBeforeRefresh();
+    setTimeout(function() {
+      showToast('🔄 Cập nhật phiên bản mới...', 'success');
+      setTimeout(function() { window.location.reload(); }, 1500);
+    }, 500);
+  }, 60000);
+
+  // Also show banner if update available and user is active
+  setInterval(function() {
+    if (!updatePending) return;
+    var idleTime = Date.now() - lastActivity;
+    if (idleTime > 60000) return; // only show if active within 1 min
+    showUpdateBanner();
+    updatePending = false; // show once
+  }, 30000);
+
   // Ctrl+Click to open links inside contenteditable editors
   document.addEventListener('click', function(e) {
     if (e.ctrlKey || e.metaKey) {
@@ -514,7 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Also show tooltip hint on links inside editors
+  // Show tooltip on links inside editors
   document.addEventListener('mouseover', function(e) {
     var a = e.target.closest('a');
     if (a && a.closest('[contenteditable]') && !a.title) {
@@ -575,6 +628,52 @@ function doRegister() {
     ['reg-name','reg-email','reg-dept','reg-reason'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
     if (document.getElementById('reg-pass')) document.getElementById('reg-pass').value = '';
   });
+}
+
+function saveStateBeforeRefresh() {
+  // Save current page
+  var activePage = document.querySelector('.page.active');
+  if (activePage) localStorage.setItem('lkl_last_page', activePage.id.replace('page-',''));
+  // Save unsaved editor content (personal notes, sub-module)
+  var pnoteEd = document.getElementById('pnote-editor');
+  if (pnoteEd && pnoteEd.innerHTML && pnoteEd.innerHTML.length > 50) {
+    localStorage.setItem('lkl_draft_note', pnoteEd.innerHTML);
+  }
+  var subEd = document.getElementById('sub-content-ed');
+  if (subEd && subEd.innerHTML && subEd.innerHTML.length > 50) {
+    localStorage.setItem('lkl_draft_sub', subEd.innerHTML);
+  }
+  // Save personal data to Firebase
+  if (typeof fbSavePersonal === 'function') fbSavePersonal();
+}
+
+function restoreStateAfterRefresh() {
+  var lastPage = localStorage.getItem('lkl_last_page');
+  if (lastPage && lastPage !== 'home') {
+    var navEl = document.querySelector('.nav-item[onclick*="\''+lastPage+'\'"]');
+    setTimeout(function(){ showPage(lastPage, navEl); }, 800);
+  }
+  localStorage.removeItem('lkl_last_page');
+  // Notify about draft recovery
+  var draft = localStorage.getItem('lkl_draft_note');
+  if (draft) {
+    showToast('📝 Đã khôi phục bản nháp ghi chú', 'success');
+    localStorage.removeItem('lkl_draft_note');
+  }
+}
+
+function showUpdateBanner() {
+  var ex = document.getElementById('update-banner'); if(ex) return; // already shown
+  var d = document.createElement('div');
+  d.id = 'update-banner';
+  d.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1d4ed8;color:#fff;border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:9000;font-size:13px;max-width:420px;width:90%';
+  d.innerHTML = '<span style="font-size:18px">🚀</span>'
+    +'<div style="flex:1"><div style="font-weight:700">Phiên bản mới đã sẵn sàng!</div><div style="font-size:11px;opacity:.8">Cập nhật ngay để dùng tính năng mới nhất</div></div>'
+    +'<button onclick="saveStateBeforeRefresh();setTimeout(function(){window.location.reload()},300)" style="background:#fff;color:#1d4ed8;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Cập nhật</button>'
+    +'<button onclick="document.getElementById(\'update-banner\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px">✕</button>';
+  document.body.appendChild(d);
+  // Auto dismiss after 30s if no action
+  setTimeout(function(){ var el=document.getElementById('update-banner'); if(el) el.remove(); }, 30000);
 }
 
 // ============================================================
@@ -693,6 +792,9 @@ function launchApp() {
 
   updateNewsDot();
   renderNews();
+
+  // Restore state if coming from auto-refresh
+  restoreStateAfterRefresh();
 
   // Show AI FAB after login
   var fab = document.getElementById('claude-fab');
