@@ -604,19 +604,18 @@ function saveApiKey() {
   var cfg = AI_PROVIDERS[currentProvider];
   var key = document.getElementById('claude-api-key').value.trim();
   if (!key) { alert('Vui lòng nhập API key'); return; }
-  // Save to localStorage (device)
+  // Claude & GPT: localStorage ONLY — never goes to Firebase (100% private)
   localStorage.setItem(cfg.keyName, key);
   localStorage.setItem('ai-provider', currentProvider);
-  // Save to Firebase per-user (private) — base64 obfuscation
   if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
-    var isPrivate = (currentProvider === 'claude' || currentProvider === 'gpt');
-    if (isPrivate) {
-      // Private: store under user's own node
-      fbSet('/users/'+currentUser.uid+'/apiKeys/'+currentProvider, { k: btoa(key), updated: Date.now() });
+    var isStrictlyPrivate = (currentProvider === 'claude' || currentProvider === 'gpt');
+    if (isStrictlyPrivate) {
+      // Do NOT save to Firebase — stays on this device only
+      showToast('🔒 Key Claude/GPT chỉ lưu trên thiết bị này, không đồng bộ lên server', 'success');
     } else {
-      // Free/shared providers: admin can also set shared key
-      var isAdmin = currentUser.role === 'owner' || currentUser.role === 'admin';
-      if (isAdmin) {
+      // Free/shared providers (OpenRouter, Gemini): Admin có thể set key chung
+      var isAdmin2 = currentUser.role === 'owner' || currentUser.role === 'admin';
+      if (isAdmin2) {
         if (confirm('Lưu key này làm key chung cho mọi người dùng không?')) {
           fbSet('/shared/aiKeys/'+currentProvider, { k: btoa(key), updated: Date.now() });
           showToast('✅ Đã lưu key chung cho mọi user', 'success');
