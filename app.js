@@ -324,6 +324,14 @@ function doLogin() {
         currentUser = { email: email, name: profile.name || email, role: profile.role, uid: uid };
       } else {
         currentUser = { email: email, name: email.split('@')[0], role: 'colleague', uid: uid };
+        // Try to get full name from pending registration data
+        fbGet('/shared/pendingRegs', function(e3, regs) {
+          if (!e3 && regs) {
+            var arr = Array.isArray(regs) ? regs : Object.values(regs);
+            var reg = arr.find(function(r){ return r.email === email; });
+            if (reg && reg.name) { currentUser.name = reg.name; document.getElementById('user-name-display').textContent = reg.name; document.getElementById('welcome-name').textContent = reg.name; document.getElementById('user-avatar').textContent = reg.name.charAt(0).toUpperCase(); }
+          }
+        });
       }
       launchApp();
     });
@@ -513,38 +521,34 @@ function launchApp() {
   var pl = document.getElementById('permission-list');
   if (pl) { pl.innerHTML = ''; pl.appendChild(ul); }
 
-  var ok = '<span class="tag tag-green">Truy cập đầy đủ</span>';
-  var no = '<span class="tag tag-red">Bị giới hạn</span>';
-  ['acc-standards', 'acc-equipment', 'acc-videos'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.innerHTML = isColleague ? ok : no;
-  });
-  var am = document.getElementById('acc-myfiles');
-  if (am) am.innerHTML = isColleague ? ok + ' (riêng tư)' : no;
+  var ok  = '<span class="tag tag-green">✅ Có</span>';
+  var ltd = '<span class="tag tag-green">✅ Của mình</span>';
+  var no  = '<span class="tag tag-red">❌ Không</span>';
+  var adm = '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:8px;font-size:12px;font-weight:700">🔑 Admin only</span>';
 
-  // Sidebar modules — tất cả role (trừ viewer) đều thấy
-  if (isColleague) {
-    syncSidebarModules();
-  }
+  var set = function(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; };
+  set('acc-standards', isColleague ? ok : no);
+  set('acc-myfiles',   isColleague ? ok : no);
+  set('acc-trash',     isColleague ? ltd : (isAdmin ? ok : no));
+  set('acc-settings',  isColleague ? ok : no);
+  set('acc-mgmt',      isAdmin ? ok : no);
+  set('acc-admin',     isAdmin ? ok : no);
+
+  // Sidebar: Colleague thấy Thùng rác (items của mình)
+  if (isColleague) syncSidebarModules();
 
   if (isAdmin) {
     var navAdmin = document.getElementById('nav-admin');
     if (navAdmin) navAdmin.style.display = 'flex';
     var navMod = document.getElementById('nav-modules');
     if (navMod) navMod.style.display = 'flex';
-    var navTrash = document.getElementById('nav-trash');
-    if (navTrash) navTrash.style.display = 'flex';
     renderModuleGroups();
     updateRegBadge();
     loadFirebaseMembers();
   }
 
-  if (!isAdmin) {
-    var sNav = document.getElementById('nav-settings');
-    if (sNav) {
-      sNav.onclick = function() { showToast('Chỉ Admin mới vào được Cài đặt', 'warning'); };
-    }
-  }
+  // Settings accessible to all Colleagues (profile + password only)
+  // Settings page already handles role-based content
 
 
   // Load shared data from Firebase then render
@@ -738,7 +742,7 @@ function doKnowledgeSearch() {
 function showPage(id, el) {
   var role = currentUser ? currentUser.role : 'viewer';
   var isAdmin = ['owner', 'admin'].includes(role);
-  var adminOnly = ['admin', 'settings', 'modules', 'trash'];
+  var adminOnly = ['admin', 'modules']; // settings & trash accessible to all colleagues
   if (adminOnly.includes(id) && !isAdmin) {
     showToast('Chỉ Admin & Owner mới vào được trang này', 'warning');
     return;
@@ -2919,12 +2923,19 @@ function renderTrash() {
   var list = document.getElementById('trash-list');
   var countEl = document.getElementById('trash-count');
   if (!list) return;
-  if (countEl) countEl.textContent = trash.length ? '(' + trash.length + ' items)' : '';
+  var isAdmin = currentUser && ['owner','admin'].includes(currentUser.role);
+  // Colleague chỉ thấy items của mình
+  var visibleTrash = isAdmin ? trash : trash.filter(function(item){
+    return item.deletedBy === (currentUser && currentUser.name);
+  });
+  if (countEl) countEl.textContent = visibleTrash.length ? '(' + visibleTrash.length + ' items)' : '';
   if (!trash.length) {
     list.innerHTML = '<p style="color:#aaa;font-style:italic;text-align:center;padding:24px">Thùng rác trống.</p>';
     return;
   }
-  list.innerHTML = trash.map(function(item, i) {
+  list.innerHTML = visibleTrash.map(function(item, i) {
+    // Map back to real trash index for restore/delete
+    var realIdx = trash.indexOf(item);
     var label = (item.data && item.data.name) ? item.data.name : (item.type || 'Item');
     var iconMap = { file:'📁', doc:'📝', sheet:'📊', news:'📢', group:'📚', module:'📦', personalmodule:'🗂️', personalfile:'📁', modulefile:'📎' };
     var icon = iconMap[item.type] || '🗑️';
@@ -2935,8 +2946,8 @@ function renderTrash() {
       + '<div style="font-weight:600;font-size:13px">' + label + '</div>'
       + '<div style="font-size:11px;color:#aaa">Xóa bởi ' + (item.deletedBy||'?') + ' · ' + (item.deletedAt||'') + (item.reason ? ' · ' + item.reason : '') + '</div>'
       + '</div>'
-      + '<button onclick="restoreTrash(' + i + ')" style="background:#dcfce7;color:#166534;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">♻️ Khôi phục</button>'
-      + '<button onclick="deleteTrashItem(' + i + ')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">🗑️ Xóa vĩnh viễn</button>'
+      + '<button onclick="restoreTrash(' + realIdx + ')" style="background:#dcfce7;color:#166534;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">♻️ Khôi phục</button>'
+      + '<button onclick="deleteTrashItem(' + realIdx + ')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">🗑️ Xóa vĩnh viễn</button>'
       + '</div>';
   }).join('');
 }

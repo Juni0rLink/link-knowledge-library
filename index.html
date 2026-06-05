@@ -80,7 +80,7 @@
       <div class="nav-item" onclick="showPage('myfiles',this)">👤 File cá nhân</div>
       <div class="sidebar-section">Hệ thống</div>
       <div class="nav-item" id="nav-modules" style="display:none" onclick="showPage('modules',this)">🗂️ Quản lý nội dung</div>
-      <div class="nav-item" id="nav-trash" style="display:none" onclick="showPage('trash',this)">🗑️ Thùng rác <span id="trash-badge" class="pending-badge" style="display:none"></span></div>
+      <div class="nav-item" id="nav-trash" onclick="showPage('trash',this)">🗑️ Thùng rác <span id="trash-badge" class="pending-badge" style="display:none"></span></div>
       <div class="nav-item" id="nav-admin" style="display:none" onclick="showPage('admin',this)">🔐 Admin Panel <span id="pending-badge" class="pending-badge" style="display:none"></span></div>
       <div class="nav-item" style="position:relative" onclick="showPage('news',this)">📢 News <span id="news-dot" style="display:none;position:absolute;top:10px;right:16px;width:8px;height:8px;border-radius:50%;background:#ef4444"></span></div>
       <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)">⚙️ Cài đặt</div>
@@ -88,9 +88,20 @@
     </aside>
     <main>
       <div class="page active" id="page-home">
-        <div class="page-header"><div class="page-tag">v1.0</div><div class="page-title">Chao mung, <span id="welcome-name"></span></div><div class="page-meta" id="welcome-desc"></div></div>
-        <div class="card"><div class="card-title">Quyền truy cập</div><div id="permission-list"></div></div>
-        <div class="card"><div class="card-title">Danh mục</div><table><tr><th>Danh mục</th><th>Quyen</th></tr><tr><td>BMW Standards</td><td id="acc-standards"></td></tr><tr><td>Equipment</td><td id="acc-equipment"></td></tr><tr><td>Videos</td><td id="acc-videos"></td></tr><tr><td>File cá nhân</td><td id="acc-myfiles"></td></tr></table></div>
+        <div class="page-header"><div class="page-tag">v1.0</div><div class="page-title">Xin chào, <span id="welcome-name"></span> 👋</div><div class="page-meta" id="welcome-desc"></div></div>
+        <div class="card"><div class="card-title">🔐 Quyền truy cập của bạn</div><div id="permission-list"></div></div>
+        <div class="card">
+          <div class="card-title">📂 Tính năng theo vai trò</div>
+          <table>
+            <tr><th>Tính năng</th><th>Quyền</th></tr>
+            <tr><td>📚 Thư viện chung (Modules + Files)</td><td id="acc-standards"></td></tr>
+            <tr><td>👤 File cá nhân</td><td id="acc-myfiles"></td></tr>
+            <tr><td>🗑️ Thùng rác</td><td id="acc-trash"></td></tr>
+            <tr><td>⚙️ Cài đặt</td><td id="acc-settings"></td></tr>
+            <tr><td>🗂️ Quản lý nội dung</td><td id="acc-mgmt"></td></tr>
+            <tr><td>🔐 Admin Panel</td><td id="acc-admin"></td></tr>
+          </table>
+        </div>
         <div class="card" id="home-storage-card" style="display:none">
           <div class="card-title">💾 Dung lượng &amp; Bộ nhớ</div>
           <div id="home-storage-widget"></div>
