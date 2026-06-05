@@ -253,6 +253,7 @@ var DEFAULT_SHARED_FILES = [
   { id:2014, name:'SG10 – ST050 UV', file:'MAN_01001_Manual_SG10.docx', type:'docx', icon:'💡', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
   { id:2015, name:'SG11 – ST730', file:'MAN_01101_Manual_SG11.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
   { id:2016, name:'SG12 – ST739', file:'MAN_01201_Manual_SG12.docx', type:'docx', icon:'🔲', category:'Operation Manual A1HG01', author:'LINK Group', date:'01/06/2024', size:'<1MB' },
+  { id:3001, name:'DE TIA WinCC Unified OEM Manual V18', file:'DE_TIA-UWCCBMWOEM_EN_01_V180003.pdf', type:'pdf', icon:'📕', category:'Tools & Software', author:'Siemens', date:'05/06/2026', size:'~13MB' },
 ];
 var sharedFiles = DEFAULT_SHARED_FILES.slice();
 
@@ -1972,7 +1973,10 @@ function showModulePage(id, name, groupId, el) {
     staticHtml = '<p style="color:#555;font-size:13px;margin-bottom:14px">' + docs.desc + '</p>'
       + docs.files.map(function(f) {
           var dlUrl = BASE_URL + encodeURIComponent(f.file);
-          var viewUrl = OFFICE_VIEW + dlUrl;
+          var fExt = (f.file||'').split('.').pop().toLowerCase();
+          var viewUrl = fExt === 'pdf'
+            ? 'https://docs.google.com/viewer?url='+encodeURIComponent(dlUrl)+'&embedded=true'
+            : OFFICE_VIEW + dlUrl;
           return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8f9fb;border-radius:8px;margin-bottom:8px;border:1px solid #e5e7eb">'
             +'<span style="font-size:22px">'+f.icon+'</span>'
             +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+f.name+'</div>'
@@ -2967,7 +2971,11 @@ function renderSharedFileList(){
         var fileUrl = f.url || (CONTENT_BASE+encodeURIComponent(f.file||''));
         var ext = (f.name||f.file||'').split('.').pop().toLowerCase();
         var isOffice = !f.isLink && ['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext) >= 0;
-        var viewUrl = f.isLink ? fileUrl : (isOffice ? 'https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl) : fileUrl);
+        var isPDF = ext === 'pdf';
+        var viewUrl = f.isLink ? fileUrl
+          : isPDF ? 'https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl)+'&embedded=true'
+          : isOffice ? 'https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl)
+          : fileUrl;
         html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:6px">'
           +'<span style="font-size:20px">'+(f.icon||'📄')+'</span>'
           +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+(f.name||f.file||'')+'</div>'
