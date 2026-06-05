@@ -828,12 +828,15 @@ function loadFirebaseMembers() {
   fbGet('/users', function(err, data) {
     if (err || !data) return;
     container.innerHTML = '';
+    var isCurrentOwner = currentUser && currentUser.role === 'owner';
     Object.keys(data).forEach(function(uid) {
       var u = data[uid];
       if (!u || !u.email) return;
-      var cfg = ROLE_CFG[u.role] || ROLE_CFG.viewer;
       var isOwnerUser = u.role === 'owner';
-      var canEdit = currentUser && currentUser.role === 'owner' && !isOwnerUser;
+      // Ẩn Owner với Admin & Colleague — chỉ Owner mới thấy Owner
+      if (isOwnerUser && !isCurrentOwner) return;
+      var cfg = ROLE_CFG[u.role] || ROLE_CFG.viewer;
+      var canEdit = isCurrentOwner && !isOwnerUser;
       var roleSelect = canEdit
         ? '<select onchange="changeUserRole(\'' + uid + '\',this.value)" style="border:1px solid #ddd;border-radius:6px;padding:3px 6px;font-size:12px">' +
           ['owner','admin','colleague'].map(function(r){
