@@ -1755,6 +1755,66 @@ function switchMgmtTab(tab, el) {
   if(tab==='modulefiles') renderMgmtModuleFiles();
 }
 
+function showAddStaticFileDialog() {
+  var ex = document.getElementById('add-static-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'add-static-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:24px;box-shadow:0 16px 48px rgba(0,0,0,.25)">'
+    +'<div style="font-weight:700;font-size:15px;margin-bottom:4px">📁 Thêm file tĩnh vào thư viện</div>'
+    +'<div style="font-size:12px;color:#888;margin-bottom:16px">File đã có trong thư mục content/ (dùng add-file.bat để copy trước)</div>'
+    +'<div style="display:flex;flex-direction:column;gap:10px">'
+    +'<div><div style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px">Tên file trong content/ *</div>'
+    +'<input id="sf-filename" class="form-input" placeholder="VD: DE_TIA-UWCCBMWOEM_EN_01_V180003.pdf" style="font-size:13px">'
+    +'<div style="font-size:11px;color:#aaa;margin-top:2px">Nhập đúng tên file (phân biệt hoa thường)</div></div>'
+    +'<div><div style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px">Tên hiển thị *</div>'
+    +'<input id="sf-name" class="form-input" placeholder="VD: WinCC Unified OEM Manual V18" style="font-size:13px"></div>'
+    +'<div><div style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px">Phân vùng / Module</div>'
+    +'<select id="sf-cat" class="form-input" style="font-size:13px"><option>GSC Modules</option><option>Safety & Compliance</option><option>Tools & Software</option><option>Advanced Modules</option><option>Operation Manual A1HG01</option><option>Training</option><option>SiCar Standards</option><option>Chung</option></select></div>'
+    +'<div><div style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px">Tác giả / Nguồn</div>'
+    +'<input id="sf-author" class="form-input" placeholder="VD: Siemens, LINK Group, Nguyễn Tuấn Phong" style="font-size:13px"></div>'
+    +'</div>'
+    +'<div id="sf-preview" style="margin-top:12px;background:#f8f9fb;border-radius:8px;padding:10px;font-size:12px;color:#555;display:none"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:16px">'
+    +'<button onclick="previewStaticFile()" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer">👁️ Kiểm tra</button>'
+    +'<button onclick="addStaticFileToLibrary()" style="flex:1;background:#0891b2;color:#fff;border:none;border-radius:8px;padding:8px;font-size:13px;font-weight:700;cursor:pointer">✅ Thêm vào thư viện</button>'
+    +'<button onclick="document.getElementById(\'add-static-modal\').remove()" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer">Hủy</button>'
+    +'</div></div>';
+  document.body.appendChild(d);
+}
+
+function previewStaticFile() {
+  var filename = (document.getElementById('sf-filename')||{}).value.trim();
+  var name = (document.getElementById('sf-name')||{}).value.trim();
+  if (!filename) { showToast('Nhập tên file', 'warning'); return; }
+  var url = 'https://juni0rlink.github.io/link-knowledge-library/content/' + encodeURIComponent(filename);
+  var preview = document.getElementById('sf-preview');
+  if (preview) {
+    preview.style.display = 'block';
+    preview.innerHTML = '🔗 URL: <a href="'+url+'" target="_blank" style="color:#1d4ed8;word-break:break-all">'+url+'</a><br>Bấm vào link để xác nhận file tồn tại.';
+  }
+}
+
+function addStaticFileToLibrary() {
+  var filename = (document.getElementById('sf-filename')||{}).value.trim();
+  var name = (document.getElementById('sf-name')||{}).value.trim();
+  var cat = (document.getElementById('sf-cat')||{}).value;
+  var author = (document.getElementById('sf-author')||{}).value.trim() || (currentUser ? currentUser.name : 'LINK Group');
+  if (!filename || !name) { showToast('Điền đầy đủ tên file và tên hiển thị', 'warning'); return; }
+  var ext = filename.split('.').pop().toLowerCase();
+  var iconMap = {pdf:'📕', docx:'📝', doc:'📝', xlsx:'📊', xls:'📊', pptx:'📋', ppt:'📋'};
+  var f = {
+    id: Date.now(), name: name, file: filename, type: ext,
+    icon: iconMap[ext] || '📄', category: cat,
+    author: author, date: new Date().toLocaleDateString('vi-VN'), size: '~?MB'
+  };
+  sharedFiles.push(f);
+  fbSaveSharedFiles(); fbClearCache();
+  document.getElementById('add-static-modal').remove();
+  renderMgmtFiles();
+  showToast('✅ Đã thêm: ' + name, 'success');
+}
+
 function renderMgmtFiles() {
   var list = document.getElementById('mgmt-files-list'); if(!list) return;
   var count = document.getElementById('mgmt-file-count');

@@ -380,7 +380,10 @@
         <div id="mgmt-tab-files" style="display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
             <div style="font-size:13px;font-weight:700;color:#374151">Toàn bộ files trong thư viện chung</div>
-            <span id="mgmt-file-count" style="font-size:12px;color:#888"></span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span id="mgmt-file-count" style="font-size:12px;color:#888"></span>
+              <button onclick="showAddStaticFileDialog()" style="background:#0891b2;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">+ Thêm file tĩnh</button>
+            </div>
           </div>
           <div id="mgmt-files-list"></div>
         </div>
