@@ -104,6 +104,7 @@ function fbLoadAll(onDone) {
     if (data.moduleGroups && Array.isArray(data.moduleGroups)) moduleGroups = data.moduleGroups;
     if (data.publicFiles && Array.isArray(data.publicFiles)) publicFiles = data.publicFiles;
     if (data.pendingRegs && Array.isArray(data.pendingRegs)) pendingRegs = data.pendingRegs;
+    if (data.trash && Array.isArray(data.trash)) { trash = data.trash; updateTrashBadge(); }
   }
 
   // Try cache first
@@ -189,6 +190,7 @@ function fbSaveSharedFiles()  { fbClearCache(); fbSet('/shared/sharedFiles', sha
 function fbSaveSharedNote()   { fbClearCache(); fbSet('/shared/sharedNote', sharedNote); }
 function fbSaveModules()      { fbClearCache(); fbSet('/shared/moduleGroups', moduleGroups); }
 function fbSavePublicFiles()  { fbClearCache(); fbSet('/shared/publicFiles', publicFiles); }
+function fbSaveTrash()        { fbSet('/shared/trash', trash); }
 
 // ============================================================
 // DATA
@@ -900,10 +902,17 @@ function renderNews() {
 }
 
 function deleteNews(id) {
-  if (!confirm('Xóa thông báo này?')) return;
-  newsItems = newsItems.filter(function(n){ return String(n.id) !== String(id); });
+  var n = newsItems.find(function(x){ return String(x.id) === String(id); });
+  if (!confirm('Đưa "' + (n ? n.title : 'thông báo') + '" vào thùng rác?')) return;
+  // Move to trash
+  if (n) {
+    trash.push({ type: 'news', data: n, deletedBy: currentUser ? currentUser.name : '?', deletedAt: new Date().toLocaleString('vi-VN') });
+    fbSet('/shared/trash', trash); // persist trash to Firebase
+    updateTrashBadge();
+  }
+  newsItems = newsItems.filter(function(x){ return String(x.id) !== String(id); });
   fbSaveNews(); renderNews();
-  showToast('Đã xóa thông báo', 'error');
+  showToast('Đã chuyển vào thùng rác', 'error');
 }
 
 function togglePinNews(id) {
@@ -2923,15 +2932,19 @@ function restoreTrash(i) {
   if (item.type === 'file') { sharedFiles.push(item.data); fbSaveSharedFiles(); }
   else if (item.type === 'doc') { sharedDocs.push(item.data); fbSaveSharedDocs(); }
   else if (item.type === 'sheet') { sharedSheets.push(item.data); fbSaveSharedSheets(); }
+  else if (item.type === 'news') { newsItems.unshift(item.data); fbSaveNews(); }
   trash.splice(i, 1);
-  showToast('Đã khôi phục: ' + (item.data && item.data.name ? item.data.name : 'item'), 'success');
+  fbSet('/shared/trash', trash);
+  showToast('Đã khôi phục: ' + (item.data && (item.data.name || item.data.title) ? (item.data.name || item.data.title) : 'item'), 'success');
   renderTrash(); updateTrashBadge();
 }
 
 function deleteTrashItem(i) {
   var item = trash[i]; if (!item) return;
-  if (!confirm('Xóa vĩnh viễn "' + (item.data && item.data.name ? item.data.name : 'item') + '"?')) return;
+  var label = item.data && (item.data.title || item.data.name) ? (item.data.title || item.data.name) : 'item';
+  if (!confirm('Xóa vĩnh viễn "' + label + '"?')) return;
   trash.splice(i, 1);
+  fbSet('/shared/trash', trash);
   showToast('Đã xóa vĩnh viễn', 'error');
   renderTrash(); updateTrashBadge();
 }
@@ -2940,6 +2953,7 @@ function emptyTrash() {
   if (!trash.length) { showToast('Thùng rác đã trống', 'warning'); return; }
   if (!confirm('Xóa vĩnh viễn tất cả ' + trash.length + ' items?')) return;
   trash = [];
+  fbSet('/shared/trash', []);
   showToast('Đã làm trống thùng rác', 'error');
   renderTrash(); updateTrashBadge();
 }
