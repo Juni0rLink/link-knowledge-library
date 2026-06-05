@@ -31,15 +31,20 @@ function fbResetPassword(email, cb) {
   }).then(function(r){ return r.json(); }).then(function(d){ cb(null, d); }).catch(function(e){ cb(e, null); });
 }
 
+function fbAuthParam() {
+  var token = sessionStorage.getItem('lkl_id_token');
+  return token ? '?auth=' + token : '';
+}
+
 function fbGet(path, cb) {
-  fetch(FB_URL + path + '.json')
+  fetch(FB_URL + path + '.json' + fbAuthParam())
     .then(function(r){ return r.json(); })
     .then(function(d){ cb(null, d); })
     .catch(function(e){ cb(e, null); });
 }
 
 function fbSet(path, data, cb) {
-  fetch(FB_URL + path + '.json', {
+  fetch(FB_URL + path + '.json' + fbAuthParam(), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -49,7 +54,7 @@ function fbSet(path, data, cb) {
 }
 
 function fbPush(path, data, cb) {
-  fetch(FB_URL + path + '.json', {
+  fetch(FB_URL + path + '.json' + fbAuthParam(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -59,7 +64,7 @@ function fbPush(path, data, cb) {
 }
 
 function fbDelete(path, cb) {
-  fetch(FB_URL + path + '.json', { method: 'DELETE' })
+  fetch(FB_URL + path + '.json' + fbAuthParam(), { method: 'DELETE' })
     .then(function(){ if(cb) cb(null); })
     .catch(function(e){ if(cb) cb(e); });
 }

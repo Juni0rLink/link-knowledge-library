@@ -610,8 +610,9 @@ function saveApiKey() {
   if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
     var isStrictlyPrivate = (currentProvider === 'claude' || currentProvider === 'gpt');
     if (isStrictlyPrivate) {
-      // Do NOT save to Firebase — stays on this device only
-      showToast('🔒 Key Claude/GPT chỉ lưu trên thiết bị này, không đồng bộ lên server', 'success');
+      // Save to Firebase under user's OWN node only (rules: only owner can read)
+      fbSet('/users/'+currentUser.uid+'/apiKeys/'+currentProvider, { k: btoa(key), updated: Date.now() });
+      showToast('🔒 Key đã lưu — chỉ bạn mới đọc được (Firebase Rules bảo vệ)', 'success');
     } else {
       // Free/shared providers (OpenRouter, Gemini): Admin có thể set key chung
       var isAdmin2 = currentUser.role === 'owner' || currentUser.role === 'admin';
