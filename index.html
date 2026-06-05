@@ -532,9 +532,13 @@ function installPWA() {
   </div>
   <!-- Chat -->
   <div id="claude-chat" style="display:none;flex-direction:column;flex:1;min-height:0">
-    <div style="background:#f8f9fb;padding:6px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:6px">
+    <div style="background:#f8f9fb;padding:5px 10px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:6px">
       <span id="chat-provider-badge" style="font-size:11px;font-weight:700;background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:20px"></span>
-      <button onclick="clearApiKey()" style="font-size:11px;color:#888;background:none;border:none;cursor:pointer;margin-left:auto;text-decoration:underline">Đổi provider</button>
+      <span id="chat-session-name" style="font-size:11px;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button onclick="showChatSessions()" title="Lịch sử chat" style="font-size:13px;background:none;border:none;cursor:pointer;padding:2px 5px" title="Lịch sử">📋</button>
+      <button onclick="newChatSession()" title="Chat mới" style="font-size:13px;background:none;border:none;cursor:pointer;padding:2px 5px">✏️</button>
+      <button onclick="exportChatSession()" title="Xuất Word" style="font-size:13px;background:none;border:none;cursor:pointer;padding:2px 5px">⬇️</button>
+      <button onclick="clearApiKey()" style="font-size:11px;color:#888;background:none;border:none;cursor:pointer;text-decoration:underline">Đổi</button>
     </div>
     <div id="claude-msgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;max-height:300px;min-height:180px"></div>
     <div style="border-top:1px solid #eee;padding:10px 12px;display:flex;gap:8px;align-items:flex-end">
@@ -552,6 +556,106 @@ function installPWA() {
 <script>
 var SYSTEM_PROMPT = "Bạn là trợ lý kỹ thuật chuyên về BMW GSC và SiCar. Hỗ trợ về: TIA Portal V18, WinCC Unified, SAS, Safety (E-STOP, Zone concept), Phase concept, Type management. Trả lời ngắn gọn, chính xác bằng tiếng Việt.";
 var chatHistory = [];
+var currentSessionId = null;
+
+// ── CHAT SESSION PERSISTENCE ──
+function saveChatSession() {
+  if (!chatHistory.length) return;
+  var sessions = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+  var sid = currentSessionId || ('session_' + Date.now());
+  currentSessionId = sid;
+  var existing = sessions.find(function(s){ return s.id === sid; });
+  var session = {
+    id: sid,
+    title: currentSessionTitle || ('Chat ' + new Date().toLocaleString('vi-VN')),
+    provider: currentProvider,
+    history: chatHistory,
+    updated: Date.now()
+  };
+  if (existing) { Object.assign(existing, session); }
+  else { sessions.unshift(session); }
+  // Keep max 20 sessions
+  if (sessions.length > 20) sessions = sessions.slice(0, 20);
+  localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+}
+
+var currentSessionTitle = '';
+
+function newChatSession() {
+  if (chatHistory.length && confirm('Lưu cuộc chat hiện tại trước khi tạo mới?')) {
+    var title = prompt('Đặt tên cho cuộc chat này:', currentSessionTitle || 'Chat mới');
+    if (title) { currentSessionTitle = title; saveChatSession(); }
+  }
+  chatHistory = [];
+  currentSessionId = null;
+  currentSessionTitle = '';
+  var msgs = document.getElementById('claude-msgs'); if(msgs) msgs.innerHTML = '';
+}
+
+function showChatSessions() {
+  var sessions = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+  var ex = document.getElementById('chat-sessions-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'chat-sessions-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  var listHtml = sessions.length ? sessions.map(function(s,i){
+    var cfg = AI_PROVIDERS[s.provider] || AI_PROVIDERS.claude;
+    var msgCount = s.history ? s.history.length : 0;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;cursor:pointer;background:#fff" onclick="loadChatSession(\''+s.id+'\')">'
+      +'<span style="font-size:18px">'+cfg.icon+'</span>'
+      +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.title+'</div>'
+      +'<div style="font-size:11px;color:#94a3b8">'+msgCount+' tin · '+new Date(s.updated).toLocaleString('vi-VN')+'</div></div>'
+      +'<button onclick="event.stopPropagation();deleteChatSession(\''+s.id+'\')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer">🗑️</button>'
+      +'</div>';
+  }).join('') : '<p style="color:#aaa;text-align:center;padding:20px">Chưa có cuộc chat nào được lưu.</p>';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:460px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.25)">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center;border-radius:14px 14px 0 0">'
+    +'<span style="color:#fff;font-weight:700;flex:1">📋 Lịch sử cuộc chat</span>'
+    +'<button onclick="document.getElementById(\'chat-sessions-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="padding:14px">'+listHtml+'</div>'
+    +'</div>';
+  document.body.appendChild(d);
+}
+
+function loadChatSession(sid) {
+  var sessions = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+  var s = sessions.find(function(x){ return x.id === sid; });
+  if (!s) return;
+  chatHistory = s.history || [];
+  currentSessionId = sid;
+  currentSessionTitle = s.title;
+  var msgs = document.getElementById('claude-msgs');
+  if (msgs) {
+    msgs.innerHTML = '';
+    chatHistory.forEach(function(m){ appendMsg(m.role === 'user' ? 'user' : 'ai', m.content); });
+  }
+  if (s.provider) {
+    currentProvider = s.provider;
+    localStorage.setItem('ai-provider', s.provider);
+    initChat();
+  }
+  document.getElementById('chat-sessions-modal').remove();
+  showToast('Đã tải: ' + s.title, 'success');
+}
+
+function deleteChatSession(sid) {
+  var sessions = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+  sessions = sessions.filter(function(s){ return s.id !== sid; });
+  localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+  showChatSessions();
+}
+
+function exportChatSession() {
+  if (!chatHistory.length) { showToast('Chưa có nội dung', 'warning'); return; }
+  var content = chatHistory.map(function(m){
+    return (m.role === 'user' ? '<h3>👤 Bạn:</h3>' : '<h3>🤖 AI:</h3>') + '<p>' + m.content.replace(/\n/g,'<br>') + '</p>';
+  }).join('<hr>');
+  var title = currentSessionTitle || 'Chat AI Export';
+  var blob = new Blob(['<html><body style="font-family:Arial;margin:40px;line-height:1.6"><h1>'+title+'</h1>'+content+'</body></html>'], {type:'application/msword'});
+  var a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=title+'.doc'; a.click();
+  showToast('✅ Đã xuất Word!', 'success');
+}
 
 // ── MULTI-PROVIDER AI ──
 var AI_PROVIDERS = {
@@ -689,6 +793,7 @@ function sendClaude() {
     if (err) { appendMsg('ai', '❌ ' + err); return; }
     chatHistory.push({role:'assistant', content: text});
     appendMsg('ai', text);
+    saveChatSession(); // auto-save after each exchange
   });
 }
 function appendMsg(role, text) {
