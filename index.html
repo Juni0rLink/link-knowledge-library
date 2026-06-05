@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="LINK Library">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.jpg">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20260604">
 </head>
 <body>
 <div id="login-screen">
@@ -172,9 +172,24 @@
           </div>
           <div id="personal-tab-notes" style="display:none">
             <div class="card">
-              <div class="card-title">💬 Ghi chú nhanh</div>
-              <textarea id="personal-note" style="width:100%;height:200px;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;resize:vertical;line-height:1.7" placeholder="Ghi chú tự do — chỉ bạn mới thấy..."></textarea>
-              <button onclick="savePersonalNote()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px">💾 Lưu ghi chú</button>
+              <div class="card-title">💬 Ghi chú cá nhân</div>
+              <div style="background:#f8f9fb;border-bottom:1px solid #e5e7eb;padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap;border-radius:8px 8px 0 0;border:1px solid #e5e7eb;border-bottom:none">
+                <button class="btn-sm" onclick="document.execCommand('bold')"><b>B</b></button>
+                <button class="btn-sm" onclick="document.execCommand('italic')"><i>I</i></button>
+                <button class="btn-sm" onclick="document.execCommand('underline')"><u>U</u></button>
+                <select class="btn-sm" onchange="document.execCommand('formatBlock',false,this.value);this.value='p'">
+                  <option value="p">Đoạn văn</option><option value="h2">Tiêu đề lớn</option><option value="h3">Tiêu đề nhỏ</option>
+                </select>
+                <button class="btn-sm" onclick="document.execCommand('insertUnorderedList')">• List</button>
+                <button class="btn-sm" onclick="document.execCommand('insertOrderedList')">1. List</button>
+                <button class="btn-sm" onclick="insertPersonalNoteLink()">🔗</button>
+                <button class="btn-sm" onclick="document.execCommand('insertHorizontalRule')">─</button>
+                <button onclick="savePersonalNote()" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto">💾 Lưu</button>
+              </div>
+              <div id="personal-note-editor" contenteditable="true"
+                style="min-height:200px;padding:14px;border:1px solid #e5e7eb;border-radius:0 0 8px 8px;font-size:14px;outline:none;line-height:1.8;background:#fff"
+                placeholder="Ghi chú tự do — chỉ bạn mới thấy..."></div>
+              <textarea id="personal-note" style="display:none"></textarea>
             </div>
           </div>
         </div>
@@ -228,22 +243,38 @@
       <div class="page" id="page-trash">
         <div class="page-header" style="background:linear-gradient(135deg,#dc2626,#b91c1c)">
           <div class="page-tag">Chỉ Admin & Owner</div>
-          <div class="page-title">🗑️ Thùng rác & Dung lượng</div>
-          <div class="page-meta">Khôi phục items đã xóa · Theo dõi dung lượng Cloudinary · Xóa vĩnh viễn</div>
+          <div class="page-title">🗑️ Thùng rác & Quản lý bộ nhớ</div>
+          <div class="page-meta">Dung lượng · Thùng rác · Dọn dẹp · Backup dữ liệu</div>
         </div>
-        <div class="card" style="border-top-color:#e8a000">
-          <div class="card-title">💾 Dung lượng lưu trữ</div>
-          <div id="storage-widget"></div>
+        <div style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:16px;background:#fff;border-radius:10px 10px 0 0;overflow:hidden">
+          <div class="trash-tab active" onclick="switchTrashTab('storage',this)" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;color:#dc2626;border-bottom:3px solid #dc2626;margin-bottom:-2px">💾 Dung lượng</div>
+          <div class="trash-tab" onclick="switchTrashTab('trash',this)" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">🗑️ Thùng rác</div>
+          <div class="trash-tab" onclick="switchTrashTab('cleanup',this)" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">🧹 Dọn dẹp</div>
+          <div class="trash-tab" onclick="switchTrashTab('backup',this)" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px">💿 Backup</div>
         </div>
-        <div class="card" style="border-top-color:#ef4444;padding:0;overflow:hidden">
-          <div style="display:flex;align-items:center;padding:16px 22px;border-bottom:1px solid #f0f0f0">
-            <div class="card-title" style="margin:0;flex:1">🗑️ Thùng rác <span id="trash-count" style="font-size:12px;color:#888;font-weight:400"></span></div>
-            <button onclick="emptyTrash()" style="background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">Làm trống tất cả</button>
+        <div id="trash-tab-storage">
+          <div class="card" style="border-top-color:#e8a000">
+            <div class="card-title">💾 Dung lượng lưu trữ</div>
+            <div id="storage-widget"></div>
           </div>
-          <div class="warning-box" style="margin:12px 16px;border-radius:8px">
-            ⏰ Items trong thùng rác sẽ tự động xóa vĩnh viễn sau <strong>30 ngày</strong>. Chỉ Admin & Owner mới thấy trang này.
+        </div>
+        <div id="trash-tab-trash" style="display:none">
+          <div class="card" style="border-top-color:#ef4444;padding:0;overflow:hidden">
+            <div style="display:flex;align-items:center;padding:16px 22px;border-bottom:1px solid #f0f0f0">
+              <div class="card-title" style="margin:0;flex:1">🗑️ Thùng rác <span id="trash-count" style="font-size:12px;color:#888;font-weight:400"></span></div>
+              <button onclick="emptyTrash()" style="background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">Làm trống tất cả</button>
+            </div>
+            <div class="warning-box" style="margin:12px 16px;border-radius:8px">
+              ⏰ Items trong thùng rác sẽ tự động xóa vĩnh viễn sau <strong>30 ngày</strong>. Chỉ Admin & Owner mới thấy trang này.
+            </div>
+            <div id="trash-list"></div>
           </div>
-          <div id="trash-list"></div>
+        </div>
+        <div id="trash-tab-cleanup" style="display:none">
+          <div id="cleanup-panel"></div>
+        </div>
+        <div id="trash-tab-backup" style="display:none">
+          <div id="backup-panel"></div>
         </div>
       </div>
 
@@ -279,14 +310,37 @@
           <div class="page-title">📢 News & Changelog</div>
           <div class="page-meta">Thông báo từ Admin — cập nhật tính năng, nội dung mới</div>
         </div>
-        <div id="news-compose" style="display:none;background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid var(--orange)">
-          <div class="card-title">✍️ Đăng thông báo</div>
-          <input id="news-title-inp" class="form-input" type="text" placeholder="Tiêu đề..." style="margin-bottom:10px">
-          <textarea id="news-body-inp" class="form-input" rows="3" placeholder="Nội dung..." style="resize:none"></textarea>
-          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-            <select class="form-input" id="news-type-sel" style="width:140px"><option value="update">Update</option><option value="new">Tính năng mới</option><option value="alert">Quan trọng</option></select>
-            <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="news-pin"> Ghim</label>
-            <button class="btn btn-primary" style="width:auto;padding:0 16px;margin-left:auto" onclick="postNews()">Đăng</button>
+        <div id="news-compose" style="display:none;background:#fff;border-radius:12px;padding:0;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-top:4px solid var(--orange);overflow:hidden">
+          <div style="padding:16px 20px 0">
+            <div class="card-title" style="margin-bottom:12px">✍️ Soạn thông báo</div>
+            <input id="news-title-inp" class="form-input" type="text" placeholder="Tiêu đề bài viết..." style="margin-bottom:10px;font-size:15px;font-weight:600">
+          </div>
+          <!-- Rich text toolbar -->
+          <div style="background:#f8f9fb;padding:6px 12px;display:flex;gap:4px;flex-wrap:wrap;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;align-items:center">
+            <button class="btn-sm" onclick="document.execCommand('bold')"><b>B</b></button>
+            <button class="btn-sm" onclick="document.execCommand('italic')"><i>I</i></button>
+            <button class="btn-sm" onclick="document.execCommand('underline')"><u>U</u></button>
+            <select class="btn-sm" onchange="document.execCommand('formatBlock',false,this.value);this.value='p'">
+              <option value="p">Đoạn văn</option><option value="h2">H2</option><option value="h3">H3</option>
+            </select>
+            <button class="btn-sm" onclick="document.execCommand('insertUnorderedList')">• List</button>
+            <button class="btn-sm" onclick="document.execCommand('insertOrderedList')">1. List</button>
+            <button class="btn-sm" onclick="insertNewsLink()" title="Chèn link">🔗</button>
+            <button class="btn-sm" onclick="insertNewsImage()" title="Chèn ảnh">🖼️</button>
+            <div style="width:1px;height:20px;background:#e5e7eb;margin:0 4px"></div>
+            <button onclick="previewNews()" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">👁️ Xem trước</button>
+            <button onclick="newsAiAssist()" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">✨ Claude AI</button>
+          </div>
+          <!-- Editor -->
+          <div id="news-body-editor" contenteditable="true"
+            style="min-height:140px;padding:16px 20px;font-size:14px;outline:none;line-height:1.8"
+            placeholder="Nội dung bài viết..."></div>
+          <textarea id="news-body-inp" style="display:none"></textarea>
+          <!-- Footer -->
+          <div style="padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select class="form-input" id="news-type-sel" style="width:140px"><option value="update">🔄 Update</option><option value="new">✨ Tính năng mới</option><option value="alert">⚠️ Quan trọng</option></select>
+            <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="news-pin"> 📌 Ghim</label>
+            <button class="btn btn-primary" style="width:auto;padding:0 20px;margin-left:auto" onclick="postNews()">📢 Đăng bài</button>
           </div>
         </div>
         <div id="news-list"></div>
@@ -383,7 +437,7 @@
 </div>
 
 <div id="toast"></div>
-<script src="app.js"></script>
+<script src="app.js?v=20260604b"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
@@ -412,23 +466,65 @@ function installPWA() {
 }
 </script>
 
-<!-- CLAUDE AI CHAT -->
-<button id="claude-fab" onclick="toggleChat()" title="Hỏi Claude AI" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);display:none;align-items:center;justify-content:center;font-size:22px;z-index:800;transition:transform .2s">🤖</button>
-<div id="claude-panel" style="display:none;position:fixed;bottom:88px;right:24px;width:380px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:900;flex-direction:column;max-height:520px;border:1px solid #e5e7eb;overflow:hidden">
-  <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 16px;display:flex;align-items:center;gap:10px">
-    <span style="font-size:20px">🤖</span>
-    <div style="flex:1"><div style="color:#fff;font-weight:700;font-size:14px">Claude AI Assistant</div><div style="color:#c4b5fd;font-size:11px">Hỗ trợ kỹ thuật BMW GSC</div></div>
+<!-- AI CHAT (multi-provider) -->
+<button id="claude-fab" onclick="toggleChat()" title="Hỏi AI Assistant" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);display:none;align-items:center;justify-content:center;font-size:22px;z-index:800;transition:transform .2s">🤖</button>
+<div id="claude-panel" style="display:none;position:fixed;bottom:88px;right:24px;width:400px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:900;flex-direction:column;max-height:560px;border:1px solid #e5e7eb;overflow:hidden">
+  <!-- Header -->
+  <div id="ai-panel-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:12px 16px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:20px" id="ai-provider-icon">🤖</span>
+    <div style="flex:1">
+      <div style="color:#fff;font-weight:700;font-size:14px" id="ai-provider-name">AI Assistant</div>
+      <div style="color:#c4b5fd;font-size:11px">Hỗ trợ kỹ thuật LINK Group</div>
+    </div>
     <button onclick="toggleChat()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
   </div>
+  <!-- Provider setup -->
   <div id="claude-setup" style="padding:16px">
-    <div style="font-size:13px;color:#555;margin-bottom:10px">🔑 Nhập Anthropic API key của bạn để sử dụng Claude AI:</div>
-    <input id="claude-api-key" type="password" placeholder="sk-ant-..." style="width:100%;border:2px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;margin-bottom:8px;font-family:monospace">
-    <div style="font-size:11px;color:#888;margin-bottom:10px">Key được lưu trong trình duyệt của bạn, không chia sẻ cho ai.</div>
-    <button onclick="saveApiKey()" style="width:100%;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">Bắt đầu dùng Claude</button>
-    <div style="text-align:center;margin-top:8px;font-size:11px;color:#aaa">Tạo API key miễn phí tại <a href="https://console.anthropic.com" target="_blank" style="color:#7c3aed">console.anthropic.com</a></div>
+    <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">🔑 Chọn AI Provider</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <button onclick="selectProvider('claude')" id="btn-claude" style="padding:10px 6px;border:2px solid #7c3aed;border-radius:10px;background:#ede9fe;cursor:pointer;font-size:11px;font-weight:700;color:#7c3aed">
+        <div style="font-size:18px;margin-bottom:4px">🟣</div>Claude
+      </button>
+      <button onclick="selectProvider('openrouter')" id="btn-openrouter" style="padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;background:#f9fafb;cursor:pointer;font-size:11px;font-weight:700;color:#888;position:relative">
+        <div style="font-size:18px;margin-bottom:4px">🌐</div>OpenRouter
+        <span style="position:absolute;top:-6px;right:-4px;background:#22c55e;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-weight:800">FREE</span>
+      </button>
+      <button onclick="selectProvider('gpt')" id="btn-gpt" style="padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;background:#f9fafb;cursor:pointer;font-size:11px;font-weight:700;color:#888">
+        <div style="font-size:18px;margin-bottom:4px">🟢</div>GPT-4o
+      </button>
+      <button onclick="selectProvider('gemini')" id="btn-gemini" style="padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;background:#f9fafb;cursor:pointer;font-size:11px;font-weight:700;color:#888">
+        <div style="font-size:18px;margin-bottom:4px">🔵</div>Gemini
+      </button>
+    </div>
+    <div id="ai-key-section">
+      <div id="openrouter-model-row" style="display:none;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:4px">Chọn model (✅ = miễn phí):</div>
+        <select id="openrouter-model" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:12px;outline:none;box-sizing:border-box">
+          <optgroup label="✅ Miễn phí hoàn toàn">
+            <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (Mạnh nhất free)</option>
+            <option value="google/gemma-3-27b-it:free">Gemma 3 27B</option>
+            <option value="mistralai/mistral-7b-instruct:free">Mistral 7B</option>
+            <option value="microsoft/phi-3-mini-128k-instruct:free">Phi-3 Mini</option>
+          </optgroup>
+          <optgroup label="💰 Trả phí (chất lượng cao)">
+            <option value="anthropic/claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+            <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+            <option value="google/gemini-flash-1.5">Gemini 1.5 Flash</option>
+          </optgroup>
+        </select>
+      </div>
+      <input id="claude-api-key" type="password" placeholder="Nhập API key..." style="width:100%;border:2px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;margin-bottom:6px;font-family:monospace;box-sizing:border-box">
+      <div id="ai-key-hint" style="font-size:11px;color:#888;margin-bottom:10px"></div>
+      <button onclick="saveApiKey()" style="width:100%;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">🚀 Bắt đầu</button>
+    </div>
   </div>
+  <!-- Chat -->
   <div id="claude-chat" style="display:none;flex-direction:column;flex:1;min-height:0">
-    <div id="claude-msgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;max-height:320px;min-height:200px"></div>
+    <div style="background:#f8f9fb;padding:6px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:6px">
+      <span id="chat-provider-badge" style="font-size:11px;font-weight:700;background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:20px"></span>
+      <button onclick="clearApiKey()" style="font-size:11px;color:#888;background:none;border:none;cursor:pointer;margin-left:auto;text-decoration:underline">Đổi provider</button>
+    </div>
+    <div id="claude-msgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;max-height:300px;min-height:180px"></div>
     <div style="border-top:1px solid #eee;padding:10px 12px;display:flex;gap:8px;align-items:flex-end">
       <textarea id="claude-input" rows="2" placeholder="Hỏi về GSC, E-STOP, SAS..." style="flex:1;border:1px solid #ddd;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;resize:none;font-family:'Segoe UI',Arial" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendClaude();}"></textarea>
       <button onclick="sendClaude()" id="claude-send-btn" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:13px;flex-shrink:0">Gửi</button>
@@ -437,18 +533,163 @@ function installPWA() {
       <button onclick="quickQ('E-STOP zone là gì?')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#555">E-STOP zone?</button>
       <button onclick="quickQ('Cách tạo SAS file trong GSC')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#555">Tạo SAS file</button>
       <button onclick="quickQ('MDB là gì trong GSC?')" style="background:#f3f4f6;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#555">MDB là gì?</button>
-      <button onclick="clearApiKey()" style="background:#fee2e2;border:none;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;color:#ef4444;margin-left:auto">Đổi API key</button>
     </div>
   </div>
 </div>
 
 <script>
-var SYSTEM_PROMPT = "Bạn là trợ lý kỹ thuật chuyên về BMW GSC (Group Standard Controls). Hỗ trợ kỹ thuật viên về: TIA Portal V18, WinCC Unified, SAS, SiVArc, Safety (E-STOP, Zone concept), Software structure, Phase concept, Type management. Trả lời ngắn gọn, chính xác bằng tiếng Việt. Dùng ví dụ thực tế từ BMW GSC khi cần.";
+var SYSTEM_PROMPT = "Bạn là trợ lý kỹ thuật chuyên về BMW GSC và SiCar. Hỗ trợ về: TIA Portal V18, WinCC Unified, SAS, Safety (E-STOP, Zone concept), Phase concept, Type management. Trả lời ngắn gọn, chính xác bằng tiếng Việt.";
 var chatHistory = [];
+
+// ── MULTI-PROVIDER AI ──
+var AI_PROVIDERS = {
+  claude:      { name:'Claude',      icon:'🟣', color:'#7c3aed', placeholder:'sk-ant-api03-...',  hint:'💳 Tạo key tại <a href="https://console.anthropic.com" target="_blank" style="color:#7c3aed">console.anthropic.com</a>', keyName:'claude-api-key' },
+  openrouter:  { name:'OpenRouter',  icon:'🌐', color:'#22c55e', placeholder:'sk-or-v1-...',       hint:'✅ <strong>1 key dùng 50+ models</strong> — Tạo free tại <a href="https://openrouter.ai/keys" target="_blank" style="color:#22c55e">openrouter.ai/keys</a>', keyName:'openrouter-api-key' },
+  gpt:         { name:'GPT-4o',      icon:'🟢', color:'#10a37f', placeholder:'sk-proj-...',        hint:'💳 Tạo key tại <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#10a37f">platform.openai.com</a>', keyName:'openai-api-key' },
+  gemini:      { name:'Gemini',      icon:'🔵', color:'#4285f4', placeholder:'AIzaSy...',          hint:'✅ Miễn phí tại <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#4285f4">aistudio.google.com</a>', keyName:'gemini-api-key' },
+};
+var currentProvider = localStorage.getItem('ai-provider') || 'claude';
+
+function selectProvider(p) {
+  currentProvider = p;
+  localStorage.setItem('ai-provider', p);
+  var cfg = AI_PROVIDERS[p];
+  // Update button styles
+  Object.keys(AI_PROVIDERS).forEach(function(k){
+    var btn = document.getElementById('btn-'+k);
+    if (!btn) return;
+    btn.style.border = k===p ? '2px solid '+AI_PROVIDERS[k].color : '2px solid #e5e7eb';
+    btn.style.background = k===p ? (k==='claude'?'#ede9fe':k==='gpt'?'#d1fae5':'#dbeafe') : '#f9fafb';
+    btn.style.color = k===p ? AI_PROVIDERS[k].color : '#888';
+  });
+  var inp = document.getElementById('claude-api-key');
+  if (inp) inp.placeholder = cfg.placeholder;
+  var hint = document.getElementById('ai-key-hint');
+  if (hint) hint.innerHTML = cfg.hint;
+  // Show/hide model selector for OpenRouter
+  var modelRow = document.getElementById('openrouter-model-row');
+  if (modelRow) modelRow.style.display = p==='openrouter' ? 'block' : 'none';
+  // Pre-fill: localStorage first, then Firebase
+  var saved = localStorage.getItem(cfg.keyName);
+  if (!saved && typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
+    fbGet('/users/'+currentUser.uid+'/apiKeys/'+p, function(err, data) {
+      if (!err && data && data.k) {
+        var key = atob(data.k); // simple base64 decode
+        localStorage.setItem(cfg.keyName, key);
+        var i = document.getElementById('claude-api-key'); if(i) i.value = key;
+      }
+    });
+  }
+  if (inp && saved) inp.value = saved;
+  // Free providers: show "không cần key" hint
+  if (p === 'gemini' || p === 'openrouter') {
+    var freeKey = localStorage.getItem(cfg.keyName);
+    if (!freeKey) {
+      // Show option to use shared key from Firebase if admin set one
+      fbGet('/shared/aiKeys/'+p, function(err, data){
+        if (!err && data && data.k) {
+          var sharedKey = atob(data.k);
+          localStorage.setItem(cfg.keyName, sharedKey);
+          var i = document.getElementById('claude-api-key');
+          if (i) i.value = sharedKey;
+          if (hint) hint.innerHTML += '<br><span style="color:#22c55e;font-weight:700">✅ Đã có key chung từ Admin — bấm Bắt đầu ngay</span>';
+        }
+      });
+    }
+  }
+}
+
+function saveApiKey() {
+  var cfg = AI_PROVIDERS[currentProvider];
+  var key = document.getElementById('claude-api-key').value.trim();
+  if (!key) { alert('Vui lòng nhập API key'); return; }
+  // Save to localStorage (device)
+  localStorage.setItem(cfg.keyName, key);
+  localStorage.setItem('ai-provider', currentProvider);
+  // Save to Firebase per-user (private) — base64 obfuscation
+  if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
+    var isPrivate = (currentProvider === 'claude' || currentProvider === 'gpt');
+    if (isPrivate) {
+      // Private: store under user's own node
+      fbSet('/users/'+currentUser.uid+'/apiKeys/'+currentProvider, { k: btoa(key), updated: Date.now() });
+    } else {
+      // Free/shared providers: admin can also set shared key
+      var isAdmin = currentUser.role === 'owner' || currentUser.role === 'admin';
+      if (isAdmin) {
+        if (confirm('Lưu key này làm key chung cho mọi người dùng không?')) {
+          fbSet('/shared/aiKeys/'+currentProvider, { k: btoa(key), updated: Date.now() });
+          showToast('✅ Đã lưu key chung cho mọi user', 'success');
+        }
+      }
+      fbSet('/users/'+currentUser.uid+'/apiKeys/'+currentProvider, { k: btoa(key), updated: Date.now() });
+    }
+  }
+  initChat();
+}
+
+function clearApiKey() {
+  document.getElementById('claude-setup').style.display = 'block';
+  document.getElementById('claude-chat').style.display = 'none';
+  chatHistory = [];
+  // Re-init provider selector
+  selectProvider(currentProvider);
+}
+
+function initChat() {
+  var cfg = AI_PROVIDERS[currentProvider];
+  document.getElementById('claude-setup').style.display = 'none';
+  document.getElementById('claude-chat').style.display = 'flex';
+  var badge = document.getElementById('chat-provider-badge');
+  if (badge) badge.textContent = cfg.icon + ' ' + cfg.name;
+  var header = document.getElementById('ai-panel-header');
+  if (header) header.style.background = 'linear-gradient(135deg,'+cfg.color+','+cfg.color+'cc)';
+  var icon = document.getElementById('ai-provider-icon');
+  if (icon) icon.textContent = cfg.icon;
+  var name = document.getElementById('ai-provider-name');
+  if (name) name.textContent = cfg.name + ' Assistant';
+  var sendBtn = document.getElementById('claude-send-btn');
+  if (sendBtn) sendBtn.style.background = cfg.color;
+}
+
 function toggleChat() {
   var panel = document.getElementById('claude-panel');
   var fab = document.getElementById('claude-fab');
   var isOpen = panel.style.display === 'flex';
+  if (!isOpen) {
+    // Check if any provider has a key saved
+    var saved = localStorage.getItem(AI_PROVIDERS[currentProvider].keyName);
+    if (saved) initChat();
+    else selectProvider(currentProvider);
+  }
   panel.style.display = isOpen ? 'none' : 'flex';
   panel.style.flexDirection = isOpen ? '' : 'column';
-  fab.style.transform = isOpen ? '' : 'scale(1.1)';
+  fab.style.transform = isOpen ? '' : 'scale(1.1)';}
+function sendClaude() {
+  var inp = document.getElementById('claude-input');
+  var msg = inp ? inp.value.trim() : ''; if (!msg) return;
+  var btn = document.getElementById('claude-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  inp.value = '';
+  appendMsg('user', msg);
+  chatHistory.push({role:'user', content: msg});
+  callAI(msg, SYSTEM_PROMPT, function(text, err) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Gửi'; }
+    if (err) { appendMsg('ai', '❌ ' + err); return; }
+    chatHistory.push({role:'assistant', content: text});
+    appendMsg('ai', text);
+  });
+}
+function appendMsg(role, text) {
+  var msgs = document.getElementById('claude-msgs'); if (!msgs) return;
+  var d = document.createElement('div');
+  var isUser = role === 'user';
+  var cfg = AI_PROVIDERS[currentProvider] || AI_PROVIDERS.claude;
+  d.style.cssText = 'display:flex;justify-content:'+(isUser?'flex-end':'flex-start');
+  d.innerHTML = '<div style="max-width:85%;padding:9px 13px;border-radius:'+(isUser?'14px 14px 4px 14px':'14px 14px 14px 4px')+';background:'+(isUser?cfg.color:'#f3f4f6')+';color:'+(isUser?'#fff':'#1e293b')+';font-size:13px;line-height:1.6;white-space:pre-wrap">'+text.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>';
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function quickQ(q) { var i=document.getElementById('claude-input'); if(i){i.value=q;sendClaude();} }
+</script>
+</body>
+</html>
