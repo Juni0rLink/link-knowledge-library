@@ -2908,12 +2908,18 @@ function uploadToCloud(file, onDone) {
   var xhr = new XMLHttpRequest();
   xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/auto/upload');
   xhr.onload = function() {
-    if (xhr.status === 200) {
+    try {
       var res = JSON.parse(xhr.responseText);
-      onDone(null, { id: res.public_id, name: file.name, url: res.secure_url,
-        type: file.type, size: res.bytes, date: new Date().toLocaleDateString('vi-VN'),
-        author: currentUser ? currentUser.name : '', cloudinary: true });
-    } else { onDone('Upload failed'); }
+      if (xhr.status === 200 && res.secure_url) {
+        onDone(null, { id: res.public_id, name: file.name, url: res.secure_url,
+          type: file.type, size: res.bytes, date: new Date().toLocaleDateString('vi-VN'),
+          author: currentUser ? currentUser.name : '', cloudinary: true });
+      } else {
+        var errMsg = (res.error && res.error.message) || ('HTTP ' + xhr.status);
+        console.error('Cloudinary error:', res);
+        onDone('Upload failed: ' + errMsg);
+      }
+    } catch(e) { onDone('Parse error: ' + xhr.status + ' ' + xhr.responseText.slice(0,100)); }
   };
   xhr.onerror = function(){ onDone('Network error'); };
   xhr.send(fd);
