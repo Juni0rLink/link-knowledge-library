@@ -223,8 +223,16 @@
               <input type="file" id="shared-file-input" multiple style="display:none" onchange="uploadSharedFile(this)">
             </label>
           </div>
-          <div style="border:2px dashed #a5f3fc;border-radius:10px;padding:14px;text-align:center;background:#f0f9ff;margin-bottom:12px;cursor:pointer" onclick="document.getElementById('shared-file-input').click()">
-            <p style="font-size:12px;color:#888;margin:0">Kéo thả hoặc bấm "Chọn file" — PDF, Word, Excel, PowerPoint, ảnh...</p>
+          <div style="border:2px dashed #a5f3fc;border-radius:10px;padding:14px;text-align:center;background:#f0f9ff;margin-bottom:8px;cursor:pointer" onclick="document.getElementById('shared-file-input').click()">
+            <p style="font-size:12px;color:#888;margin:0">Kéo thả hoặc bấm "Chọn file" — <10MB (PDF, Word, Excel, PowerPoint, ảnh...)</p>
+          </div>
+          <div style="background:#fefce8;border:1px solid #fde047;border-radius:8px;padding:10px 14px;margin-bottom:12px">
+            <div style="font-size:12px;font-weight:700;color:#854d0e;margin-bottom:6px">📎 File lớn >10MB? Dùng link OneDrive/Google Drive:</div>
+            <div style="display:flex;gap:8px">
+              <input id="shared-link-input" type="text" placeholder="Paste link chia sẻ từ OneDrive, Google Drive, Dropbox..." class="form-input" style="flex:1;font-size:12px;padding:7px 10px">
+              <button onclick="addSharedLink()" style="background:#854d0e;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">+ Thêm link</button>
+            </div>
+            <div style="font-size:10px;color:#a16207;margin-top:4px">💡 OneDrive: Share → Anyone with link → Copy link</div>
           </div>
           <p id="shared-upload-progress" style="display:none;color:#0891b2;font-size:12px;font-weight:600;margin-bottom:8px"></p>
           <div id="shared-files-list"><p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p></div>

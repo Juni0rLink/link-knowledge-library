@@ -2880,8 +2880,8 @@ function renderSharedFileList(){
       cats[cat].forEach(function(f){
         var fileUrl = f.url || (CONTENT_BASE+encodeURIComponent(f.file||''));
         var ext = (f.name||f.file||'').split('.').pop().toLowerCase();
-        var isOffice = ['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext) >= 0;
-        var viewUrl = isOffice ? 'https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl) : fileUrl;
+        var isOffice = !f.isLink && ['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext) >= 0;
+        var viewUrl = f.isLink ? fileUrl : (isOffice ? 'https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl) : fileUrl);
         html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:6px">'
           +'<span style="font-size:20px">'+(f.icon||'📄')+'</span>'
           +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+(f.name||f.file||'')+'</div>'
@@ -3059,6 +3059,27 @@ function populateCategoryDropdown() {
       }
     }
   };
+}
+
+function addSharedLink() {
+  var inp = document.getElementById('shared-link-input');
+  var url = inp ? inp.value.trim() : '';
+  if (!url || !url.startsWith('http')) { showToast('Vui lòng nhập link hợp lệ', 'warning'); return; }
+  var catEl = document.getElementById('shared-upload-category');
+  var category = catEl ? catEl.value : 'Chung';
+  var name = prompt('Tên hiển thị cho file này:');
+  if (!name) return;
+  var f = {
+    id: Date.now(), name: name, url: url, file: name,
+    type: 'link', icon: '🔗', category: category,
+    author: currentUser ? currentUser.name : '',
+    date: new Date().toLocaleDateString('vi-VN'),
+    size: 'Link', isLink: true
+  };
+  sharedFiles.push(f);
+  fbSaveSharedFiles(); fbClearCache(); renderSharedFileList();
+  if (inp) inp.value = '';
+  showToast('✅ Đã thêm link: ' + name, 'success');
 }
 
 function getSharedFileIcon(name) {
