@@ -1624,17 +1624,32 @@ function loadModuleExtras(id) {
     var el = document.getElementById('mod-comments-'+id); if (!el) return;
     var list = (cmts && Array.isArray(cmts)) ? cmts : (cmts ? Object.values(cmts) : []);
     if (!list.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px;font-style:italic">Chưa có bình luận nào.</p>'; return; }
-    el.innerHTML = list.map(function(c) {
+    var isAdmin = currentUser && ['owner','admin'].includes(currentUser.role);
+    el.innerHTML = list.map(function(c, ci) {
       var cfg = ROLE_CFG[c.role] || ROLE_CFG.colleague;
+      var canDelete = isAdmin || (currentUser && c.author === currentUser.name);
       return '<div style="background:#f8f9fb;border-left:3px solid #1d4ed8;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:8px">'
         +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'
         +'<span style="font-weight:700;font-size:12px;color:#1d4ed8">'+c.author+'</span>'
         +'<span class="role-badge '+cfg.cls+'" style="font-size:10px;padding:1px 6px">'+cfg.label+'</span>'
         +'<span style="font-size:11px;color:#aaa;margin-left:auto">'+c.time+'</span>'
+        +(canDelete ? '<button onclick="deleteModuleComment(\''+id+'\','+ci+')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;margin-left:6px">🗑️</button>' : '')
         +'</div>'
         +'<div style="font-size:13px;color:#374151;line-height:1.6">'+c.text+'</div>'
         +'</div>';
     }).join('');
+  });
+}
+
+function deleteModuleComment(moduleId, idx) {
+  if (!confirm('Xóa bình luận này?')) return;
+  fbGet('/moduleData/'+moduleId+'/comments', function(err, cmts) {
+    var list = (cmts && Array.isArray(cmts)) ? cmts : (cmts ? Object.values(cmts) : []);
+    list.splice(idx, 1);
+    fbSet('/moduleData/'+moduleId+'/comments', list, function(){
+      loadModuleExtras(moduleId);
+      showToast('Đã xóa bình luận', 'error');
+    });
   });
 }
 
@@ -2333,6 +2348,7 @@ function loadModuleActivity() {
           +'<span style="font-weight:700;font-size:12px;color:#1e293b">'+c.author+'</span>'
           +'<span class="role-badge '+cfg.cls+'" style="font-size:10px;padding:1px 5px">'+cfg.label+'</span>'
           +'<span style="font-size:10px;color:#aaa;margin-left:auto">'+c.time+'</span>'
+          +((currentUser&&(['owner','admin'].includes(currentUser.role)||c.author===currentUser.name)) ? '<button onclick="deleteModuleComment(\''+r.mid+'\','+r.all.slice(-3).reverse().indexOf(c)+')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:4px">🗑️</button>' : '')
           +'</div>'
           +'<div style="font-size:12px;color:#475569;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.text+'</div>'
           +'</div></div>';
