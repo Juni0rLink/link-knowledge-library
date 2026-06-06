@@ -3050,7 +3050,7 @@ function renderSharedFileList(){
         var ext = (f.name||f.file||'').split('.').pop().toLowerCase();
         var isOffice = !f.isLink && ['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext) >= 0;
         var isPDF = ext === 'pdf';
-        var viewUrl = f.isLink ? fileUrl
+        var viewUrl = f.isLink ? (f.viewUrl || fileUrl)
           : isPDF ? 'https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl)+'&embedded=true'
           : isOffice ? 'https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl)
           : fileUrl;
@@ -3244,25 +3244,57 @@ function populateCategoryDropdown() {
   };
 }
 
+function previewLinkSource(url) {
+  var badge = document.getElementById('link-source-badge'); if(!badge) return;
+  if (!url || !url.startsWith('http')) { badge.style.display='none'; return; }
+  var info = normalizeShareLink(url);
+  badge.style.display = 'inline';
+  badge.textContent = info.icon + ' ' + info.source;
+}
+
+function normalizeShareLink(url) {
+  // Google Drive: extract file ID and create direct view link
+  var gdMatch = url.match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
+  if (gdMatch) {
+    return { url: 'https://drive.google.com/file/d/'+gdMatch[1]+'/view', viewUrl: 'https://drive.google.com/file/d/'+gdMatch[1]+'/preview', icon: '📗', source: 'Google Drive' };
+  }
+  // Google Drive folder
+  var gdFolder = url.match(/drive\.google\.com\/drive\/folders\/([^\/\?]+)/);
+  if (gdFolder) {
+    return { url: url, viewUrl: url, icon: '📁', source: 'Google Drive Folder' };
+  }
+  // OneDrive
+  if (url.includes('onedrive') || url.includes('sharepoint')) {
+    return { url: url, viewUrl: url, icon: '📘', source: 'OneDrive' };
+  }
+  // Dropbox
+  if (url.includes('dropbox.com')) {
+    var dlUrl = url.replace('?dl=0','?raw=1').replace('www.dropbox','dl.dropboxusercontent');
+    return { url: dlUrl, viewUrl: url, icon: '📦', source: 'Dropbox' };
+  }
+  return { url: url, viewUrl: url, icon: '🔗', source: 'Link' };
+}
+
 function addSharedLink() {
   var inp = document.getElementById('shared-link-input');
-  var url = inp ? inp.value.trim() : '';
-  if (!url || !url.startsWith('http')) { showToast('Vui lòng nhập link hợp lệ', 'warning'); return; }
+  var rawUrl = inp ? inp.value.trim() : '';
+  if (!rawUrl || !rawUrl.startsWith('http')) { showToast('Vui lòng nhập link hợp lệ', 'warning'); return; }
   var catEl = document.getElementById('shared-upload-category');
   var category = catEl ? catEl.value : 'Chung';
-  var name = prompt('Tên hiển thị cho file này:');
+  var linkInfo = normalizeShareLink(rawUrl);
+  var name = prompt('Tên hiển thị cho file này:', '');
   if (!name) return;
   var f = {
-    id: Date.now(), name: name, url: url, file: name,
-    type: 'link', icon: '🔗', category: category,
+    id: Date.now(), name: name, url: linkInfo.url, viewUrl: linkInfo.viewUrl,
+    file: name, type: 'link', icon: linkInfo.icon, category: category,
     author: currentUser ? currentUser.name : '',
     date: new Date().toLocaleDateString('vi-VN'),
-    size: 'Link', isLink: true
+    size: linkInfo.source, isLink: true
   };
   sharedFiles.push(f);
   fbSaveSharedFiles(); fbClearCache(); renderSharedFileList();
   if (inp) inp.value = '';
-  showToast('✅ Đã thêm link: ' + name, 'success');
+  showToast('✅ Đã thêm từ ' + linkInfo.source + ': ' + name, 'success');
 }
 
 function getSharedFileIcon(name) {
