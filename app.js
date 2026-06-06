@@ -3023,6 +3023,14 @@ function goToModule(mid) {
 }
 function moveNoteToPersonal(){var t=document.getElementById('shared-note-area');if(t)personalNote=t.value;var pn=document.getElementById('personal-note');if(pn)pn.value=personalNote;showToast('Đã sao chép về Cá nhân','success');}
 function renderSharedFiles(){renderSharedFileList();}
+function toggleFilePreview(id, encodedUrl) {
+  var panel = document.getElementById(id); if (!panel) return;
+  var isOpen = panel.style.display !== 'none';
+  if (isOpen) { panel.style.display = 'none'; panel.querySelector('iframe').src = ''; return; }
+  panel.style.display = 'block';
+  panel.querySelector('iframe').src = decodeURIComponent(encodedUrl);
+}
+
 var _collapsedCats = {};
 function toggleCat(cat) {
   _collapsedCats[cat] = !_collapsedCats[cat];
@@ -3054,13 +3062,35 @@ function renderSharedFileList(){
           : isPDF ? 'https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl)+'&embedded=true'
           : isOffice ? 'https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl)
           : fileUrl;
-        html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:6px">'
+        var fileId = 'fv_'+f.id;
+        // Build embed URL for in-app viewer
+        var embedUrl = '';
+        if (f.isLink) {
+          var gd = (f.url||'').match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
+          if (gd) embedUrl = 'https://drive.google.com/file/d/'+gd[1]+'/preview';
+          else embedUrl = viewUrl;
+        } else if (isPDF) {
+          embedUrl = 'https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl)+'&embedded=true';
+        } else if (isOffice) {
+          embedUrl = viewUrl;
+        }
+        var canEmbed = !!embedUrl;
+        var downloadHtml = f.isLink
+          ? '<a href="'+fileUrl+'" target="_blank" style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">↗️ Mở</a>'
+          : '<a href="'+fileUrl+'" download style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>';
+
+        html+='<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:6px">'
+          +'<div style="display:flex;align-items:center;gap:12px;padding:10px 14px">'
           +'<span style="font-size:20px">'+(f.icon||'📄')+'</span>'
           +'<div style="flex:1"><div style="font-weight:700;font-size:13px">'+(f.name||f.file||'')+'</div>'
           +'<div style="font-size:11px;color:#888;margin-top:1px">'+(f.author||'')+' · '+(f.date||'')+(f.size?' · '+f.size:'')+'</div></div>'
-          +'<a href="'+viewUrl+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>'
-          +'<a href="'+fileUrl+'" download style="background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none;margin-left:4px">⬇️ Tải</a>'
+          +(canEmbed ? '<button onclick="toggleFilePreview(\''+fileId+'\',\''+encodeURIComponent(embedUrl)+'\')" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">👁️ Xem</button>' : '<a href="'+viewUrl+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>')
+          + downloadHtml
           +(isAdmin2 ? '<button onclick="deleteSharedFile(\''+encodeURIComponent(JSON.stringify({name:f.name||f.file,id:f.id}))+'\',\''+encodeURIComponent(cat)+'\')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">🗑️</button>' : '')
+          +'</div>'
+          +'<div id="'+fileId+'" style="display:none;border-top:1px solid #e5e7eb;background:#f8f9fb;border-radius:0 0 8px 8px;overflow:hidden">'
+          +'<iframe src="" style="width:100%;height:520px;border:none" allow="autoplay" loading="lazy"></iframe>'
+          +'</div>'
           +'</div>';
       });
     }
