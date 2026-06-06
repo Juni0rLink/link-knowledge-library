@@ -3068,7 +3068,8 @@ function renderSharedFileList(){
         if (f.isLink) {
           var gd = (f.url||'').match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
           if (gd) embedUrl = 'https://drive.google.com/file/d/'+gd[1]+'/preview';
-          else embedUrl = viewUrl;
+          // Folders cannot be embedded — skip
+          else if (!(f.url||'').includes('/folders/')) embedUrl = viewUrl;
         } else if (isPDF) {
           embedUrl = 'https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl)+'&embedded=true';
         } else if (isOffice) {
@@ -3089,7 +3090,15 @@ function renderSharedFileList(){
           +(isAdmin2 ? '<button onclick="deleteSharedFile(\''+encodeURIComponent(JSON.stringify({name:f.name||f.file,id:f.id}))+'\',\''+encodeURIComponent(cat)+'\')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">🗑️</button>' : '')
           +'</div>'
           +'<div id="'+fileId+'" style="display:none;border-top:1px solid #e5e7eb;background:#f8f9fb;border-radius:0 0 8px 8px;overflow:hidden">'
-          +'<iframe src="" style="width:100%;height:520px;border:none" allow="autoplay" loading="lazy"></iframe>'
+          +'<iframe src="" style="width:100%;height:520px;border:none" allow="autoplay" loading="lazy" '
+          +'onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" '
+          +'onload="if(this.contentDocument&&this.contentDocument.title===\'403\'){this.style.display=\'none\';this.nextSibling.style.display=\'flex\';}"></iframe>'
+          +'<div style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:12px">'
+          +'<div style="font-size:40px">🔒</div>'
+          +'<div style="font-weight:700;color:#374151">Không thể xem trực tiếp</div>'
+          +'<div style="font-size:13px;color:#888;text-align:center">Google chặn nhúng file này. Bấm "↗️ Mở" để xem trong Drive.<br>Hoặc đổi sharing thành "Anyone with link → Viewer"</div>'
+          +'<a href="'+viewUrl+'" target="_blank" style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;text-decoration:none">↗️ Mở trong Drive</a>'
+          +'</div>'
           +'</div>'
           +'</div>';
       });
