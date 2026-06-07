@@ -2126,7 +2126,13 @@ function loadModuleExtras(id) {
   });
   fbGet('/moduleData/'+id+'/comments', function(e, cmts) {
     var el = document.getElementById('mod-comments-'+id); if (!el) return;
-    var list = (cmts && Array.isArray(cmts)) ? cmts : (cmts ? Object.values(cmts) : []);
+    var rawList = (cmts && Array.isArray(cmts)) ? cmts : (cmts ? Object.values(cmts) : []);
+    // Filter out bad/undefined comments
+    var list = rawList.filter(function(c){ return c && c.author && c.text; });
+    // Clean up if there were bad comments
+    if (list.length < rawList.length) {
+      fbSet('/moduleData/'+id+'/comments', list);
+    }
     if (!list.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px;font-style:italic">Chưa có bình luận nào.</p>'; return; }
     var isAdmin = currentUser && ['owner','admin'].includes(currentUser.role);
     el.innerHTML = list.map(function(c, ci) {
@@ -2149,9 +2155,11 @@ function loadModuleExtras(id) {
 function deleteModuleComment(moduleId, idx) {
   if (!confirm('Xóa bình luận này?')) return;
   fbGet('/moduleData/'+moduleId+'/comments', function(err, cmts) {
-    var list = (cmts && Array.isArray(cmts)) ? cmts : (cmts ? Object.values(cmts) : []);
-    list.splice(idx, 1);
-    fbSet('/moduleData/'+moduleId+'/comments', list, function(){
+    var rawList = (cmts && Array.isArray(cmts)) ? cmts : (cmts ? Object.values(cmts) : []);
+    // Work on filtered list, find real index
+    var cleanList = rawList.filter(function(c){ return c && c.author && c.text; });
+    cleanList.splice(idx, 1);
+    fbSet('/moduleData/'+moduleId+'/comments', cleanList, function(){
       loadModuleExtras(moduleId);
       showToast('Đã xóa bình luận', 'error');
     });
