@@ -1749,6 +1749,11 @@ var moduleGroups = [
     { id:402, icon:'📊', name:'User Sequence' },
     { id:403, icon:'🗂️', name:'Type Management' },
   ]},
+  { id:6, icon:'🎓', name:'Training', modules:[
+    { id:601, icon:'📖', name:'BMW GSC Training' },
+    { id:602, icon:'🛡️', name:'Safety Training' },
+    { id:603, icon:'⚙️', name:'SiCar Training' },
+  ]},
   { id:5, icon:'📘', name:'Operation Manual A1HG01', modules:[
     { id:501, icon:'📋', name:'General & Overview' },
     { id:502, icon:'🔲', name:'Safety Gates SG01–SG06' },
