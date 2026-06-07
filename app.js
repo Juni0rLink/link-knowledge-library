@@ -681,7 +681,9 @@ function showUpdateBanner() {
     +'<button onclick="document.getElementById(\'update-banner\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px">✕</button>';
   document.body.appendChild(d);
   // Auto dismiss after 30s if no action
-  setTimeout(function(){ var el=document.getElementById('update-banner'); if(el) el.remove(); }, 30000);
+  setTimeout(function(){ var el=document.getElementById('update-banner'); if(el) el.remove(); }, 60000);
+  // Also remove any stuck banner on next user interaction
+  document.addEventListener('keydown', function dismissBanner(){ var el=document.getElementById('update-banner'); if(el) el.remove(); document.removeEventListener('keydown', dismissBanner); }, {once:true});
 }
 
 // ============================================================
@@ -3532,12 +3534,21 @@ function showMoveTab(tab) {
 function moveFileToModule(fileId, moduleId) {
   var f = sharedFiles.find(function(x){ return String(x.id) === String(fileId); });
   if (!f) return;
+  var fname = f.name||f.file;
+  // Ask: Move (remove from Files) or Copy (keep in both)
+  var choice = confirm('"'+fname+'"\n\nOK = Di chuyển (xóa khỏi Files)\nCancel = Sao chép (giữ cả 2 nơi)');
   fbGet('/moduleData/'+moduleId+'/files', function(err, existing){
     var arr = (existing && Array.isArray(existing)) ? existing : [];
-    arr.push({ name: f.name||f.file, url: f.url, author: f.author||'', date: f.date||new Date().toLocaleDateString('vi-VN'), fromLibrary: true });
+    if (arr.find(function(x){ return x.name === fname; })) { showToast('File đã có trong module', 'warning'); return; }
+    arr.push({ name: fname, url: f.url, author: f.author||'', date: f.date||new Date().toLocaleDateString('vi-VN'), fromLibrary: true });
     fbSet('/moduleData/'+moduleId+'/files', arr, function(){
+      if (choice) {
+        // Move: remove from sharedFiles
+        sharedFiles = sharedFiles.filter(function(x){ return String(x.id) !== String(fileId); });
+        fbSaveSharedFiles(); fbClearCache();
+      }
       document.getElementById('move-file-modal').remove();
-      showToast('✅ Đã thêm "'+( f.name||f.file)+'" vào module', 'success');
+      showToast(choice ? '✅ Đã di chuyển vào module' : '✅ Đã sao chép vào module', 'success');
     });
   });
 }
