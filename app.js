@@ -1990,9 +1990,14 @@ function addModule(gid) {
   var inp = document.getElementById('mod-inp-' + gid);
   if (!inp || !inp.value.trim()) { showToast('Nhập tên module', 'warning'); return; }
   var g = moduleGroups.find(function(g){return g.id===gid;});
-  g.modules.push({ id: Date.now(), icon: 'Ὄb', name: inp.value.trim() });
+  if (!g) return;
+  if (!g.modules) g.modules = [];
+  var name = inp.value.trim();
+  g.modules.push({ id: Date.now(), icon: '📦', name: name });
+  inp.value = '';
+  fbSaveModules(); // ← Fix: save to Firebase
   renderModuleGroups(); syncSidebarModules();
-  showToast('Đã thêm module: ' + inp.value.trim(), 'success');
+  showToast('Đã thêm module: ' + name, 'success');
 }
 
 function deleteModule(gid, mid) {
