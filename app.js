@@ -2073,6 +2073,7 @@ function showModulePage(id, name, groupId, el) {
 
   var uploadBtn = isAdmin
     ? '<label style="background:#0891b2;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">+ Upload tài liệu<input type="file" multiple style="display:none" onchange="uploadModuleFile(this,'+id+')"></label>'
+    + '<button onclick="pickFromLibrary('+id+')" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-left:6px">📚 Từ thư viện</button>'
     : '';
 
   pg.innerHTML =
@@ -2109,6 +2110,43 @@ function showModulePage(id, name, groupId, el) {
 
   // Load extra files + comments from Firebase
   loadModuleExtras(id);
+}
+
+function pickFromLibrary(moduleId) {
+  var ex = document.getElementById('pick-lib-modal'); if(ex) ex.remove();
+  var d = document.createElement('div');
+  d.id = 'pick-lib-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  var fileListHtml = sharedFiles.length ? sharedFiles.map(function(f,i){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;background:#fff">'
+      +'<span style="font-size:18px">'+(f.icon||'📄')+'</span>'
+      +'<div style="flex:1"><div style="font-size:13px;font-weight:600">'+(f.name||f.file||'')+'</div>'
+      +'<div style="font-size:11px;color:#aaa">'+(f.category||'')+(f.author?' · '+f.author:'')+'</div></div>'
+      +'<button onclick="addLibFileToModule('+i+','+moduleId+')" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">+ Thêm</button>'
+      +'</div>';
+  }).join('') : '<p style="color:#aaa;text-align:center;padding:20px">Thư viện chung trống.</p>';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:14px 18px;display:flex;align-items:center">'
+    +'<span style="color:#fff;font-weight:700;flex:1">📚 Chọn file từ Thư viện chung</span>'
+    +'<button onclick="document.getElementById(\'pick-lib-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="overflow-y:auto;padding:12px">'+fileListHtml+'</div>'
+    +'</div>';
+  document.body.appendChild(d);
+}
+
+function addLibFileToModule(fileIndex, moduleId) {
+  var f = sharedFiles[fileIndex]; if(!f) return;
+  fbGet('/moduleData/'+moduleId+'/files', function(err, existing){
+    var arr = (existing && Array.isArray(existing)) ? existing : [];
+    // Check duplicate
+    if (arr.find(function(x){ return x.name === (f.name||f.file); })) { showToast('File đã có trong module', 'warning'); return; }
+    arr.push({ name: f.name||f.file, url: f.url, author: f.author||'', date: f.date||new Date().toLocaleDateString('vi-VN'), fromLibrary: true });
+    fbSet('/moduleData/'+moduleId+'/files', arr, function(){
+      loadModuleExtras(moduleId);
+      showToast('✅ Đã thêm "'+( f.name||f.file)+'" vào module', 'success');
+    });
+  });
 }
 
 function loadModuleExtras(id) {
@@ -3386,26 +3424,69 @@ function showMoveFileDialog(fileId) {
   moduleGroups.forEach(function(g){ categories.push({ name: g.name, icon: g.icon }); });
   ['Training','Chung','Khác'].forEach(function(c){ if(!categories.find(function(x){return x.name===c;})) categories.push({name:c,icon:'📁'}); });
 
+  // Build flat module list
+  var allModules = [];
+  moduleGroups.forEach(function(g){ (g.modules||[]).forEach(function(m){ allModules.push({id:m.id, name:m.name, icon:m.icon, groupName:g.name}); }); });
+
   var d = document.createElement('div');
   d.id = 'move-file-modal';
   d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
-  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:400px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:420px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
     +'<div style="background:#0891b2;padding:14px 18px;display:flex;align-items:center">'
     +'<span style="color:#fff;font-weight:700;flex:1">📂 Di chuyển: '+(f.name||f.file||'')+'</span>'
     +'<button onclick="document.getElementById(\'move-file-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
     +'</div>'
-    +'<div style="padding:12px;max-height:400px;overflow-y:auto">'
-    +'<div style="font-size:12px;color:#888;margin-bottom:8px">Chọn vị trí đến:</div>'
+    // Tabs
+    +'<div style="display:flex;border-bottom:1px solid #e5e7eb">'
+    +'<button onclick="showMoveTab(\'cat\')" id="move-tab-cat" style="flex:1;padding:9px;border:none;background:#f0f9ff;font-size:12px;font-weight:700;color:#0891b2;cursor:pointer;border-bottom:2px solid #0891b2">📁 Categories</button>'
+    +'<button onclick="showMoveTab(\'mod\')" id="move-tab-mod" style="flex:1;padding:9px;border:none;background:#f8f9fb;font-size:12px;font-weight:600;color:#888;cursor:pointer;border-bottom:2px solid transparent">📦 Modules</button>'
+    +'</div>'
+    +'<div style="max-height:350px;overflow-y:auto">'
+    // Categories
+    +'<div id="move-panel-cat" style="padding:10px">'
     + categories.map(function(cat){
         var isCurrent = (f.category||'Chung') === cat.name;
         return '<button onclick="moveFileTo(\''+fileId+'\',\''+cat.name+'\')" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;border:none;border-radius:8px;cursor:pointer;text-align:left;margin-bottom:4px;background:'+(isCurrent?'#e0f2fe':'#f8f9fb')+';font-weight:'+(isCurrent?'700':'400')+';color:'+(isCurrent?'#0369a1':'#374151')+'">'
-          +'<span style="font-size:18px">'+cat.icon+'</span>'
-          +'<span style="flex:1;font-size:13px">'+cat.name+'</span>'
+          +'<span style="font-size:18px">'+cat.icon+'</span><span style="flex:1;font-size:13px">'+cat.name+'</span>'
           +(isCurrent?'<span style="font-size:11px;color:#0369a1">● Hiện tại</span>':'')
           +'</button>';
       }).join('')
+    +'</div>'
+    // Modules
+    +'<div id="move-panel-mod" style="padding:10px;display:none">'
+    + allModules.map(function(m){
+        return '<button onclick="moveFileToModule(\''+fileId+'\','+m.id+')" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;border:none;border-radius:8px;cursor:pointer;text-align:left;margin-bottom:4px;background:#f8f9fb">'
+          +'<span style="font-size:16px">'+m.icon+'</span>'
+          +'<div style="flex:1;text-align:left"><div style="font-size:13px;font-weight:600">'+m.name+'</div><div style="font-size:11px;color:#aaa">'+m.groupName+'</div></div>'
+          +'<span style="font-size:11px;color:#0891b2;font-weight:700">→ Thêm vào</span>'
+          +'</button>';
+      }).join('')
+    +'</div>'
     +'</div></div>';
   document.body.appendChild(d);
+}
+
+function showMoveTab(tab) {
+  ['cat','mod'].forEach(function(t){
+    var btn = document.getElementById('move-tab-'+t);
+    var panel = document.getElementById('move-panel-'+t);
+    var active = t === tab;
+    if(btn) { btn.style.background = active?'#f0f9ff':'#f8f9fb'; btn.style.color = active?'#0891b2':'#888'; btn.style.fontWeight = active?'700':'600'; btn.style.borderBottom = active?'2px solid #0891b2':'2px solid transparent'; }
+    if(panel) panel.style.display = active?'block':'none';
+  });
+}
+
+function moveFileToModule(fileId, moduleId) {
+  var f = sharedFiles.find(function(x){ return String(x.id) === String(fileId); });
+  if (!f) return;
+  fbGet('/moduleData/'+moduleId+'/files', function(err, existing){
+    var arr = (existing && Array.isArray(existing)) ? existing : [];
+    arr.push({ name: f.name||f.file, url: f.url, author: f.author||'', date: f.date||new Date().toLocaleDateString('vi-VN'), fromLibrary: true });
+    fbSet('/moduleData/'+moduleId+'/files', arr, function(){
+      document.getElementById('move-file-modal').remove();
+      showToast('✅ Đã thêm "'+( f.name||f.file)+'" vào module', 'success');
+    });
+  });
 }
 
 function moveFileTo(fileId, targetCat) {
