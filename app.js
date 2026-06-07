@@ -2112,6 +2112,59 @@ function showModulePage(id, name, groupId, el) {
   loadModuleExtras(id);
 }
 
+// Pick personal file → add as sub-item in personal module
+function pickPersonalFileToModule(mi) {
+  var m = personalModules[mi]; if(!m) return;
+  if (!m.items) m.items = [];
+  var ex = document.getElementById('pick-pf-modal'); if(ex) ex.remove();
+  var files = personalFiles.concat(sharedFiles); // both personal + shared
+  var d = document.createElement('div');
+  d.id = 'pick-pf-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px';
+  var listHtml = files.length ? files.map(function(f,i){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;background:#fff">'
+      +'<span style="font-size:18px">'+(f.icon||'📄')+'</span>'
+      +'<div style="flex:1"><div style="font-size:13px;font-weight:600">'+(f.name||f.file||'')+'</div>'
+      +'<div style="font-size:11px;color:#aaa">'+(i < personalFiles.length ? '👤 Cá nhân' : '📚 Chung')+' · '+(f.date||'')+'</div></div>'
+      +'<button onclick="addFileAsSubItem('+mi+','+i+','+( i < personalFiles.length ? 1 : 0)+')" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">+ Thêm</button>'
+      +'</div>';
+  }).join('') : '<p style="color:#aaa;text-align:center;padding:20px">Chưa có file nào.</p>';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:14px 18px;display:flex;align-items:center">'
+    +'<span style="color:#fff;font-weight:700;flex:1">📂 Chọn file để thêm vào module</span>'
+    +'<button onclick="document.getElementById(\'pick-pf-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="overflow-y:auto;padding:12px">'+listHtml+'</div>'
+    +'</div>';
+  document.body.appendChild(d);
+}
+
+function pickSharedFileToModule(mi) {
+  var m = personalModules[mi]; if(!m) return;
+  pickPersonalFileToModule(mi); // reuse same picker showing both
+}
+
+function addFileAsSubItem(mi, fileIdx, isPersonal) {
+  var allFiles = personalFiles.concat(sharedFiles);
+  var f = allFiles[fileIdx]; if(!f) return;
+  var m = personalModules[mi]; if(!m) return;
+  if(!m.items) m.items = [];
+  var icons2 = ['📄','📝','🔧','💡','📊','🛡️'];
+  var item = {
+    id: Date.now(), name: f.name||f.file||'File',
+    icon: f.icon||icons2[m.items.length%icons2.length],
+    date: new Date().toLocaleDateString('vi-VN'),
+    notes: '', content: '',
+    fileRef: { url: f.url, name: f.name||f.file, type: f.type||'file' }
+  };
+  m.items.push(item);
+  fbSavePersonal();
+  var grid = document.getElementById('pm-subgrid');
+  if (grid && window.buildPmSubGrid) grid.innerHTML = window.buildPmSubGrid(mi);
+  document.getElementById('pick-pf-modal').remove();
+  showToast('✅ Đã thêm: ' + item.name, 'success');
+}
+
 function pickFromLibrary(moduleId) {
   var ex = document.getElementById('pick-lib-modal'); if(ex) ex.remove();
   var d = document.createElement('div');
@@ -3678,6 +3731,8 @@ function openPersonalModule(mi) {
     +'<button onclick="document.getElementById(\'pm-detail-page\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:7px;padding:7px 12px;cursor:pointer;font-size:13px;font-weight:600">&larr; Quay lại</button>'
     +'<span id="pm-detail-icon" style="font-size:24px;cursor:pointer" onclick="showIconPicker(\''+m.icon+'\',function(ic){personalModules['+mi+'].icon=ic;document.getElementById(\'pm-detail-icon\').textContent=ic;})" title="Đổi icon">'+m.icon+'</span>'
     +'<span style="color:#fff;font-size:16px;font-weight:700;flex:1">'+m.name+'</span>'
+    +'<button onclick="pickPersonalFileToModule('+mi+')" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">📂 Từ Files</button>'
+    +'<button onclick="pickSharedFileToModule('+mi+')" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">📚 Từ thư viện</button>'
     +'<button onclick="addSubModule('+mi+')" style="background:#fff;color:#7c3aed;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">+ Thêm mục</button>'
     +'</div>'
     +'<div style="max-width:900px;margin:24px auto;padding:0 16px">'
