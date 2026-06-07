@@ -2700,12 +2700,16 @@ function renderPersonalSheets(){var list=document.getElementById('personal-sheet
 function uploadPersonalFile(input){var files=Array.from(input.files);files.forEach(function(f){var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),url:URL.createObjectURL(f)});});renderPersonalFiles();showToast('Đã upload '+files.length+' file','success');input.value='';}
 function publishPersonalFile(i) {
   var f = personalFiles[i]; if (!f) return;
-  var cat = prompt('Đưa vào phân vùng nào?\n(GSC Modules / Tools & Software / Training / SiCar Standards / Chung)', 'Chung');
-  if (!cat) return;
+  var cat = prompt('Đưa vào phân vùng nào?\n(GSC Modules / Tools & Software / Training / SiCar Standards / Chung)', f.category || 'Chung');
+  if (!cat) return; // user cancelled category selection
+  if (!confirm('📤 Di chuyển "' + (f.name||'') + '" lên Thư viện chung?\n\nOK = Di chuyển (xóa khỏi File cá nhân)\nCancel = Hủy')) return;
+  // Move: add to shared + remove from personal
   var pub = Object.assign({}, f, { id: Date.now(), category: cat, author: currentUser ? currentUser.name : '', date: new Date().toLocaleDateString('vi-VN') });
   sharedFiles.push(pub);
   fbSaveSharedFiles(); fbClearCache();
-  showToast('✅ Đã public lên Thư viện chung: ' + cat, 'success');
+  personalFiles.splice(i, 1);
+  fbSavePersonal(); renderPersonalFiles();
+  showToast('✅ Đã di chuyển lên Thư viện chung: ' + cat, 'success');
 }
 
 var _personalCollapsedCats = {};
