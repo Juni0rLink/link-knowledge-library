@@ -105,7 +105,13 @@ function fbLoadAll(onDone) {
     if (data.news && Array.isArray(data.news)) newsItems = data.news;
     if (data.sharedDocs && Array.isArray(data.sharedDocs)) sharedDocs = data.sharedDocs;
     if (data.sharedSheets && Array.isArray(data.sharedSheets)) sharedSheets = data.sharedSheets;
-    if (data.sharedFiles && Array.isArray(data.sharedFiles) && data.sharedFiles.length > 0) sharedFiles = data.sharedFiles;
+    if (data.sharedFiles && Array.isArray(data.sharedFiles) && data.sharedFiles.length > 0) {
+      // Merge: Firebase data (user uploads/links) + DEFAULT entries not in Firebase
+      var fbFiles = data.sharedFiles;
+      var fbIds = fbFiles.map(function(f){ return f.id; });
+      var missing = DEFAULT_SHARED_FILES.filter(function(f){ return fbIds.indexOf(f.id) < 0; });
+      sharedFiles = missing.concat(fbFiles);
+    }
     if (data.sharedNote) sharedNote = data.sharedNote;
     if (data.moduleGroups && Array.isArray(data.moduleGroups)) moduleGroups = data.moduleGroups;
     if (data.publicFiles && Array.isArray(data.publicFiles)) publicFiles = data.publicFiles;
