@@ -1883,10 +1883,26 @@ function changeFileCategory(index, newCat) {
 }
 
 function recordDeletedFileId(fileId) {
-  // Persist deleted ID to prevent re-adding from DEFAULT_SHARED_FILES
   fbGet('/shared/deletedFileIds', function(err, ids) {
     var arr = (!err && Array.isArray(ids)) ? ids : [];
     if (arr.indexOf(fileId) < 0) { arr.push(fileId); fbSet('/shared/deletedFileIds', arr); }
+  });
+}
+
+function removeFileFromAllModules(fileName, fileUrl) {
+  // Also remove from any module that has this file attached
+  fbGet('/moduleData', function(err, data) {
+    if (err || !data) return;
+    Object.keys(data).forEach(function(mid) {
+      var files = data[mid] && data[mid].files;
+      if (!files || !files.length) return;
+      var filtered = files.filter(function(f){
+        return f.name !== fileName && f.url !== fileUrl;
+      });
+      if (filtered.length < files.length) {
+        fbSet('/moduleData/'+mid+'/files', filtered);
+      }
+    });
   });
 }
 
@@ -1895,7 +1911,8 @@ function deleteSharedFileByIndex(index) {
   if (!confirm('Đưa "' + (f.name||f.file) + '" vào thùng rác?')) return;
   moveToTrash('file', f);
   sharedFiles.splice(index, 1);
-  recordDeletedFileId(f.id); // prevent reappearing
+  recordDeletedFileId(f.id);
+  removeFileFromAllModules(f.name||f.file, f.url); // also remove from modules
   fbSaveSharedFiles(); fbClearCache(); renderMgmtFiles();
   showToast('Đã chuyển vào thùng rác', 'error');
 }
@@ -3463,7 +3480,7 @@ function deleteSharedFile(encodedInfo, encodedCat) {
   var info = JSON.parse(decodeURIComponent(encodedInfo));
   if (!confirm('Đưa "' + info.name + '" vào thùng rác?')) return;
   var f = sharedFiles.find(function(x){ return (x.id === info.id) || (x.name === info.name); });
-  if (f) { moveToTrash('file', f); recordDeletedFileId(f.id); }
+  if (f) { moveToTrash('file', f); recordDeletedFileId(f.id); removeFileFromAllModules(f.name||f.file, f.url); }
   sharedFiles = sharedFiles.filter(function(f){ return (f.id !== info.id) && (f.name !== info.name) && (f.file !== info.name); });
   fbSaveSharedFiles(); fbClearCache(); renderSharedFileList();
   showToast('Đã chuyển vào thùng rác', 'error');
