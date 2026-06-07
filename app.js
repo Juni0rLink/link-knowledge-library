@@ -106,10 +106,13 @@ function fbLoadAll(onDone) {
     if (data.sharedDocs && Array.isArray(data.sharedDocs)) sharedDocs = data.sharedDocs;
     if (data.sharedSheets && Array.isArray(data.sharedSheets)) sharedSheets = data.sharedSheets;
     if (data.sharedFiles && Array.isArray(data.sharedFiles) && data.sharedFiles.length > 0) {
-      // Merge: Firebase data (user uploads/links) + DEFAULT entries not in Firebase
       var fbFiles = data.sharedFiles;
       var fbIds = fbFiles.map(function(f){ return f.id; });
-      var missing = DEFAULT_SHARED_FILES.filter(function(f){ return fbIds.indexOf(f.id) < 0; });
+      // Track deleted IDs to prevent re-adding deleted defaults
+      var deletedIds = (data.deletedFileIds && Array.isArray(data.deletedFileIds)) ? data.deletedFileIds : [];
+      var missing = DEFAULT_SHARED_FILES.filter(function(f){
+        return fbIds.indexOf(f.id) < 0 && deletedIds.indexOf(f.id) < 0;
+      });
       sharedFiles = missing.concat(fbFiles);
     }
     if (data.sharedNote) sharedNote = data.sharedNote;
@@ -1861,7 +1864,8 @@ function renderMgmtFiles() {
           return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:4px">'
             +'<span style="font-size:18px">'+(f.icon||'📄')+'</span>'
             +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+(f.name||f.file||'')+'</div>'
-            +'<div style="font-size:11px;color:#94a3b8">'+(f.author||'')+(f.date?' · '+f.date:'')+(f.size?' · '+f.size:'')+'</div></div>'
+            +'<div style="font-size:11px;color:#94a3b8">'+(f.author||'')+(f.date?' · '+f.date:'')+(f.size?' · '+f.size:'')+'</div>'
+            +'<div style="font-size:10px;color:#7c3aed;margin-top:2px">📍 Files → '+(f.category||'Chung')+'</div></div>'
             +'<select onchange="changeFileCategory('+i+',this.value)" style="border:1px solid #e5e7eb;border-radius:6px;padding:4px 6px;font-size:11px;color:#475569">'
             + moduleGroups.map(function(g){return '<option value="'+g.name+'"'+(f.category===g.name?' selected':'')+'>'+g.name+'</option>';}).join('')
             +'<option value="Training"'+(f.category==='Training'?' selected':'')+'>Training</option>'
@@ -1878,11 +1882,20 @@ function changeFileCategory(index, newCat) {
   if (sharedFiles[index]) { sharedFiles[index].category = newCat; fbSaveSharedFiles(); fbClearCache(); showToast('Đã đổi phân vùng','success'); }
 }
 
+function recordDeletedFileId(fileId) {
+  // Persist deleted ID to prevent re-adding from DEFAULT_SHARED_FILES
+  fbGet('/shared/deletedFileIds', function(err, ids) {
+    var arr = (!err && Array.isArray(ids)) ? ids : [];
+    if (arr.indexOf(fileId) < 0) { arr.push(fileId); fbSet('/shared/deletedFileIds', arr); }
+  });
+}
+
 function deleteSharedFileByIndex(index) {
   var f = sharedFiles[index]; if (!f) return;
   if (!confirm('Đưa "' + (f.name||f.file) + '" vào thùng rác?')) return;
   moveToTrash('file', f);
   sharedFiles.splice(index, 1);
+  recordDeletedFileId(f.id); // prevent reappearing
   fbSaveSharedFiles(); fbClearCache(); renderMgmtFiles();
   showToast('Đã chuyển vào thùng rác', 'error');
 }
@@ -3450,7 +3463,7 @@ function deleteSharedFile(encodedInfo, encodedCat) {
   var info = JSON.parse(decodeURIComponent(encodedInfo));
   if (!confirm('Đưa "' + info.name + '" vào thùng rác?')) return;
   var f = sharedFiles.find(function(x){ return (x.id === info.id) || (x.name === info.name); });
-  if (f) moveToTrash('file', f);
+  if (f) { moveToTrash('file', f); recordDeletedFileId(f.id); }
   sharedFiles = sharedFiles.filter(function(f){ return (f.id !== info.id) && (f.name !== info.name) && (f.file !== info.name); });
   fbSaveSharedFiles(); fbClearCache(); renderSharedFileList();
   showToast('Đã chuyển vào thùng rác', 'error');
@@ -4228,7 +4241,15 @@ function renderTrash() {
 
 function restoreTrash(i) {
   var item = trash[i]; if (!item) return;
-  if (item.type === 'file') { sharedFiles.push(item.data); fbSaveSharedFiles(); }
+  if (item.type === 'file') {
+    sharedFiles.push(item.data);
+    fbSaveSharedFiles();
+    // Remove from deletedFileIds so it shows up again
+    fbGet('/shared/deletedFileIds', function(err, ids) {
+      var arr = (!err && Array.isArray(ids)) ? ids.filter(function(id){ return id !== item.data.id; }) : [];
+      fbSet('/shared/deletedFileIds', arr);
+    });
+  }
   else if (item.type === 'doc') { sharedDocs.push(item.data); fbSaveSharedDocs(); }
   else if (item.type === 'sheet') { sharedSheets.push(item.data); fbSaveSharedSheets(); }
   else if (item.type === 'news') { newsItems.unshift(item.data); fbSaveNews(); }
