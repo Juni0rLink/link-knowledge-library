@@ -2708,21 +2708,72 @@ function publishPersonalFile(i) {
   showToast('✅ Đã public lên Thư viện chung: ' + cat, 'success');
 }
 
+var _personalCollapsedCats = {};
+function togglePersonalCat(cat) { _personalCollapsedCats[cat]=!_personalCollapsedCats[cat]; renderPersonalFiles(); }
+
 function renderPersonalFiles(){
   var list=document.getElementById('personal-files-list');
   if(!list)return;
   if(!personalFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p>';return;}
-  list.innerHTML=personalFiles.map(function(f,i){
-    var icon = getSharedFileIcon ? getSharedFileIcon(f.name||'') : '📁';
-    return '<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px">'
-      +'<span style="font-size:20px">'+icon+'</span>'
-      +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+f.name+'</div>'
-      +'<div style="font-size:11px;color:#888">'+(f.size||'')+(f.date?' · '+f.date:'')+'</div></div>'
-      +'<button onclick="publishPersonalFile('+i+')" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer" title="Chia sẻ lên Thư viện chung">📤</button>'
-      +'<a href="'+f.url+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">⬇️</a>'
-      +'<button onclick="moveToTrash(\'personalfile\',personalFiles['+i+'],function(){personalFiles.splice('+i+',1);fbSavePersonal();renderPersonalFiles();})" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>'
-      +'</div>';
-  }).join('');
+  // Group by category
+  var cats={};
+  personalFiles.forEach(function(f,i){ var cat=f.category||'Chung'; if(!cats[cat])cats[cat]=[]; cats[cat].push({f:f,i:i}); });
+  var html='';
+  Object.keys(cats).forEach(function(cat){
+    var collapsed=_personalCollapsedCats[cat];
+    var safecat=cat.replace(/'/g,"\\'");
+    html+='<div onclick="togglePersonalCat(\''+safecat+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f5f3ff;border-radius:8px;margin:10px 0 6px;cursor:pointer;user-select:none">'
+      +'<span style="font-size:11px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:1px;flex:1">'+cat+' ('+cats[cat].length+')</span>'
+      +'<span style="font-size:12px;color:#a78bfa;transform:rotate('+(collapsed?'-90':'0')+'deg)">▾</span></div>';
+    if(!collapsed){
+      cats[cat].forEach(function(x){
+        var f=x.f, i=x.i;
+        var icon=getSharedFileIcon?getSharedFileIcon(f.name||''):(f.icon||'📁');
+        var ext=(f.name||'').split('.').pop().toLowerCase();
+        var isPDF=ext==='pdf', isOffice=['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext)>=0;
+        var fileUrl=f.url||'';
+        var viewUrl=f.isLink?(f.viewUrl||fileUrl):isPDF?('https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl)+'&embedded=true'):isOffice?('https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl)):fileUrl;
+        var dlBtn=f.isLink?('<a href="'+fileUrl+'" target="_blank" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">↗️</a>'):('<a href="'+fileUrl+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">⬇️</a>');
+        html+='<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px">'
+          +'<span style="font-size:20px">'+icon+'</span>'
+          +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+(f.name||'')+'</div>'
+          +'<div style="font-size:11px;color:#888">'+(f.size||'')+(f.date?' · '+f.date:'')+'</div></div>'
+          +'<button onclick="showMovePersonalFile('+i+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer" title="Di chuyển">📂</button>'
+          +'<button onclick="publishPersonalFile('+i+')" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px" title="Chia sẻ lên Thư viện chung">📤</button>'
+          +'<a href="'+viewUrl+'" target="_blank" style="background:#ede9fe;color:#7c3aed;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">👁️</a>'
+          + dlBtn
+          +'<button onclick="moveToTrash(\'personalfile\',personalFiles['+i+'],function(){personalFiles.splice('+i+',1);fbSavePersonal();renderPersonalFiles();})" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>'
+          +'</div>';
+      });
+    }
+  });
+  list.innerHTML=html;
+}
+
+function showMovePersonalFile(idx) {
+  var f = personalFiles[idx]; if(!f) return;
+  var cats = ['Chung','Tài liệu kỹ thuật','Training','Công việc','Cá nhân'];
+  var ex=document.getElementById('move-pf-modal');if(ex)ex.remove();
+  var d=document.createElement('div');d.id='move-pf-modal';
+  d.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML='<div style="background:#fff;border-radius:14px;max-width:360px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:12px 16px;display:flex;align-items:center">'
+    +'<span style="color:#fff;font-weight:700;flex:1;font-size:13px">📂 Di chuyển: '+(f.name||'')+'</span>'
+    +'<button onclick="document.getElementById(\'move-pf-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:5px;padding:3px 8px;cursor:pointer">✕</button>'
+    +'</div><div style="padding:10px">'
+    + cats.map(function(cat){
+        var isCurrent=(f.category||'Chung')===cat;
+        return '<button onclick="movePersonalFileTo('+idx+',\''+cat+'\')" style="width:100%;padding:9px 12px;border:none;border-radius:7px;cursor:pointer;text-align:left;margin-bottom:4px;font-size:13px;background:'+(isCurrent?'#ede9fe':'#f8f9fb')+';color:'+(isCurrent?'#7c3aed':'#374151')+';font-weight:'+(isCurrent?'700':'400')+'">'
+          +(isCurrent?'● ':'')+cat+'</button>';
+      }).join('')
+    +'</div></div>';
+  document.body.appendChild(d);
+}
+
+function movePersonalFileTo(idx, cat) {
+  if(personalFiles[idx]) { personalFiles[idx].category=cat; fbSavePersonal(); renderPersonalFiles(); }
+  document.getElementById('move-pf-modal').remove();
+  showToast('✅ Đã di chuyển vào "'+cat+'"','success');
 }
 function savePersonalNote() { fbSavePersonal(); }
 
@@ -3572,13 +3623,36 @@ function getSharedFileIcon(name) {
 
 function uploadPersonalFile(input) {
   var files = Array.from(input.files); if (!files.length) return;
+  var catEl = document.getElementById('personal-upload-category');
+  var category = catEl ? catEl.value : 'Chung';
   files.forEach(function(file) {
     uploadToCloud(file, function(err, f) {
-      if (!err) { personalFiles.push(f); fbSavePersonal(); renderPersonalFiles(); showToast('✅ Upload: ' + f.name, 'success'); }
-      else { showToast('Lỗi upload: ' + file.name, 'error'); }
+      if (!err) {
+        f.category = category;
+        f.icon = getSharedFileIcon(file.name);
+        personalFiles.push(f); fbSavePersonal(); renderPersonalFiles();
+        showToast('✅ Upload: ' + f.name, 'success');
+      } else { showToast('Lỗi upload: ' + file.name, 'error'); }
     });
   });
   input.value = '';
+}
+
+function addPersonalLink() {
+  var inp = document.getElementById('personal-link-input');
+  var rawUrl = inp ? inp.value.trim() : '';
+  if (!rawUrl || !rawUrl.startsWith('http')) { showToast('Vui lòng nhập link hợp lệ', 'warning'); return; }
+  var catEl = document.getElementById('personal-upload-category');
+  var category = catEl ? catEl.value : 'Chung';
+  var linkInfo = normalizeShareLink(rawUrl);
+  var name = prompt('Tên hiển thị cho file này:', '');
+  if (!name) return;
+  var f = { id: Date.now(), name: name, url: linkInfo.url, viewUrl: linkInfo.viewUrl, file: name, type: 'link', icon: linkInfo.icon, category: category, author: currentUser ? currentUser.name : '', date: new Date().toLocaleDateString('vi-VN'), size: linkInfo.source, isLink: true };
+  personalFiles.push(f);
+  fbSavePersonal(); renderPersonalFiles();
+  if (inp) inp.value = '';
+  var badge = document.getElementById('personal-link-badge'); if(badge) badge.style.display='none';
+  showToast('✅ Đã thêm link: ' + name, 'success');
 }
 
 // ── EMOJI PICKER (full, searchable) ──
