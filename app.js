@@ -2711,9 +2711,12 @@ function publishPersonalFile(i) {
   // Move: add to shared + remove from personal
   var pub = Object.assign({}, f, { id: Date.now(), category: cat, author: currentUser ? currentUser.name : '', date: new Date().toLocaleDateString('vi-VN') });
   sharedFiles.push(pub);
+  // Remove from personal using id match (safer than index)
+  personalFiles = personalFiles.filter(function(x){ return x.id !== f.id; });
   fbSaveSharedFiles(); fbClearCache();
-  personalFiles.splice(i, 1);
-  fbSavePersonal(); renderPersonalFiles();
+  fbSavePersonal();
+  renderPersonalFiles();
+  renderSharedFileList();
   showToast('✅ Đã di chuyển lên Thư viện chung: ' + cat, 'success');
 }
 
@@ -4112,14 +4115,16 @@ function showPublicGroupDetail(gid) {
   var modsHtml = '';
   (g.modules||[]).forEach(function(m){
     var docs = MODULE_DOCS[m.id]; var fc = docs ? docs.files.length : 0;
-    var hasDocs = fc > 0;
+    // Also count uploaded files in sharedFiles matching category
+    var uploadedCount = sharedFiles.filter(function(f){ return (f.category||'').toLowerCase() === g.name.toLowerCase(); }).length;
+    var hasDocs = fc > 0 || uploadedCount > 0;
     modsHtml += '<div id="pubmod-'+m.id+'" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px 16px;cursor:pointer;transition:box-shadow .15s,border-color .15s" '
       +'onmouseover="this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.1)\';this.style.borderColor=\'#0891b2\'" '
       +'onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'#e5e7eb\'">'
       +'<div style="font-size:26px;margin-bottom:10px">'+m.icon+'</div>'
       +'<div style="font-weight:700;font-size:13px;margin-bottom:6px;line-height:1.4">'+m.name+'</div>'
       +'<div style="display:flex;align-items:center;gap:6px">'
-      +'<span style="font-size:11px;color:'+(hasDocs?'#0891b2':'#aaa')+';font-weight:'+(hasDocs?'700':'400')+'">'+fc+' tài liệu</span>'
+      +'<span style="font-size:11px;color:'+(hasDocs?'#0891b2':'#aaa')+';font-weight:'+(hasDocs?'700':'400')+'">'+(fc+uploadedCount)+' tài liệu</span>'
       +(hasDocs?'<span style="font-size:10px;background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:8px;font-weight:700">Có nội dung</span>':'')
       +'</div></div>';
   });
