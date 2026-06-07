@@ -3095,6 +3095,7 @@ function renderSharedFileList(){
           +'<div style="font-size:11px;color:#888;margin-top:1px">'+(f.author||'')+' · '+(f.date||'')+(f.size?' · '+f.size:'')+'</div></div>'
           +(canEmbed ? '<button onclick="toggleFilePreview(\''+fileId+'\',\''+encodeURIComponent(embedUrl)+'\')" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">👁️ Xem</button>' : '<a href="'+viewUrl+'" target="_blank" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-decoration:none">👁️ Xem</a>')
           + downloadHtml
+          +'<button onclick="showMoveFileDialog(\''+f.id+'\')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;margin-left:4px" title="Di chuyển">📂</button>'
           +(isAdmin2 ? '<button onclick="deleteSharedFile(\''+encodeURIComponent(JSON.stringify({name:f.name||f.file,id:f.id}))+'\',\''+encodeURIComponent(cat)+'\')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">🗑️</button>' : '')
           +'</div>'
           +'<div id="'+fileId+'" style="display:none;border-top:1px solid #e5e7eb;background:#f8f9fb;border-radius:0 0 8px 8px;overflow:hidden">'
@@ -3342,6 +3343,49 @@ function addSharedLink() {
   fbSaveSharedFiles(); fbClearCache(); renderSharedFileList();
   if (inp) inp.value = '';
   showToast('✅ Đã thêm từ ' + linkInfo.source + ': ' + name, 'success');
+}
+
+function showMoveFileDialog(fileId) {
+  var f = sharedFiles.find(function(x){ return String(x.id) === String(fileId); });
+  if (!f) return;
+  var ex = document.getElementById('move-file-modal'); if(ex) ex.remove();
+
+  // Build destination list: categories + modules
+  var categories = [];
+  moduleGroups.forEach(function(g){ categories.push({ name: g.name, icon: g.icon }); });
+  ['Training','Chung','Khác'].forEach(function(c){ if(!categories.find(function(x){return x.name===c;})) categories.push({name:c,icon:'📁'}); });
+
+  var d = document.createElement('div');
+  d.id = 'move-file-modal';
+  d.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:400px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.25);overflow:hidden">'
+    +'<div style="background:#0891b2;padding:14px 18px;display:flex;align-items:center">'
+    +'<span style="color:#fff;font-weight:700;flex:1">📂 Di chuyển: '+(f.name||f.file||'')+'</span>'
+    +'<button onclick="document.getElementById(\'move-file-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="padding:12px;max-height:400px;overflow-y:auto">'
+    +'<div style="font-size:12px;color:#888;margin-bottom:8px">Chọn vị trí đến:</div>'
+    + categories.map(function(cat){
+        var isCurrent = (f.category||'Chung') === cat.name;
+        return '<button onclick="moveFileTo(\''+fileId+'\',\''+cat.name+'\')" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;border:none;border-radius:8px;cursor:pointer;text-align:left;margin-bottom:4px;background:'+(isCurrent?'#e0f2fe':'#f8f9fb')+';font-weight:'+(isCurrent?'700':'400')+';color:'+(isCurrent?'#0369a1':'#374151')+'">'
+          +'<span style="font-size:18px">'+cat.icon+'</span>'
+          +'<span style="flex:1;font-size:13px">'+cat.name+'</span>'
+          +(isCurrent?'<span style="font-size:11px;color:#0369a1">● Hiện tại</span>':'')
+          +'</button>';
+      }).join('')
+    +'</div></div>';
+  document.body.appendChild(d);
+}
+
+function moveFileTo(fileId, targetCat) {
+  var f = sharedFiles.find(function(x){ return String(x.id) === String(fileId); });
+  if (!f) return;
+  var oldCat = f.category || 'Chung';
+  f.category = targetCat;
+  fbSaveSharedFiles(); fbClearCache();
+  document.getElementById('move-file-modal').remove();
+  renderSharedFileList();
+  showToast('✅ Đã di chuyển từ "'+oldCat+'" → "'+targetCat+'"', 'success');
 }
 
 function getSharedFileIcon(name) {
