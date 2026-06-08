@@ -1671,63 +1671,6 @@ function showToast(msg, type) {
 }
 
 // ============================================================
-// FILE MANAGEMENT
-// ============================================================
-var userFiles = [];
-
-function renderFiles() {
-  var list = document.getElementById('file-list');
-  if (!list) return;
-  if (userFiles.length === 0) {
-    list.innerHTML = '<p style="color:#aaa;font-style:italic">Chưa có file nào. Upload file đầu tiên bên dưới.</p>';
-    return;
-  }
-  list.innerHTML = userFiles.map(function(f) {
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #eee;border-radius:8px;margin-bottom:8px;">' +
-      '<span style="font-size:20px">' + getFileIcon(f.type) + '</span>' +
-      '<div style="flex:1"><div style="font-weight:600;font-size:13px">' + f.name + '</div>' +
-      '<div style="font-size:11px;color:#888">' + f.size + ' · ' + f.date + ' · ' + f.author + '</div></div>' +
-      '<button class="btn-sm" style="background:#fee2e2;color:#ef4444;border:none;cursor:pointer" onclick="deleteFile(' + f.id + ')">Xóa</button>' +
-      '</div>';
-  }).join('');
-}
-
-function getFileIcon(type) {
-  if (type.includes('pdf')) return 'Ὄ4';
-  if (type.includes('image')) return 'Ὓc️';
-  if (type.includes('video')) return 'Ἲc';
-  if (type.includes('sheet') || type.includes('excel')) return 'Ὄa';
-  if (type.includes('presentation') || type.includes('powerpoint')) return 'Ὅ1';
-  return 'Ὄ1';
-}
-
-function handleFileUpload(input) {
-  var files = input.files;
-  for (var i = 0; i < files.length; i++) {
-    var f = files[i];
-    var size = f.size > 1024*1024 ? (f.size/1024/1024).toFixed(1)+'MB' : (f.size/1024).toFixed(0)+'KB';
-    userFiles.push({
-      id: Date.now() + i,
-      name: f.name,
-      type: f.type,
-      size: size,
-      date: new Date().toLocaleDateString('vi-VN'),
-      author: currentUser ? currentUser.name : 'Không rõ',
-      url: URL.createObjectURL(f)
-    });
-  }
-  renderFiles();
-  showToast('Đã upload ' + files.length + ' file thành công', 'success');
-  input.value = '';
-}
-
-function deleteFile(id) {
-  userFiles = userFiles.filter(function(f) { return f.id !== id; });
-  renderFiles();
-  showToast('Đã xóa file', 'error');
-}
-
-// ============================================================
 // MODULE MANAGER
 // ============================================================
 var BASE_URL = 'https://juni0rlink.github.io/link-knowledge-library/content/';
@@ -2852,7 +2795,6 @@ function editPersonalDoc(i){var el=document.getElementById('doc-editor-'+i);if(e
 function savePersonalDoc(i){var c=document.getElementById('doc-content-'+i);if(c&&personalDocs[i]){personalDocs[i].content=c.innerHTML;showToast('Đã lưu!','success');}}
 function createPersonalSheet(){var name=prompt('Tên bảng tính:');if(!name)return;personalSheets.push({id:Date.now(),name:name,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:{}});renderPersonalSheets();showToast('Đã tạo: '+name,'success');}
 function renderPersonalSheets(){var list=document.getElementById('personal-sheets-list');if(!list)return;if(!personalSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}list.innerHTML=personalSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.date+'</div></div><button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn">🗑️</button></div>';}).join('');}
-function uploadPersonalFile(input){var files=Array.from(input.files);files.forEach(function(f){var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),url:URL.createObjectURL(f)});});renderPersonalFiles();showToast('Đã upload '+files.length+' file','success');input.value='';}
 function publishPersonalFile(i) {
   var f = personalFiles[i]; if (!f) return;
   // Only show categories that exist as module groups
