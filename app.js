@@ -515,6 +515,13 @@ function doLogout() {
   currentUser = null;
   loginAttempts = 0;
   lockUntil = 0;
+  // Clear all session/cache data
+  sessionStorage.removeItem('lkl_id_token');
+  sessionStorage.removeItem('lkl_shared_cache');
+  sessionStorage.removeItem('lkl_shared_ts');
+  // Clear chat history
+  if (typeof chatHistory !== 'undefined') chatHistory = [];
+  if (typeof currentSessionId !== 'undefined') currentSessionId = null;
   var btn = document.getElementById('login-btn');
   if (btn) { btn.disabled = false; btn.textContent = 'Đăng nhập'; }
   document.getElementById('app').style.display = 'none';
@@ -918,7 +925,7 @@ function doKnowledgeSearch() {
         '</div>' +
         '<ul style="margin:0 0 10px 18px;padding:0">' +
         summary.map(function(s) {
-          var highlighted = s.text;
+          var highlighted = s.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
           words.forEach(function(w){
             var re = new RegExp('('+w+')', 'gi');
             highlighted = highlighted.replace(re, '<mark style="background:#fef08a;padding:0 2px;border-radius:2px;font-weight:600">$1</mark>');
@@ -939,7 +946,7 @@ function doKnowledgeSearch() {
       var item = r.item;
       var fileUrl = 'https://juni0rlink.github.io/link-knowledge-library/content/' + encodeURIComponent(item.file);
       var viewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + fileUrl;
-      var excerpt = item.text;
+      var excerpt = item.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       words.forEach(function(w){
         var re = new RegExp('('+w+')', 'gi');
         excerpt = excerpt.replace(re, '<mark style="background:#fef08a;padding:0 2px;border-radius:2px;font-weight:600">$1</mark>');
