@@ -92,6 +92,28 @@
     <main>
       <div class="page active" id="page-home">
         <div class="page-header"><div class="page-tag">v1.0</div><div class="page-title">Xin chào, <span id="welcome-name"></span> 👋</div><div class="page-meta" id="welcome-desc"></div></div>
+
+        <div class="card" id="home-guide-card" style="border-top-color:#7c3aed">
+          <div class="card-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="document.getElementById('home-guide-body').style.display = document.getElementById('home-guide-body').style.display==='none'?'block':'none'; this.querySelector('span').textContent = document.getElementById('home-guide-body').style.display==='none'?'▶':'▼';">
+            <span>📖 Cẩm nang sử dụng — Hướng dẫn nhanh các tính năng</span>
+            <span style="font-size:12px;color:#7c3aed">▼</span>
+          </div>
+          <div id="home-guide-body" style="font-size:13px;line-height:1.7;color:#374151">
+            <p>Chào mừng bạn đến với <strong>LINK Knowledge Library</strong> — thư viện tri thức kỹ thuật nội bộ của LINK Group. Dưới đây là hướng dẫn nhanh giúp bạn khai thác tối đa các tính năng:</p>
+            <ul style="padding-left:18px;margin:8px 0">
+              <li><strong>🔍 Tìm kiếm tài liệu:</strong> Gõ từ khóa (tên module, mã lỗi, thuật ngữ kỹ thuật...) để tìm nhanh trong toàn bộ tài liệu GSC, Safety, SAS, Manual.</li>
+              <li><strong>📚 Thư viện chung:</strong> Xem tài liệu/module theo từng nhóm (GSC, Safety, SAS...), có thể bình luận, đặt câu hỏi ngay trên từng module.</li>
+              <li><strong>👤 File cá nhân:</strong> Upload, lưu trữ và quản lý tài liệu riêng của bạn — chỉ bạn mới thấy được, có thể chuyển sang chia sẻ chung khi cần.</li>
+              <li><strong>📝 Ghi chú &amp; Bảng tính:</strong> Tạo ghi chú nhanh hoặc bảng tính đơn giản (hỗ trợ công thức như SUM, AVG, IF...) ngay trong app.</li>
+              <li><strong>📢 News:</strong> Theo dõi thông báo, cập nhật mới nhất từ Admin — luôn cập nhật những gì vừa thay đổi trong hệ thống.</li>
+              <li><strong>🤖 Trợ lý AI:</strong> Bấm biểu tượng 🤖 để hỏi đáp nhanh về kỹ thuật, tóm tắt tài liệu hoặc nhờ AI hỗ trợ soạn nội dung (cần cấu hình API key trong Cài đặt).</li>
+              <li><strong>🗑️ Thùng rác:</strong> File/module bị xóa sẽ lưu tạm ở đây — có thể khôi phục nếu xóa nhầm.</li>
+              <li><strong>⚙️ Cài đặt:</strong> Đổi mật khẩu, cấu hình AI, quản lý dung lượng lưu trữ cá nhân.</li>
+            </ul>
+            <p style="color:#6b7280;font-size:12px;margin-top:6px">💡 Mẹo: Bảng "Tính năng theo vai trò" bên dưới cho biết bạn đang có quyền truy cập những gì. Nếu cần thêm quyền, hãy liên hệ Admin.</p>
+          </div>
+        </div>
+
         <div class="card"><div class="card-title">🔐 Quyền truy cập của bạn</div><div id="permission-list"></div></div>
         <div class="card">
           <div class="card-title">📂 Tính năng theo vai trò</div>
