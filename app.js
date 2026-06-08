@@ -656,7 +656,10 @@ function doRegister() {
     fbSet('/shared/pendingRegs', pendingRegs);
     updateRegBadge();
 
-    ok.textContent = '✅ Đăng ký thành công! Admin sẽ phê duyệt và cấp quyền cho ' + email;
+    ok.innerHTML = '✅ Đăng ký thành công!<br>'
+      + '📧 Email: <strong>' + email + '</strong><br>'
+      + '⏳ Trạng thái: Chờ Admin phê duyệt (thường trong vòng 1 ngày làm việc)<br>'
+      + '💡 Bạn sẽ nhận email thông báo khi được cấp quyền. Liên hệ Admin nếu cần gấp.';
     ok.style.display = 'block';
     ['reg-name','reg-email','reg-dept','reg-reason'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
     if (document.getElementById('reg-pass')) document.getElementById('reg-pass').value = '';
