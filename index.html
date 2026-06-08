@@ -356,7 +356,14 @@
             <button class="btn-sm" onclick="insertNewsImage()" title="Chèn ảnh">🖼️</button>
             <div style="width:1px;height:20px;background:#e5e7eb;margin:0 4px"></div>
             <button onclick="previewNews()" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">👁️ Xem trước</button>
-            <button onclick="newsAiAssist()" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">✨ Claude AI</button>
+            <button onclick="toggleNewsAiBar()" id="news-ai-toggle-btn" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">✨ AI viết</button>
+          </div>
+          <!-- AI inline prompt bar -->
+          <div id="news-ai-bar" style="display:none;background:#f5f3ff;border-bottom:1px solid #ddd6fe;padding:10px 16px;gap:8px;align-items:center">
+            <input id="news-ai-prompt" type="text" placeholder="Nhập yêu cầu cho AI (VD: viết bài về update tính năng GSC v18)..." style="flex:1;border:1px solid #c4b5fd;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;min-width:0"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();runNewsAiInline();}">
+            <button onclick="runNewsAiInline()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">🚀 Tạo bài</button>
+            <button onclick="toggleNewsAiBar()" style="background:#f3f4f6;border:none;border-radius:6px;padding:7px 10px;font-size:12px;cursor:pointer">✕</button>
           </div>
           <!-- Editor -->
           <div id="news-body-editor" contenteditable="true"
@@ -509,7 +516,7 @@ function installPWA() {
 
 <!-- AI CHAT (multi-provider) -->
 <button id="claude-fab" onclick="toggleChat()" title="Hỏi AI Assistant" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.4);display:none;align-items:center;justify-content:center;font-size:22px;z-index:800;transition:transform .2s">🤖</button>
-<div id="claude-panel" style="display:none;position:fixed;bottom:88px;right:24px;width:400px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:900;flex-direction:column;max-height:560px;border:1px solid #e5e7eb;overflow:hidden">
+<div id="claude-panel" style="display:none;position:fixed;bottom:88px;right:16px;width:340px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:900;flex-direction:column;max-height:480px;border:1px solid #e5e7eb;overflow:hidden">
   <!-- Header -->
   <div id="ai-panel-header" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:12px 16px;display:flex;align-items:center;gap:10px">
     <span style="font-size:20px" id="ai-provider-icon">🤖</span>

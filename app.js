@@ -1215,6 +1215,42 @@ function togglePinNews(id) {
   if (n) { n.pinned = !n.pinned; fbSaveNews(); renderNews(); showToast(n.pinned?'Đã ghim':'Đã bỏ ghim','success'); }
 }
 
+function toggleNewsAiBar() {
+  var bar = document.getElementById('news-ai-bar');
+  if (!bar) return;
+  var isOpen = bar.style.display !== 'none';
+  bar.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) {
+    var inp = document.getElementById('news-ai-prompt'); if(inp) { inp.focus(); inp.value = ''; }
+  }
+}
+
+function runNewsAiInline() {
+  var promptEl = document.getElementById('news-ai-prompt');
+  var prompt = promptEl ? promptEl.value.trim() : '';
+  if (!prompt) { showToast('Nhập yêu cầu cho AI', 'warning'); return; }
+  var titleEl = document.getElementById('news-title-inp');
+  var title = titleEl ? titleEl.value.trim() : '';
+  var editor = document.getElementById('news-body-editor');
+  if (editor) editor.innerHTML = '<p style="color:#aaa">⏳ AI đang viết bài...</p>';
+  var fullPrompt = 'Viết một bài thông báo nội bộ ngắn gọn (200-400 từ) cho LINK Group theo yêu cầu sau:\n'
+    + prompt
+    + (title ? '\nTiêu đề bài viết: ' + title : '')
+    + '\n\nYêu cầu: bài viết chuyên nghiệp, có cấu trúc rõ ràng (giới thiệu, nội dung, kết luận), phù hợp với môi trường kỹ thuật BMW/SiCar.';
+  callAI(fullPrompt, 'Bạn là chuyên gia viết nội dung kỹ thuật nội bộ cho LINK Group. Viết bằng tiếng Việt, chuyên nghiệp, súc tích.', function(text, err) {
+    if (!editor) return;
+    if (err) { editor.innerHTML = '<p style="color:#ef4444">❌ Lỗi AI: '+err+'</p>'; return; }
+    editor.innerHTML = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');
+    // Auto-fill title if empty
+    if (titleEl && !titleEl.value.trim()) {
+      var firstLine = text.split('\n')[0].replace(/^#+\s*/,'').replace(/\*\*/g,'').slice(0,80);
+      if (firstLine) titleEl.value = firstLine;
+    }
+    document.getElementById('news-ai-bar').style.display = 'none';
+    showToast('✅ AI đã tạo nội dung — kiểm tra và chỉnh sửa trước khi đăng', 'success');
+  });
+}
+
 function insertNewsLink() {
   var url = prompt('Nhập URL:'); if (!url) return;
   var text = prompt('Tên hiển thị:') || url;
