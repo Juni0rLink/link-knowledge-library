@@ -518,6 +518,28 @@ function renderProfileCard() {
   }
 }
 
+/**
+ * Cho phép người dùng tự sửa tên hiển thị của chính mình (khắc phục các tài
+ * khoản có tên bị thiếu/sai do đăng ký từ luồng cũ — vd hiển thị "phongnt"
+ * thay vì "Nguyễn Tuấn Phong"). Cập nhật cả Firebase /users/{uid}/name lẫn
+ * currentUser + các phần tử hiển thị trên giao diện ngay lập tức.
+ */
+function editMyName() {
+  if (!currentUser) return;
+  var newName = prompt('Nhập họ tên đầy đủ của bạn:', currentUser.name || '');
+  if (newName === null) return;
+  newName = newName.trim();
+  if (!newName) { showToast('Tên không được để trống', 'warning'); return; }
+  fbSet('/users/' + currentUser.uid + '/name', newName, function() {
+    currentUser.name = newName;
+    var n1 = document.getElementById('profile-name-display'); if (n1) n1.textContent = newName;
+    var n2 = document.getElementById('user-name-display'); if (n2) n2.textContent = newName;
+    var n3 = document.getElementById('welcome-name'); if (n3) n3.textContent = newName;
+    var av = document.getElementById('user-avatar'); if (av) av.textContent = newName.charAt(0).toUpperCase();
+    showToast('✅ Đã cập nhật tên hiển thị', 'success');
+  });
+}
+
 function forgotPassword() {
   var email = document.getElementById('login-email').value.trim();
   if (!email) {
@@ -1095,9 +1117,13 @@ function acceptReg(id) {
   if (!reg) return;
   var roleSel = document.getElementById('role-sel-' + id);
   var chosenRole = roleSel ? roleSel.value : 'colleague';
-  // Update role in Firebase DB
+  // Update role in Firebase DB — also (re)sync name/email from registration
+  // so the user's display name is always correct, even if the existing
+  // /users/{uid} profile predates this fix or was missing the field.
   fbSet('/users/' + id + '/role', chosenRole);
   fbSet('/users/' + id + '/status', 'active');
+  fbSet('/users/' + id + '/name', reg.name);
+  fbSet('/users/' + id + '/email', reg.email);
   addMemberRow(reg.name, reg.email, chosenRole);
   showToast('✅ Đã cấp quyền ' + chosenRole + ' cho ' + reg.name, 'success');
   pendingRegs = pendingRegs.filter(function(r) { return r.id != id; });
