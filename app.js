@@ -1510,6 +1510,24 @@ function tryClaudeModels(key, sysMsg, prompt, models, cb) {
 }
 
 // ── UNIVERSAL AI CALL ──
+// Translate raw AI provider errors into clear, actionable Vietnamese messages
+function aiClearErr(provider, status, rawMsg) {
+  var s = (rawMsg||'').toLowerCase();
+  if (status === 401 || status === 403 || s.includes('unauthorized') || s.includes('invalid') && s.includes('key') || s.includes('incorrect api key') || s.includes('api key not valid')) {
+    return '🔑 API key của ' + provider + ' không hợp lệ hoặc đã bị thu hồi. Vào phần cài đặt AI (🤖) để kiểm tra/nhập lại key đúng.';
+  }
+  if (status === 429 || s.includes('rate limit') || s.includes('quota') || s.includes('exceeded')) {
+    return '⏳ ' + provider + ' báo vượt giới hạn (rate limit/quota). Vui lòng thử lại sau ít phút hoặc kiểm tra hạn mức tài khoản.';
+  }
+  if (status === 404 || s.includes('model')) {
+    return '⚠️ Model AI không khả dụng với key/tài khoản này. Hãy thử chọn model khác trong cài đặt AI.';
+  }
+  if (status >= 500) {
+    return '🛠️ Máy chủ ' + provider + ' đang gặp sự cố (lỗi ' + status + '). Vui lòng thử lại sau.';
+  }
+  return provider + ' error: ' + (rawMsg || ('HTTP ' + status));
+}
+
 function callAI(prompt, systemMsg, cb) {
   var provider = localStorage.getItem('ai-provider') || 'claude';
   var sysMsg = systemMsg || 'Bạn là trợ lý kỹ thuật nội bộ LINK Group. Trả lời bằng tiếng Việt, súc tích, chính xác.';
@@ -1520,8 +1538,8 @@ function callAI(prompt, systemMsg, cb) {
       method:'POST',
       headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:localStorage.getItem('claude-working-model')||'claude-3-5-haiku-latest',max_tokens:1000,system:sysMsg,messages:[{role:'user',content:prompt}]})
-    }).then(function(r){return r.json();}).then(function(d){
-      if(d.error && (d.error.message||'').toLowerCase().includes('model')) {
+    }).then(function(r){return r.json().then(function(d){d._status=r.status;return d;});}).then(function(d){
+      if(d.error && (d.error.message||'').toLowerCase().includes('model') && d._status !== 401 && d._status !== 403) {
         // Model not found — try fallback list
         tryClaudeModels(key, sysMsg, prompt, [
           'claude-3-haiku-20240307',
@@ -1530,7 +1548,7 @@ function callAI(prompt, systemMsg, cb) {
           'claude-opus-4-5'
         ], cb);
       } else if(d.error) {
-        cb(null, 'Claude error: '+d.error.message);
+        cb(null, aiClearErr('Claude', d._status, d.error.message));
       } else {
         // Save working model for next time
         var workingModel = 'claude-3-5-haiku-latest';
@@ -1545,8 +1563,8 @@ function callAI(prompt, systemMsg, cb) {
       method:'POST',
       headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
       body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1000,messages:[{role:'system',content:sysMsg},{role:'user',content:prompt}]})
-    }).then(function(r){return r.json();}).then(function(d){
-      if(d.error) cb(null,'GPT error: '+d.error.message);
+    }).then(function(r){return r.json().then(function(d){d._status=r.status;return d;});}).then(function(d){
+      if(d.error) cb(null,aiClearErr('OpenAI/GPT', d._status, d.error.message));
       else cb((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'');
     }).catch(function(e){cb(null,'Lỗi kết nối GPT: '+e.message);});
 
@@ -1559,8 +1577,8 @@ function callAI(prompt, systemMsg, cb) {
       method:'POST',
       headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json','HTTP-Referer':'https://juni0rlink.github.io/link-knowledge-library','X-Title':'LINK Knowledge Library'},
       body:JSON.stringify({model:model,max_tokens:1000,messages:[{role:'system',content:sysMsg},{role:'user',content:prompt}]})
-    }).then(function(r){return r.json();}).then(function(d){
-      if(d.error) cb(null,'OpenRouter error: '+d.error.message);
+    }).then(function(r){return r.json().then(function(d){d._status=r.status;return d;});}).then(function(d){
+      if(d.error) cb(null,aiClearErr('OpenRouter', d._status, d.error.message));
       else cb((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'');
     }).catch(function(e){cb(null,'Lỗi kết nối OpenRouter: '+e.message);});
 
@@ -1570,8 +1588,8 @@ function callAI(prompt, systemMsg, cb) {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:sysMsg+'\n\n'+prompt}]}]})
-    }).then(function(r){return r.json();}).then(function(d){
-      if(d.error) cb(null,'Gemini error: '+d.error.message);
+    }).then(function(r){return r.json().then(function(d){d._status=r.status;return d;});}).then(function(d){
+      if(d.error) cb(null,aiClearErr('Gemini', d._status, d.error.message||(d.error.status)));
       else cb((d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text)||'');
     }).catch(function(e){cb(null,'Lỗi kết nối Gemini: '+e.message);});
   }
