@@ -37,6 +37,12 @@ function fbAuthParam() {
   return token ? '?auth=' + token : '';
 }
 
+// Escape HTML special chars to prevent XSS when injecting user-provided text via innerHTML
+function escHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function fbGet(path, cb) {
   fetch(FB_URL + path + '.json' + fbAuthParam())
     .then(function(r){ return r.json(); })
@@ -1080,8 +1086,8 @@ function loadFirebaseMembers() {
           }).join('') + '</select>'
         : '<span class="role-badge ' + cfg.cls + '">' + cfg.label + '</span>';
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td><strong>' + (u.name||u.email.split('@')[0]) + '</strong></td>' +
-        '<td style="font-size:12px;color:#888">' + u.email + '</td>' +
+      tr.innerHTML = '<td><strong>' + escHtml(u.name||u.email.split('@')[0]) + '</strong></td>' +
+        '<td style="font-size:12px;color:#888">' + escHtml(u.email) + '</td>' +
         '<td>' + roleSelect + '</td>' +
         '<td>' + (isOwnerUser ? '—' : (canEdit ? '<button class="btn-sm reject-btn" onclick="removeUser(\''+uid+'\')">🗑️</button>' : '')) + '</td>';
       container.appendChild(tr);
@@ -2338,12 +2344,12 @@ function loadModuleExtras(id) {
       var canDelete = isAdmin || (currentUser && (c.author === currentUser.name || c.author === emailPrefix));
       return '<div style="background:#f8f9fb;border-left:3px solid #1d4ed8;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:8px">'
         +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'
-        +'<span style="font-weight:700;font-size:12px;color:#1d4ed8">'+c.author+'</span>'
+        +'<span style="font-weight:700;font-size:12px;color:#1d4ed8">'+escHtml(c.author)+'</span>'
         +'<span class="role-badge '+cfg.cls+'" style="font-size:10px;padding:1px 6px">'+cfg.label+'</span>'
-        +'<span style="font-size:11px;color:#aaa;margin-left:auto">'+c.time+'</span>'
+        +'<span style="font-size:11px;color:#aaa;margin-left:auto">'+escHtml(c.time)+'</span>'
         +(canDelete ? '<button onclick="deleteModuleComment(\''+id+'\','+ci+')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;margin-left:6px">🗑️</button>' : '')
         +'</div>'
-        +'<div style="font-size:13px;color:#374151;line-height:1.6">'+c.text+'</div>'
+        +'<div style="font-size:13px;color:#374151;line-height:1.6">'+escHtml(c.text)+'</div>'
         +'</div>';
     }).join('');
   });
@@ -2666,7 +2672,7 @@ function openRoom(id) {
     '</div>' +
     '<div style="width:280px;border-left:1px solid #eee;display:flex;flex-direction:column">' +
     '<div style="padding:10px 14px;font-size:12px;font-weight:700;border-bottom:1px solid #eee">Ὂc Comments</div>' +
-    '<div id="room-comments" style="flex:1;overflow-y:auto;padding:10px">'+activeRoom.comments.map(function(c){return '<div style="background:#f0f5ff;border-left:3px solid #1c69d4;padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:12px"><div style="font-weight:700;color:#0653b6;margin-bottom:3px">'+c.author+'</div>'+c.text+'<div style="color:#aaa;font-size:10px;margin-top:4px">'+c.time+'</div></div>';}).join('')+'</div>' +
+    '<div id="room-comments" style="flex:1;overflow-y:auto;padding:10px">'+activeRoom.comments.map(function(c){return '<div style="background:#f0f5ff;border-left:3px solid #1c69d4;padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:12px"><div style="font-weight:700;color:#0653b6;margin-bottom:3px">'+escHtml(c.author)+'</div>'+escHtml(c.text)+'<div style="color:#aaa;font-size:10px;margin-top:4px">'+escHtml(c.time)+'</div></div>';}).join('')+'</div>' +
     '<div style="padding:10px;border-top:1px solid #eee"><textarea id="room-cmt-input" rows="2" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:7px;font-size:12px;outline:none;resize:none"></textarea><button onclick="addRoomComment()" style="width:100%;background:#1c69d4;color:#fff;border:none;padding:6px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px">Gửi comment</button></div>' +
     '</div></div></div>';
 }
@@ -2697,7 +2703,7 @@ function addRoomComment() {
   var list = document.getElementById('room-comments');
   var div = document.createElement('div');
   div.style.cssText = 'background:#f0f5ff;border-left:3px solid #1c69d4;padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:12px';
-  div.innerHTML = '<div style="font-weight:700;color:#0653b6;margin-bottom:3px">'+c.author+'</div>'+c.text+'<div style="color:#aaa;font-size:10px;margin-top:4px">Vừa xong</div>';
+  div.innerHTML = '<div style="font-weight:700;color:#0653b6;margin-bottom:3px">'+escHtml(c.author)+'</div>'+escHtml(c.text)+'<div style="color:#aaa;font-size:10px;margin-top:4px">Vừa xong</div>';
   list.appendChild(div);
   list.scrollTop = 9999;
   inp.value = '';
@@ -2790,11 +2796,11 @@ function switchPersonalTab(tab, el) {
   if(tab==='notes') loadPersonalNoteEditor();
 }
 function createPersonalDoc(){var name=prompt('Tên tài liệu:');if(!name)return;personalDocs.push({id:Date.now(),name:name,content:'<p>Bắt đầu soạn thảo...</p>',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:''});renderPersonalDocs();showToast('Đã tạo: '+name,'success');}
-function renderPersonalDocs(){var list=document.getElementById('personal-docs-list');if(!list)return;if(!personalDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}list.innerHTML=personalDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.date+'</div></div><button onclick="editPersonalDoc('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Sửa</button><button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>'+'<div id="doc-editor-'+i+'" style="display:none;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px"><div contenteditable="true" id="doc-content-'+i+'" style="min-height:120px;padding:12px;outline:none;font-size:13px">'+doc.content+'</div><button onclick="savePersonalDoc('+i+')" style="margin:8px;background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer">💾 Lưu</button></div>';}).join('');}
+function renderPersonalDocs(){var list=document.getElementById('personal-docs-list');if(!list)return;if(!personalDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}list.innerHTML=personalDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+escHtml(doc.name)+'</div><div style="font-size:11px;color:#888">'+doc.date+'</div></div><button onclick="editPersonalDoc('+i+')" class="btn-sm" style="background:#f3f4f6;border:none;cursor:pointer">✏️ Sửa</button><button onclick="personalDocs.splice('+i+',1);renderPersonalDocs()" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button></div>'+'<div id="doc-editor-'+i+'" style="display:none;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px"><div contenteditable="true" id="doc-content-'+i+'" style="min-height:120px;padding:12px;outline:none;font-size:13px">'+doc.content+'</div><button onclick="savePersonalDoc('+i+')" style="margin:8px;background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer">💾 Lưu</button></div>';}).join('');}
 function editPersonalDoc(i){var el=document.getElementById('doc-editor-'+i);if(el)el.style.display=el.style.display==='none'?'block':'none';}
 function savePersonalDoc(i){var c=document.getElementById('doc-content-'+i);if(c&&personalDocs[i]){personalDocs[i].content=c.innerHTML;showToast('Đã lưu!','success');}}
 function createPersonalSheet(){var name=prompt('Tên bảng tính:');if(!name)return;personalSheets.push({id:Date.now(),name:name,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:{}});renderPersonalSheets();showToast('Đã tạo: '+name,'success');}
-function renderPersonalSheets(){var list=document.getElementById('personal-sheets-list');if(!list)return;if(!personalSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}list.innerHTML=personalSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.date+'</div></div><button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn">🗑️</button></div>';}).join('');}
+function renderPersonalSheets(){var list=document.getElementById('personal-sheets-list');if(!list)return;if(!personalSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}list.innerHTML=personalSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+escHtml(s.name)+'</div><div style="font-size:11px;color:#888">'+s.date+'</div></div><button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn">🗑️</button></div>';}).join('');}
 function publishPersonalFile(i) {
   var f = personalFiles[i]; if (!f) return;
   // Only show categories that exist as module groups
@@ -3225,9 +3231,9 @@ function switchFilesTab(tab, el) {
   if(tab==='notes') loadModuleActivity();
 }
 function createSharedDoc(){var name=prompt('Tên tài liệu chung:');if(!name)return;sharedDocs.push({id:Date.now(),name:name,content:'<p>Bắt đầu soạn thảo...</p>',date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',comments:[]});fbSet('/shared/sharedDocs',sharedDocs);fbClearCache();renderSharedDocs();showToast('Đã tạo: '+name,'success');}
-function renderSharedDocs(){var list=document.getElementById('shared-docs-list');if(!list)return;if(!sharedDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}var isAdmin=currentUser&&['owner','admin'].includes(currentUser.role);list.innerHTML=sharedDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+doc.name+'</div><div style="font-size:11px;color:#888">'+doc.author+' · '+doc.date+'</div></div>'+(isAdmin?'<button onclick="sharedDocs.splice('+i+',1);fbSet(\'/shared/sharedDocs\',sharedDocs);fbClearCache();renderSharedDocs()" class="btn-sm reject-btn">🗑️</button>':'')+'</div>';}).join('');}
+function renderSharedDocs(){var list=document.getElementById('shared-docs-list');if(!list)return;if(!sharedDocs.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có tài liệu nào.</p>';return;}var isAdmin=currentUser&&['owner','admin'].includes(currentUser.role);list.innerHTML=sharedDocs.map(function(doc,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📝</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+escHtml(doc.name)+'</div><div style="font-size:11px;color:#888">'+escHtml(doc.author)+' · '+doc.date+'</div></div>'+(isAdmin?'<button onclick="sharedDocs.splice('+i+',1);fbSet(\'/shared/sharedDocs\',sharedDocs);fbClearCache();renderSharedDocs()" class="btn-sm reject-btn">🗑️</button>':'')+'</div>';}).join('');}
 function createSharedSheet(){var name=prompt('Tên bảng tính chung:');if(!name)return;sharedSheets.push({id:Date.now(),name:name,date:new Date().toLocaleDateString('vi-VN'),author:currentUser?currentUser.name:'',data:{}});fbSet('/shared/sharedSheets',sharedSheets);fbClearCache();renderSharedSheets();showToast('Đã tạo: '+name,'success');}
-function renderSharedSheets(){var list=document.getElementById('shared-sheets-list');if(!list)return;if(!sharedSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}var isAdmin=currentUser&&['owner','admin'].includes(currentUser.role);list.innerHTML=sharedSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+s.name+'</div><div style="font-size:11px;color:#888">'+s.author+' · '+s.date+'</div></div>'+(isAdmin?'<button onclick="sharedSheets.splice('+i+',1);fbSet(\'/shared/sharedSheets\',sharedSheets);fbClearCache();renderSharedSheets()" class="btn-sm reject-btn">🗑️</button>':'')+'</div>';}).join('');}
+function renderSharedSheets(){var list=document.getElementById('shared-sheets-list');if(!list)return;if(!sharedSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}var isAdmin=currentUser&&['owner','admin'].includes(currentUser.role);list.innerHTML=sharedSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+escHtml(s.name)+'</div><div style="font-size:11px;color:#888">'+escHtml(s.author)+' · '+s.date+'</div></div>'+(isAdmin?'<button onclick="sharedSheets.splice('+i+',1);fbSet(\'/shared/sharedSheets\',sharedSheets);fbClearCache();renderSharedSheets()" class="btn-sm reject-btn">🗑️</button>':'')+'</div>';}).join('');}
 function saveSharedNote(){var t=document.getElementById('shared-note-area');if(t){sharedNote=t.value;fbSet('/shared/sharedNote',sharedNote);showToast('Đã lưu ghi chú','success');}}
 
 function loadModuleActivity() {
@@ -3257,15 +3263,15 @@ function loadModuleActivity() {
       var recentHtml = r.all.slice(-3).reverse().map(function(c){
         var cfg = ROLE_CFG[c.role] || ROLE_CFG.colleague;
         return '<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f5f5f5">'
-          +'<div style="width:28px;height:28px;border-radius:50%;background:'+cfg.color+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">'+c.author.charAt(0).toUpperCase()+'</div>'
+          +'<div style="width:28px;height:28px;border-radius:50%;background:'+cfg.color+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">'+escHtml((c.author||'?').charAt(0).toUpperCase())+'</div>'
           +'<div style="flex:1;min-width:0">'
           +'<div style="display:flex;gap:6px;align-items:center;margin-bottom:2px">'
-          +'<span style="font-weight:700;font-size:12px;color:#1e293b">'+c.author+'</span>'
+          +'<span style="font-weight:700;font-size:12px;color:#1e293b">'+escHtml(c.author)+'</span>'
           +'<span class="role-badge '+cfg.cls+'" style="font-size:10px;padding:1px 5px">'+cfg.label+'</span>'
-          +'<span style="font-size:10px;color:#aaa;margin-left:auto">'+c.time+'</span>'
+          +'<span style="font-size:10px;color:#aaa;margin-left:auto">'+escHtml(c.time)+'</span>'
           +((currentUser&&(['owner','admin'].includes(currentUser.role)||c.author===currentUser.name)) ? '<button onclick="deleteModuleComment(\''+r.mid+'\','+r.all.slice(-3).reverse().indexOf(c)+')" style="background:#fee2e2;color:#ef4444;border:none;border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;margin-left:4px">🗑️</button>' : '')
           +'</div>'
-          +'<div style="font-size:12px;color:#475569;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.text+'</div>'
+          +'<div style="font-size:12px;color:#475569;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(c.text)+'</div>'
           +'</div></div>';
       }).join('');
       return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:0;margin-bottom:12px;overflow:hidden">'
