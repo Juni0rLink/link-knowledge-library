@@ -2791,7 +2791,9 @@ function renderPersonalSheets(){var list=document.getElementById('personal-sheet
 function uploadPersonalFile(input){var files=Array.from(input.files);files.forEach(function(f){var sz=f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';personalFiles.push({id:Date.now(),name:f.name,type:f.type,size:sz,date:new Date().toLocaleDateString('vi-VN'),url:URL.createObjectURL(f)});});renderPersonalFiles();showToast('Đã upload '+files.length+' file','success');input.value='';}
 function publishPersonalFile(i) {
   var f = personalFiles[i]; if (!f) return;
-  var cat = prompt('Đưa vào phân vùng nào?\n(GSC Modules / Tools & Software / Training / SiCar Standards / Chung)', f.category || 'Chung');
+  // Only show categories that exist as module groups
+  var catOptions = moduleGroups.map(function(g){ return g.name; }).join('\n');
+  var cat = prompt('Đưa vào phân vùng nào?\n' + catOptions, moduleGroups[0]&&moduleGroups[0].name||'Chung');
   if (!cat) return; // user cancelled category selection
   if (!confirm('📤 Di chuyển "' + (f.name||'') + '" lên Thư viện chung?\n\nOK = Di chuyển (xóa khỏi File cá nhân)\nCancel = Hủy')) return;
   // Move: add to shared + remove from personal
@@ -2806,46 +2808,27 @@ function publishPersonalFile(i) {
   showToast('✅ Đã di chuyển lên Thư viện chung: ' + cat, 'success');
 }
 
-var _personalCollapsedCats = {};
-function togglePersonalCat(cat) { _personalCollapsedCats[cat]=!_personalCollapsedCats[cat]; renderPersonalFiles(); }
-
 function renderPersonalFiles(){
   var list=document.getElementById('personal-files-list');
   if(!list)return;
-  if(!personalFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào.</p>';return;}
-  // Group by category
-  var cats={};
-  personalFiles.forEach(function(f,i){ var cat=f.category||'Chung'; if(!cats[cat])cats[cat]=[]; cats[cat].push({f:f,i:i}); });
-  var html='';
-  Object.keys(cats).forEach(function(cat){
-    var collapsed=_personalCollapsedCats[cat];
-    var safecat=cat.replace(/'/g,"\\'");
-    html+='<div onclick="togglePersonalCat(\''+safecat+'\')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f5f3ff;border-radius:8px;margin:10px 0 6px;cursor:pointer;user-select:none">'
-      +'<span style="font-size:11px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:1px;flex:1">'+cat+' ('+cats[cat].length+')</span>'
-      +'<span style="font-size:12px;color:#a78bfa;transform:rotate('+(collapsed?'-90':'0')+'deg)">▾</span></div>';
-    if(!collapsed){
-      cats[cat].forEach(function(x){
-        var f=x.f, i=x.i;
-        var icon=getSharedFileIcon?getSharedFileIcon(f.name||''):(f.icon||'📁');
-        var ext=(f.name||'').split('.').pop().toLowerCase();
-        var isPDF=ext==='pdf', isOffice=['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext)>=0;
-        var fileUrl=f.url||'';
-        var viewUrl=f.isLink?(f.viewUrl||fileUrl):isPDF?('https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl)+'&embedded=true'):isOffice?('https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl)):fileUrl;
-        var dlBtn=f.isLink?('<a href="'+fileUrl+'" target="_blank" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">↗️</a>'):('<a href="'+fileUrl+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">⬇️</a>');
-        html+='<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px">'
-          +'<span style="font-size:20px">'+icon+'</span>'
-          +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+(f.name||'')+'</div>'
-          +'<div style="font-size:11px;color:#888">'+(f.size||'')+(f.date?' · '+f.date:'')+'</div></div>'
-          +'<button onclick="showMovePersonalFile('+i+')" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer" title="Di chuyển">📂</button>'
-          +'<button onclick="publishPersonalFile('+i+')" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px" title="Chia sẻ lên Thư viện chung">📤</button>'
-          +'<a href="'+viewUrl+'" target="_blank" style="background:#ede9fe;color:#7c3aed;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">👁️</a>'
-          + dlBtn
-          +'<button onclick="moveToTrash(\'personalfile\',personalFiles['+i+'],function(){personalFiles.splice('+i+',1);fbSavePersonal();renderPersonalFiles();})" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>'
-          +'</div>';
-      });
-    }
-  });
-  list.innerHTML=html;
+  if(!personalFiles.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:10px">Chưa có file nào. Bấm "Chọn file" để upload.</p>';return;}
+  list.innerHTML = personalFiles.map(function(f,i){
+    var icon=getSharedFileIcon?getSharedFileIcon(f.name||''):(f.icon||'📁');
+    var ext=(f.name||'').split('.').pop().toLowerCase();
+    var isPDF=ext==='pdf', isOffice=['doc','docx','xls','xlsx','ppt','pptx'].indexOf(ext)>=0;
+    var fileUrl=f.url||'';
+    var viewUrl=f.isLink?(f.viewUrl||fileUrl):isPDF?('https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl)+'&embedded=true'):isOffice?('https://view.officeapps.live.com/op/view.aspx?src='+encodeURIComponent(fileUrl)):fileUrl;
+    var dlBtn=f.isLink?('<a href="'+fileUrl+'" target="_blank" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">↗️</a>'):('<a href="'+fileUrl+'" download="'+f.name+'" style="background:#dcfce7;color:#15803d;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">⬇️</a>');
+    return '<div style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px">'
+      +'<span style="font-size:20px">'+icon+'</span>'
+      +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+(f.name||'')+'</div>'
+      +'<div style="font-size:11px;color:#888">'+(f.size||'')+(f.date?' · '+f.date:'')+'</div></div>'
+      +'<button onclick="publishPersonalFile('+i+')" style="background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer" title="Chia sẻ lên Thư viện chung">📤 Public</button>'
+      +'<a href="'+viewUrl+'" target="_blank" style="background:#ede9fe;color:#7c3aed;padding:4px 8px;border-radius:6px;font-size:11px;text-decoration:none;margin-left:4px">👁️</a>'
+      + dlBtn
+      +'<button onclick="moveToTrash(\'personalfile\',personalFiles['+i+'],function(){personalFiles.splice('+i+',1);fbSavePersonal();renderPersonalFiles();})" class="btn-sm reject-btn" style="margin-left:4px">🗑️</button>'
+      +'</div>';
+  }).join('');
 }
 
 function showMovePersonalFile(idx) {
@@ -3720,13 +3703,11 @@ function getSharedFileIcon(name) {
 
 function uploadPersonalFile(input) {
   var files = Array.from(input.files); if (!files.length) return;
-  var catEl = document.getElementById('personal-upload-category');
-  var category = catEl ? catEl.value : 'Chung';
   files.forEach(function(file) {
     uploadToCloud(file, function(err, f) {
       if (!err) {
-        f.category = category;
         f.icon = getSharedFileIcon(file.name);
+        // No category needed — stays in personal files until published
         personalFiles.push(f); fbSavePersonal(); renderPersonalFiles();
         showToast('✅ Upload: ' + f.name, 'success');
       } else { showToast('Lỗi upload: ' + file.name, 'error'); }
