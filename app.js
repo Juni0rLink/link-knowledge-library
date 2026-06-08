@@ -1070,6 +1070,12 @@ function showPage(id, el) {
   if (id === 'myfiles') { renderPersonalDocs(); renderPersonalSheets(); renderPersonalFiles(); }
   if (id === 'admin') { renderRegRequests(); loadFirebaseMembers(); }
   if (id === 'settings') { renderProfileCard(); renderAiKeysList(); }
+  // Chỉ hiện AI FAB ở các trang nội dung; ẩn ở trang quản trị/tin tức/cài đặt
+  var fab = document.getElementById('claude-fab');
+  if (fab) {
+    var AI_PAGES = ['home', 'search', 'files', 'myfiles'];
+    fab.style.display = AI_PAGES.includes(id) ? 'flex' : 'none';
+  }
 }
 
 //#endregion
