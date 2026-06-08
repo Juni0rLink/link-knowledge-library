@@ -33,17 +33,20 @@ function fbResetPassword(email, cb) {
   }).then(function(r){ return r.json(); }).then(function(d){ cb(null, d); }).catch(function(e){ cb(e, null); });
 }
 
+/** Trả về query string "?auth=TOKEN" để gắn vào URL Firebase REST API (lấy token từ sessionStorage). */
 function fbAuthParam() {
   var token = sessionStorage.getItem('lkl_id_token');
   return token ? '?auth=' + token : '';
 }
 
 // Escape HTML special chars to prevent XSS when injecting user-provided text via innerHTML
+/** Escape ký tự HTML đặc biệt (&,<,>,",') để chống XSS khi chèn text do người dùng nhập vào innerHTML. */
 function escHtml(s) {
   if (s === null || s === undefined) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+/** Đọc dữ liệu từ Firebase Realtime DB qua REST API (GET .json) — cb(err, data). */
 function fbGet(path, cb) {
   fetch(FB_URL + path + '.json' + fbAuthParam())
     .then(function(r){ return r.json(); })
@@ -51,6 +54,7 @@ function fbGet(path, cb) {
     .catch(function(e){ cb(e, null); });
 }
 
+/** Ghi đè dữ liệu tại 1 path trong Firebase Realtime DB qua REST API (PUT .json). */
 function fbSet(path, data, cb) {
   fetch(FB_URL + path + '.json' + fbAuthParam(), {
     method: 'PUT',
@@ -61,6 +65,7 @@ function fbSet(path, data, cb) {
     .catch(function(e){ if(cb) cb(e, null); });
 }
 
+/** Thêm 1 phần tử mới vào danh sách trong Firebase (POST .json — Firebase tự sinh key). */
 function fbPush(path, data, cb) {
   fetch(FB_URL + path + '.json' + fbAuthParam(), {
     method: 'POST',
@@ -71,6 +76,7 @@ function fbPush(path, data, cb) {
     .catch(function(e){ if(cb) cb(e, null); });
 }
 
+/** Xóa dữ liệu tại 1 path trong Firebase Realtime DB (DELETE .json). */
 function fbDelete(path, cb) {
   fetch(FB_URL + path + '.json' + fbAuthParam(), { method: 'DELETE' })
     .then(function(){ if(cb) cb(null); })
@@ -102,6 +108,7 @@ function fbDelete(path, cb) {
 })();
 
 // Load all shared data from Firebase with sessionStorage cache
+/** Tải toàn bộ dữ liệu /shared (modules, files, news, users...) — có cache trong sessionStorage để giảm số lần gọi Firebase. */
 function fbLoadAll(onDone) {
   var CACHE_KEY = 'lkl_shared_cache';
   var CACHE_TS  = 'lkl_shared_ts';
@@ -175,6 +182,7 @@ function fbLoadAll(onDone) {
 }
 
 // Invalidate cache when data changes
+/** Xóa cache /shared trong sessionStorage — gọi khi có thay đổi để lần load tiếp theo lấy dữ liệu mới nhất. */
 function fbClearCache() {
   try { sessionStorage.removeItem('lkl_shared_cache'); sessionStorage.removeItem('lkl_shared_ts'); } catch(e) {}
 }
@@ -184,6 +192,7 @@ function fbClearCache() {
 // Metadata (light): id, name, icon, date, notes — saved in /personalData
 // Content (heavy): HTML rich text — saved separately in /itemContent/{itemId}
 
+/** Lưu dữ liệu cá nhân (modules, files, notes...) của user hiện tại lên /users/{uid} trên Firebase. */
 function fbSavePersonal() {
   if (!currentUser || !currentUser.uid) return;
   // Strip content from modules before saving metadata
@@ -230,6 +239,7 @@ function fbSavePublicFiles()  { fbClearCache(); fbSet('/shared/publicFiles', pub
 function fbSaveTrash()        { fbSet('/shared/trash', trash); }
 
 var _trashLock = false;
+/** Chuyển 1 mục (file/module/note...) vào thùng rác /shared/trash thay vì xóa vĩnh viễn — cho phép khôi phục sau. */
 function moveToTrash(type, data, onDone) {
   if (_trashLock) return; // prevent double-fire
   _trashLock = true;
@@ -331,6 +341,7 @@ function switchTab(tab) {
 // LOGIN
 // ============================================================
 //#region LOGIN
+/** Xử lý đăng nhập: gọi Firebase Auth REST API, kiểm tra khóa tài khoản (login attempts), lưu token vào sessionStorage rồi launchApp(). */
 function doLogin() {
   var emailEl = document.getElementById('login-email');
   var passEl  = document.getElementById('login-pass');
@@ -397,6 +408,7 @@ function doLogin() {
   });
 }
 
+/** Đổi mật khẩu cho tài khoản đang đăng nhập qua Firebase Auth REST API. */
 function doChangePassword() {
   var np = document.getElementById('change-pass-new').value;
   var cp = document.getElementById('change-pass-confirm').value;
@@ -522,11 +534,13 @@ function forgotPassword() {
   });
 }
 
+/** Cho phép truy cập app ở chế độ Viewer (xem giới hạn, không cần tài khoản). */
 function viewerAccess() {
   currentUser = { email: null, name: 'Khách', role: 'viewer' };
   launchApp();
 }
 
+/** Đăng xuất: xóa session/token/cache, reset trạng thái UI, chuyển về màn hình đăng nhập. */
 function doLogout() {
   currentUser = null;
   loginAttempts = 0;
@@ -632,6 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // REGISTER
 // ============================================================
 //#region REGISTER
+/** Xử lý đăng ký tài khoản mới: tạo user qua Firebase Auth, lưu hồ sơ vào /shared/pendingRegs để Admin duyệt. */
 function doRegister() {
   var name   = document.getElementById('reg-name').value.trim();
   var email  = document.getElementById('reg-email').value.trim().toLowerCase();
@@ -685,6 +700,7 @@ function doRegister() {
   });
 }
 
+/** Lưu tạm trạng thái UI hiện tại (trang đang xem, tab...) trước khi trang reload — để khôi phục lại sau. */
 function saveStateBeforeRefresh() {
   // Save current page
   var activePage = document.querySelector('.page.active');
@@ -702,6 +718,7 @@ function saveStateBeforeRefresh() {
   if (typeof fbSavePersonal === 'function') fbSavePersonal();
 }
 
+/** Khôi phục lại trang/tab đang xem sau khi trang reload, dựa trên dữ liệu đã lưu ở saveStateBeforeRefresh. */
 function restoreStateAfterRefresh() {
   var lastPage = localStorage.getItem('lkl_last_page');
   if (lastPage && lastPage !== 'home') {
@@ -717,6 +734,7 @@ function restoreStateAfterRefresh() {
   }
 }
 
+/** Hiển thị banner thông báo có phiên bản mới của app (khi Service Worker phát hiện cập nhật). */
 function showUpdateBanner() {
   var ex = document.getElementById('update-banner'); if(ex) return; // already shown
   var d = document.createElement('div');
@@ -739,6 +757,7 @@ function showUpdateBanner() {
 // LAUNCH APP
 // ============================================================
 //#region LAUNCH APP
+/** Khởi chạy giao diện chính sau khi đăng nhập thành công: tải dữ liệu, dựng UI theo role, hiển thị trang chủ. */
 function launchApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
@@ -873,6 +892,7 @@ function launchApp() {
 //#region KNOWLEDGE SEARCH
 var searchIndex = null;
 
+/** Tải file search-index.json (chỉ mục nội dung tài liệu) để phục vụ tìm kiếm toàn văn. */
 function loadSearchIndex(cb) {
   if (searchIndex) { cb(searchIndex); return; }
   fetch('search-index.json')
@@ -882,6 +902,7 @@ function loadSearchIndex(cb) {
 }
 
 // ── EXTRACTIVE SUMMARIZATION ──
+/** Trích đoạn văn bản chứa từ khóa tìm kiếm và highlight (in đậm) các từ khớp trong kết quả. */
 function extractSummary(topResults, words) {
   // Split each result into sentences, score by keyword density
   var sentences = [];
@@ -906,6 +927,7 @@ function extractSummary(topResults, words) {
   return final.slice(0, 4);
 }
 
+/** Thực hiện tìm kiếm trong search-index: lọc theo từ khóa, tính điểm liên quan, hiển thị danh sách kết quả. */
 function doKnowledgeSearch() {
   var q = document.getElementById('ks-input').value.trim().toLowerCase();
   var results = document.getElementById('ks-results');
@@ -1003,6 +1025,7 @@ function doKnowledgeSearch() {
 // NAVIGATION
 // ============================================================
 //#region NAVIGATION
+/** Chuyển hiển thị sang 1 trang/tab trong app (ẩn trang cũ, hiện trang mới, cập nhật trạng thái nav). */
 function showPage(id, el) {
   var role = currentUser ? currentUser.role : 'viewer';
   var isAdmin = ['owner', 'admin'].includes(role);
@@ -1066,6 +1089,7 @@ function renderRegRequests() {
   }).join('');
 }
 
+/** Admin duyệt 1 yêu cầu đăng ký: cấp quyền (role mặc định colleague) và xóa khỏi danh sách chờ duyệt. */
 function acceptReg(id) {
   var reg = pendingRegs.find(function(r) { return r.id == id; });
   if (!reg) return;
@@ -1082,6 +1106,7 @@ function acceptReg(id) {
   renderRegRequests();
 }
 
+/** Admin từ chối 1 yêu cầu đăng ký: xóa khỏi danh sách chờ và (tùy chọn) xóa tài khoản Auth tương ứng. */
 function rejectReg(id) {
   var reg = pendingRegs.find(function(r) { return r.id === id; });
   pendingRegs = pendingRegs.filter(function(r) { return r.id !== id; });
@@ -1120,12 +1145,14 @@ function loadFirebaseMembers() {
   });
 }
 
+/** Admin/Owner đổi vai trò (role) của 1 thành viên — quyết định họ truy cập được những tính năng nào. */
 function changeUserRole(uid, newRole) {
   fbSet('/users/' + uid + '/role', newRole);
   showToast('Đã cập nhật vai trò', 'success');
   fbClearCache();
 }
 
+/** Admin/Owner xóa 1 thành viên khỏi hệ thống (xóa khỏi /shared/users). */
 function removeUser(uid) {
   if (!confirm('Xóa người dùng này?')) return;
   fbDelete('/users/' + uid);
@@ -1159,6 +1186,7 @@ function sendInvite() {
 // NEWS
 // ============================================================
 //#region NEWS
+/** Hiển thị danh sách tin tức/thông báo (News) lên giao diện, đánh dấu tin mới chưa đọc. */
 function renderNews() {
   var list = document.getElementById('news-list');
   if (!list) return;
@@ -1372,6 +1400,7 @@ function newsAiAssist() {
 }
 
 // ── PDF COMPRESSION (browser-side, before upload) ──
+/** Nén file PDF xuống dung lượng mục tiêu trước khi upload (áp dụng cho file PDF lớn hơn 10MB). */
 function compressPDF(file, targetMB, onDone) {
   if (typeof PDFLib === 'undefined') {
     onDone(null, file); // fallback: no compression
@@ -1407,6 +1436,7 @@ function compressPDF(file, targetMB, onDone) {
 }
 
 // ── CLOUDINARY CHUNKED UPLOAD (files > 10MB, up to 5GB, free plan) ──
+/** Upload file lớn (>10MB) lên Cloudinary theo từng phần (chunked upload) để tránh giới hạn kích thước. */
 function uploadToCloudinaryLarge(file, onDone) {
   var CHUNK_SIZE = 6 * 1024 * 1024; // 6MB chunks
   var totalSize = file.size;
@@ -1501,6 +1531,7 @@ function uploadToFirebaseStorage(file, onDone) {
 }
 
 // ── RAG: auto-inject relevant context from search index ──
+/** Bổ sung ngữ cảnh từ tài liệu nội bộ (RAG) vào prompt trước khi gửi cho AI, giúp câu trả lời sát với nội dung công ty hơn. */
 function ragInject(prompt, systemMsg, cb) {
   if (!searchIndex || !searchIndex.length) {
     cb(prompt, systemMsg); return;
@@ -1523,6 +1554,7 @@ function ragInject(prompt, systemMsg, cb) {
 }
 
 // ── CLAUDE MODEL FALLBACK (must be outside callAI) ──
+/** Thử lần lượt các model Claude trong danh sách dự phòng khi model mặc định không khả dụng — lưu lại model hoạt động được. */
 function tryClaudeModels(key, sysMsg, prompt, models, cb) {
   if (!models.length) { cb(null, 'Không tìm thấy model Claude hoạt động. Kiểm tra API key tại console.anthropic.com'); return; }
   var model = models[0];
@@ -1545,6 +1577,7 @@ function tryClaudeModels(key, sysMsg, prompt, models, cb) {
 
 // ── UNIVERSAL AI CALL ──
 // Translate raw AI provider errors into clear, actionable Vietnamese messages
+/** Dịch lỗi thô từ provider AI (401, 429, model not found...) thành thông báo tiếng Việt rõ ràng, dễ hiểu cho người dùng. */
 function aiClearErr(provider, status, rawMsg) {
   var s = (rawMsg||'').toLowerCase();
   if (status === 401 || status === 403 || s.includes('unauthorized') || s.includes('invalid') && s.includes('key') || s.includes('incorrect api key') || s.includes('api key not valid')) {
@@ -1562,6 +1595,7 @@ function aiClearErr(provider, status, rawMsg) {
   return provider + ' error: ' + (rawMsg || ('HTTP ' + status));
 }
 
+/** Hàm trung tâm gọi AI: chọn provider (Claude/GPT/OpenRouter/Gemini) theo cấu hình người dùng, gửi prompt và trả lời qua callback. */
 function callAI(prompt, systemMsg, cb) {
   var provider = localStorage.getItem('ai-provider') || 'claude';
   var sysMsg = systemMsg || 'Bạn là trợ lý kỹ thuật nội bộ LINK Group. Trả lời bằng tiếng Việt, súc tích, chính xác.';
@@ -1629,6 +1663,7 @@ function callAI(prompt, systemMsg, cb) {
   }
 }
 
+/** Gọi AI để hỗ trợ soạn/cải thiện nội dung bài viết News (cải thiện văn phong, tóm tắt, gợi ý tiêu đề...). */
 function runNewsAI(mode) {
   var ctx = window._newsAiContext || {};
   var outputEl = document.getElementById('news-ai-output');
@@ -1662,6 +1697,7 @@ function applyNewsAI() {
   showToast('✅ Đã áp dụng gợi ý AI', 'success');
 }
 
+/** Admin đăng 1 tin tức/thông báo mới lên mục News — lưu vào /shared/news. */
 function postNews() {
   var title = document.getElementById('news-title-inp').value.trim();
   var editor = document.getElementById('news-body-editor');
@@ -2045,6 +2081,7 @@ function deleteModuleFile(mid, fi) {
   });
 }
 
+/** Hiển thị danh sách nhóm module (GSC, Safety, SAS...) trong trang Quản lý nội dung. */
 function renderModuleGroups() {
   var c = document.getElementById('module-groups-container');
   if (!c) return;
@@ -2102,6 +2139,7 @@ function editModuleName(gid, mid) {
   el.replaceWith(inp); inp.focus(); inp.select();
 }
 
+/** Thêm 1 module mới vào 1 nhóm module hiện có. */
 function addModule(gid) {
   var inp = document.getElementById('mod-inp-' + gid);
   if (!inp || !inp.value.trim()) { showToast('Nhập tên module', 'warning'); return; }
@@ -2116,6 +2154,7 @@ function addModule(gid) {
   showToast('Đã thêm module: ' + name, 'success');
 }
 
+/** Xóa 1 module khỏi nhóm (chuyển vào thùng rác để có thể khôi phục). */
 function deleteModule(gid, mid) {
   var g = moduleGroups.find(function(g){return g.id===gid;});
   var m = g && (g.modules||[]).find(function(m){return m.id===mid;});
@@ -2147,6 +2186,7 @@ function addGroup() {
 
 var collapsedGroups = {};
 
+/** Đồng bộ lại danh sách module hiển thị trên thanh điều hướng (sidebar) khớp với dữ liệu hiện có. */
 function syncSidebarModules() {
   var c = document.getElementById('sidebar-modules');
   if (!c) return;
@@ -2167,6 +2207,7 @@ function toggleGroup(gid) {
   syncSidebarModules();
 }
 
+/** Hiển thị trang chi tiết của 1 module: nội dung, file đính kèm, bình luận. */
 function showModulePage(id, name, groupId, el) {
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
@@ -2828,7 +2869,9 @@ function addSheetCol(){sCols++;buildMainSheet();}
 
 function sExpand(ref){var m=ref.match(/([A-Z])(\d+):([A-Z])(\d+)/);if(!m)return[ref];var cells=[];for(var r=parseInt(m[2]);r<=parseInt(m[4]);r++)for(var c=m[1].charCodeAt(0);c<=m[3].charCodeAt(0);c++)cells.push(String.fromCharCode(c)+r);return cells;}
 function sGetNum(id){var v=sEval(id);return isNaN(parseFloat(v))?0:parseFloat(v);}
+/** Tính giá trị của 1 ô trong bảng tính: nếu là công thức (bắt đầu bằng "=") thì xử lý SUM/AVG/MAX/MIN/COUNT/IF rồi eval biểu thức. */
 function sEval(id){var raw=sData[id]||'';if(!raw.startsWith('='))return raw;try{var expr=raw.substring(1).toUpperCase();expr=expr.replace(/SUM\(([^)]+)\)/g,function(m,r){return sExpand(r).map(sGetNum).reduce(function(a,b){return a+b;},0);});expr=expr.replace(/AVG\(([^)]+)\)/g,function(m,r){var a=sExpand(r).map(sGetNum);return a.reduce(function(s,v){return s+v;},0)/a.length;});expr=expr.replace(/MAX\(([^)]+)\)/g,function(m,r){return Math.max.apply(null,sExpand(r).map(sGetNum));});expr=expr.replace(/MIN\(([^)]+)\)/g,function(m,r){return Math.min.apply(null,sExpand(r).map(sGetNum));});expr=expr.replace(/COUNT\(([^)]+)\)/g,function(m,r){return sExpand(r).filter(function(c){return!isNaN(parseFloat(sData[c]));}).length;});expr=expr.replace(/IF\((.+),(.+),(.+)\)/g,function(m,cond,t,f){cond=cond.replace(/([A-Z]\d+)/g,function(c){return parseFloat(sEval(c))||0;});try{return eval(cond)?t.replace(/"/g,''):f.replace(/"/g,'');}catch(e){return'ERR';}});expr=expr.replace(/([A-Z]\d+)/g,function(c){return parseFloat(sEval(c))||0;});var res=eval(expr);return isNaN(res)?res:Math.round(res*1000)/1000;}catch(e){return'#ERR';}}
+/** Tính lại toàn bộ các ô có công thức trong bảng tính và cập nhật hiển thị (kèm tô màu ô lỗi). */
 function sRecalc(){for(var id in sData){var el=document.getElementById('sc-'+id);if(!el)continue;if((sData[id]||'').startsWith('=')){var r=sEval(id);el.value=r;var td=document.getElementById('stc-'+id);if(td)td.style.background=r==='#ERR'||r==='ERR'?'#fee2e2':(sData[id].startsWith('=')?'#f0f5ff':'');}}}
 
 function exportSheetCSV(){var rows=[];for(var r=0;r<sRows;r++){var row=[];for(var c=0;c<sCols;c++){var id=sCellId(r,c);row.push(sEval(id)||'');}rows.push(row.join(','));}var blob=new Blob(['﻿'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='spreadsheet.csv';a.click();showToast('Đã xuất CSV — mở bằng Excel!','success');}
@@ -3486,6 +3529,7 @@ function showDuplicateDialog(file, dupInfo, onReplace, onKeepBoth, onCancel) {
   document.getElementById('dup-cancel').onclick  = function(){ d.remove(); onCancel(); };
 }
 
+/** Hàm upload file dùng chung: tự chọn nén/chia nhỏ nếu cần, gửi lên Cloudinary, báo tiến trình qua onProgress. */
 function uploadToCloud(file, onDone, onProgress) {
   var TEN_MB = 10 * 1024 * 1024;
   // If PDF > 10MB → try compress first, then upload
@@ -3534,6 +3578,7 @@ function uploadToCloud(file, onDone, onProgress) {
   xhr.send(fd);
 }
 
+/** Xử lý upload file vào thư viện chung: kiểm tra trùng lặp, hỏi người dùng xử lý (thay thế/giữ cả hai), rồi upload lên Cloudinary. */
 function uploadSharedFile(input) {
   var files = Array.from(input.files); if (!files.length) return;
   var catEl = document.getElementById('shared-upload-category');
@@ -4368,6 +4413,7 @@ function updateTrashBadge() {
   if (b) { b.textContent = n; b.style.display = n > 0 ? 'inline' : 'none'; }
 }
 
+/** Hiển thị danh sách các mục đã xóa (file/module/note...) trong Thùng rác, cho phép khôi phục hoặc xóa vĩnh viễn. */
 function renderTrash() {
   var list = document.getElementById('trash-list');
   var countEl = document.getElementById('trash-count');
@@ -4401,6 +4447,7 @@ function renderTrash() {
   }).join('');
 }
 
+/** Khôi phục 1 mục từ Thùng rác về vị trí ban đầu (file/module/note...). */
 function restoreTrash(i) {
   var item = trash[i]; if (!item) return;
   if (item.type === 'file') {
@@ -4442,6 +4489,7 @@ function deleteTrashItem(i) {
   renderTrash(); updateTrashBadge();
 }
 
+/** Xóa vĩnh viễn toàn bộ nội dung trong Thùng rác — không thể khôi phục. */
 function emptyTrash() {
   if (!trash.length) { showToast('Thùng rác đã trống', 'warning'); return; }
   if (!confirm('Xóa vĩnh viễn tất cả ' + trash.length + ' items?')) return;
@@ -4501,6 +4549,7 @@ function renderCleanupPanel() {
     +'</div></div>';
 }
 
+/** Dọn dẹp các bản ghi nội dung (itemContent) không còn được tham chiếu bởi module/file nào — giải phóng dung lượng. */
 function cleanOrphanedContent() {
   if (!currentUser || !currentUser.uid) return;
   var el = document.getElementById('cleanup-orphan-result');
@@ -4585,6 +4634,7 @@ function renderBackupPanel() {
     +'</div></div>';
 }
 
+/** Xuất dữ liệu hiện có (modules, files, news...) ra file JSON để sao lưu. */
 function exportBackup(type) {
   var filename = 'lkl-backup-' + type + '-' + new Date().toISOString().slice(0,10) + '.json';
   function download(data) {
@@ -4606,6 +4656,7 @@ function exportBackup(type) {
   }
 }
 
+/** Nhập lại dữ liệu từ file backup JSON đã xuất trước đó — ghi đè dữ liệu hiện tại. */
 function importBackup(input) {
   var file = input.files[0]; if(!file) return;
   var el = document.getElementById('import-result');
@@ -4630,6 +4681,7 @@ function importBackup(input) {
   input.value = '';
 }
 
+/** Hiển thị widget thống kê dung lượng lưu trữ đã dùng (Firebase + Cloudinary) cho người dùng. */
 function renderStorageWidget(containerId) {
   var el = document.getElementById(containerId || 'storage-widget');
   if (!el) return;
