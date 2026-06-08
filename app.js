@@ -2232,14 +2232,25 @@ function pickFromLibrary(moduleId) {
 
 function addLibFileToModule(fileIndex, moduleId) {
   var f = sharedFiles[fileIndex]; if(!f) return;
+  var fname = f.name||f.file;
+  var doMove = confirm('"'+fname+'"\n\nOK = Di chuyển vào module (chỉ 1 phiên bản)\nCancel = Sao chép (giữ ở cả 2 nơi)');
   fbGet('/moduleData/'+moduleId+'/files', function(err, existing){
     var arr = (existing && Array.isArray(existing)) ? existing : [];
-    // Check duplicate
-    if (arr.find(function(x){ return x.name === (f.name||f.file); })) { showToast('File đã có trong module', 'warning'); return; }
-    arr.push({ name: f.name||f.file, url: f.url, author: f.author||'', date: f.date||new Date().toLocaleDateString('vi-VN'), fromLibrary: true });
+    if (arr.find(function(x){ return x.name === fname; })) { showToast('File đã có trong module', 'warning'); return; }
+    arr.push({ name: fname, url: f.url, author: f.author||'', date: f.date||new Date().toLocaleDateString('vi-VN'), fromLibrary: true });
     fbSet('/moduleData/'+moduleId+'/files', arr, function(){
+      if (doMove) {
+        // Remove from sharedFiles
+        sharedFiles = sharedFiles.filter(function(x){ return x.id !== f.id; });
+        recordDeletedFileId(f.id);
+        fbSaveSharedFiles(); fbClearCache();
+      }
+      document.getElementById('pick-lib-modal') && document.getElementById('pick-lib-modal').remove();
       loadModuleExtras(moduleId);
-      showToast('✅ Đã thêm "'+( f.name||f.file)+'" vào module', 'success');
+      showToast(doMove ? '✅ Đã di chuyển vào module' : '✅ Đã sao chép vào module', 'success');
+      // Update count
+      if (!window._moduleFileCounts) window._moduleFileCounts = {};
+      window._moduleFileCounts[moduleId] = arr.length;
     });
   });
 }
@@ -4142,16 +4153,42 @@ function renderPublicModulesGrid() {
   grid.innerHTML = html;
 }
 
+function prefetchModuleFileCounts(moduleIds, cb) {
+  if (!window._moduleFileCounts) window._moduleFileCounts = {};
+  var pending = moduleIds.length;
+  if (!pending) { cb(); return; }
+  moduleIds.forEach(function(mid) {
+    fbGet('/moduleData/'+mid+'/files', function(err, files) {
+      window._moduleFileCounts[mid] = (!err && files && files.length) ? files.length : 0;
+      if (--pending === 0) cb();
+    });
+  });
+}
+
 function showPublicGroupDetail(gid) {
   var g = moduleGroups.find(function(x){return x.id===gid;}); if(!g) return;
   var container = document.getElementById('public-modules-grid'); if(!container) return;
+
+  // Prefetch Firebase file counts, then re-render module cards
+  var mids = (g.modules||[]).map(function(m){ return m.id; });
+  prefetchModuleFileCounts(mids, function() {
+    // Update count badges on cards that already rendered
+    mids.forEach(function(mid) {
+      var el = document.getElementById('pubmod-'+mid); if(!el) return;
+      var docs2 = MODULE_DOCS[mid]; var fc2 = docs2 ? docs2.files.length : 0;
+      var uc2 = (window._moduleFileCounts && window._moduleFileCounts[mid]) || 0;
+      var total = fc2 + uc2;
+      var spans = el.querySelectorAll('span');
+      spans.forEach(function(sp){ if(sp.textContent.includes('tài liệu')) { sp.textContent = total + ' tài liệu'; sp.style.color = total>0?'#0891b2':'#aaa'; sp.style.fontWeight = total>0?'700':'400'; } });
+    });
+  });
 
   // Sub-modules cards
   var modsHtml = '';
   (g.modules||[]).forEach(function(m){
     var docs = MODULE_DOCS[m.id]; var fc = docs ? docs.files.length : 0;
-    // Also count uploaded files in sharedFiles matching category
-    var uploadedCount = sharedFiles.filter(function(f){ return (f.category||'').toLowerCase() === g.name.toLowerCase(); }).length;
+    // Count from Firebase moduleData (cached)
+    var uploadedCount = window._moduleFileCounts && window._moduleFileCounts[m.id] ? window._moduleFileCounts[m.id] : 0;
     var hasDocs = fc > 0 || uploadedCount > 0;
     modsHtml += '<div id="pubmod-'+m.id+'" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px 16px;cursor:pointer;transition:box-shadow .15s,border-color .15s" '
       +'onmouseover="this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.1)\';this.style.borderColor=\'#0891b2\'" '
@@ -4160,6 +4197,7 @@ function showPublicGroupDetail(gid) {
       +'<div style="font-weight:700;font-size:13px;margin-bottom:6px;line-height:1.4">'+m.name+'</div>'
       +'<div style="display:flex;align-items:center;gap:6px">'
       +'<span style="font-size:11px;color:'+(hasDocs?'#0891b2':'#aaa')+';font-weight:'+(hasDocs?'700':'400')+'">'+(fc+uploadedCount)+' tài liệu</span>'
+      // show total count correctly
       +(hasDocs?'<span style="font-size:10px;background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:8px;font-weight:700">Có nội dung</span>':'')
       +'</div></div>';
   });
