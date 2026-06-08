@@ -116,7 +116,22 @@ function fbLoadAll(onDone) {
       sharedFiles = missing.concat(fbFiles);
     }
     if (data.sharedNote) sharedNote = data.sharedNote;
-    if (data.moduleGroups && Array.isArray(data.moduleGroups)) moduleGroups = data.moduleGroups;
+    if (data.moduleGroups && Array.isArray(data.moduleGroups)) {
+      moduleGroups = data.moduleGroups;
+      // Ensure default groups exist (add if missing by id)
+      var existingIds = moduleGroups.map(function(g){ return g.id; });
+      var defaultGroups = [
+        { id:1, icon:'📚', name:'BMW Standards', modules:[] },
+        { id:2, icon:'🛡️', name:'Safety & Compliance', modules:[] },
+        { id:3, icon:'⚙️', name:'Tools & Software', modules:[] },
+        { id:4, icon:'🔬', name:'Advanced Modules', modules:[] },
+        { id:5, icon:'📘', name:'Operation Manual A1HG01', modules:[] },
+        { id:6, icon:'🎓', name:'Training', modules:[] },
+      ];
+      defaultGroups.forEach(function(dg){
+        if (existingIds.indexOf(dg.id) < 0) moduleGroups.push(dg);
+      });
+    }
     if (data.publicFiles && Array.isArray(data.publicFiles)) publicFiles = data.publicFiles;
     if (data.pendingRegs && Array.isArray(data.pendingRegs)) pendingRegs = data.pendingRegs;
     if (data.trash && Array.isArray(data.trash)) { trash = data.trash; updateTrashBadge(); }
@@ -798,7 +813,7 @@ function launchApp() {
     });
   }
 
-  if (isAdmin) {
+  if (isColleague) { // All colleagues can write news
     var nc = document.getElementById('news-compose');
     if (nc) nc.style.display = 'block';
   }
@@ -1853,9 +1868,33 @@ function renderMgmtFiles() {
   var list = document.getElementById('mgmt-files-list'); if(!list) return;
   var count = document.getElementById('mgmt-file-count');
   if(count) count.textContent = sharedFiles.length + ' files';
+  // Force fresh load from Firebase (no cache) for sync
+  fbClearCache();
   if(!sharedFiles.length){list.innerHTML='<p style="color:#aaa;text-align:center;padding:20px">Chưa có file nào.</p>';return;}
   var cats={};
   sharedFiles.forEach(function(f,i){var cat=f.category||'Khác';if(!cats[cat])cats[cat]=[];cats[cat].push({f:f,i:i});});
+  // After render, check which files are also in modules
+  setTimeout(function(){
+    fbGet('/moduleData', function(err, mdata){
+      if(err||!mdata) return;
+      Object.keys(mdata).forEach(function(mid){
+        var mfiles = mdata[mid] && mdata[mid].files;
+        if(!mfiles||!mfiles.length) return;
+        // Find module name
+        var modName = mid;
+        moduleGroups.forEach(function(g){ (g.modules||[]).forEach(function(m){ if(String(m.id)===String(mid)) modName=m.name; }); });
+        mfiles.forEach(function(mf){
+          sharedFiles.forEach(function(sf){
+            if((sf.name||sf.file)===mf.name||(sf.url&&sf.url===mf.url)){
+              var el=document.getElementById('loc-'+sf.id);
+              if(el) el.innerHTML='📍 Files → '+(sf.category||'Chung')+' <span style="color:#0891b2">+ 📦 Module: '+modName+'</span>';
+            }
+          });
+        });
+      });
+    });
+  }, 500);
+
   list.innerHTML = Object.keys(cats).map(function(cat){
     return '<div style="margin-bottom:16px">'
       +'<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;padding:6px 10px;background:#f1f5f9;border-radius:6px;margin-bottom:6px">'+cat+' ('+cats[cat].length+')</div>'
@@ -1865,7 +1904,7 @@ function renderMgmtFiles() {
             +'<span style="font-size:18px">'+(f.icon||'📄')+'</span>'
             +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+(f.name||f.file||'')+'</div>'
             +'<div style="font-size:11px;color:#94a3b8">'+(f.author||'')+(f.date?' · '+f.date:'')+(f.size?' · '+f.size:'')+'</div>'
-            +'<div style="font-size:10px;color:#7c3aed;margin-top:2px">📍 Files → '+(f.category||'Chung')+'</div></div>'
+            +'<div id="loc-'+f.id+'" style="font-size:10px;color:#7c3aed;margin-top:2px">📍 Files → '+(f.category||'Chung')+'</div></div>'
             +'<select onchange="changeFileCategory('+i+',this.value)" style="border:1px solid #e5e7eb;border-radius:6px;padding:4px 6px;font-size:11px;color:#475569">'
             + moduleGroups.map(function(g){return '<option value="'+g.name+'"'+(f.category===g.name?' selected':'')+'>'+g.name+'</option>';}).join('')
             +'<option value="Training"'+(f.category==='Training'?' selected':'')+'>Training</option>'
@@ -3584,9 +3623,8 @@ function showMoveFileDialog(fileId) {
   var ex = document.getElementById('move-file-modal'); if(ex) ex.remove();
 
   // Build destination list: categories + modules
-  var categories = [];
-  moduleGroups.forEach(function(g){ categories.push({ name: g.name, icon: g.icon }); });
-  ['Training','Chung','Khác'].forEach(function(c){ if(!categories.find(function(x){return x.name===c;})) categories.push({name:c,icon:'📁'}); });
+  // Categories ONLY from moduleGroups — no orphan categories
+  var categories = moduleGroups.map(function(g){ return { name: g.name, icon: g.icon }; });
 
   // Build flat module list
   var allModules = [];
