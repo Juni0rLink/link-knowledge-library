@@ -2,6 +2,7 @@
 // ============================================================
 // FIREBASE CONFIG
 // ============================================================
+//#region FIREBASE CONFIG
 var FB_URL = 'https://link-knowledge-library-default-rtdb.asia-southeast1.firebasedatabase.app';
 var FB_STORAGE = 'https://firebasestorage.googleapis.com/v0/b/link-knowledge-library.appspot.com/o';
 var FB_API_KEY = 'AIzaSyBiRVWULX1TO_S3E31KAy5wK6k7aZdmhv0';
@@ -246,9 +247,12 @@ function moveToTrash(type, data, onDone) {
   if (onDone) onDone();
 }
 
+//#endregion
+
 // ============================================================
 // DATA
 // ============================================================
+//#region DATA
 // ── Personal & Shared data arrays ──
 var personalDocs = [];
 var personalSheets = [];
@@ -308,9 +312,12 @@ let newsItems = [
 ];
 let unreadCount = newsItems.filter(function(n) { return n.isNew; }).length;
 
+//#endregion
+
 // ============================================================
 // TABS
 // ============================================================
+//#region TABS
 function switchTab(tab) {
   ['login', 'register'].forEach(function(t) {
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
@@ -318,9 +325,12 @@ function switchTab(tab) {
   });
 }
 
+//#endregion
+
 // ============================================================
 // LOGIN
 // ============================================================
+//#region LOGIN
 function doLogin() {
   var emailEl = document.getElementById('login-email');
   var passEl  = document.getElementById('login-pass');
@@ -616,9 +626,12 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+//#endregion
+
 // ============================================================
 // REGISTER
 // ============================================================
+//#region REGISTER
 function doRegister() {
   var name   = document.getElementById('reg-name').value.trim();
   var email  = document.getElementById('reg-email').value.trim().toLowerCase();
@@ -720,9 +733,12 @@ function showUpdateBanner() {
   document.addEventListener('keydown', function dismissBanner(){ var el=document.getElementById('update-banner'); if(el) el.remove(); document.removeEventListener('keydown', dismissBanner); }, {once:true});
 }
 
+//#endregion
+
 // ============================================================
 // LAUNCH APP
 // ============================================================
+//#region LAUNCH APP
 function launchApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
@@ -849,9 +865,12 @@ function launchApp() {
   }
 }
 
+//#endregion
+
 // ============================================================
 // KNOWLEDGE SEARCH
 // ============================================================
+//#region KNOWLEDGE SEARCH
 var searchIndex = null;
 
 function loadSearchIndex(cb) {
@@ -978,9 +997,12 @@ function doKnowledgeSearch() {
   });
 }
 
+//#endregion
+
 // ============================================================
 // NAVIGATION
 // ============================================================
+//#region NAVIGATION
 function showPage(id, el) {
   var role = currentUser ? currentUser.role : 'viewer';
   var isAdmin = ['owner', 'admin'].includes(role);
@@ -1005,9 +1027,12 @@ function showPage(id, el) {
   if (id === 'settings') { renderProfileCard(); renderAiKeysList(); }
 }
 
+//#endregion
+
 // ============================================================
 // ADMIN
 // ============================================================
+//#region ADMIN
 function updateRegBadge() {
   var n = pendingRegs.length;
   var badge = document.getElementById('reg-count-badge');
@@ -1128,9 +1153,12 @@ function sendInvite() {
   document.getElementById('invite-email').value = '';
 }
 
+//#endregion
+
 // ============================================================
 // NEWS
 // ============================================================
+//#region NEWS
 function renderNews() {
   var list = document.getElementById('news-list');
   if (!list) return;
@@ -1664,9 +1692,12 @@ function markNewsRead() {
   renderNews();
 }
 
+//#endregion
+
 // ============================================================
 // UTILS
 // ============================================================
+//#region UTILS
 function showToast(msg, type) {
   type = type || 'success';
   var t = document.getElementById('toast');
@@ -1676,9 +1707,12 @@ function showToast(msg, type) {
   window._tt = setTimeout(function() { t.className = ''; }, 3500);
 }
 
+//#endregion
+
 // ============================================================
 // MODULE MANAGER
 // ============================================================
+//#region MODULE MANAGER
 var BASE_URL = 'https://juni0rlink.github.io/link-knowledge-library/content/';
 var OFFICE_VIEW = 'https://view.officeapps.live.com/op/view.aspx?src=';
 
@@ -2404,16 +2438,22 @@ function postModuleComment(moduleId) {
   });
 }
 
+//#endregion
+
 // ============================================================
 // CLOUDINARY UPLOAD
 // ============================================================
+//#region CLOUDINARY UPLOAD
 var CLOUD_NAME = 'draqjeguw';
 var UPLOAD_PRESET = 'fkrodeht';
 var cloudFiles = [];
 
+//#endregion
+
 // ============================================================
 // VERSION CONTROL
 // ============================================================
+//#region VERSION CONTROL
 function getNextVersion(name) {
   var base = name.replace(/\s*v(\d+)(\.[^.]+)?$/, '').replace(/(\.[^.]+)$/, '');
   var ext  = name.match(/(\.[^.]+)$/) ? name.match(/(\.[^.]+)$/)[1] : '';
@@ -2553,9 +2593,12 @@ function renderCloudFiles() {
   }).join('');
 }
 
+//#endregion
+
 // ============================================================
 // YOUTUBE VIDEO EMBED
 // ============================================================
+//#region YOUTUBE VIDEO EMBED
 var youtubeVideos = [
   { id: 1, title: 'Tổng quan GSC v18', module: 'GSC Introduction', url: '', author: 'Nguyễn Tuấn Phong', date: '01/06/2024' },
   { id: 2, title: 'Hướng dẫn tạo SAS file', module: 'SAS', url: '', author: 'Nguyễn Tuấn Phong', date: '01/06/2024' },
@@ -2617,9 +2660,12 @@ function removeVideo(i) {
   showToast('Đã xóa: ' + title, 'error');
 }
 
+//#endregion
+
 // ============================================================
 // DOCUMENT ROOMS
 // ============================================================
+//#region DOCUMENT ROOMS
 var rooms = [
   { id:1, name:'GSC E-STOP Procedure', color:'#22c55e', status:'review', content:'<h2>Quy trình vận hành E-STOP</h2><h3>1. Mục đích</h3><p>Mô tả quy trình vận hành nút dừng khẩn cấp (E-STOP) trong hệ thống GSC.</p><h3>2. Quy trình</h3><p><strong>Bước 1:</strong> Xác nhận vùng E-STOP trên HMI.</p><p><strong>Bước 2:</strong> Kiểm tra an toàn trước khi reset.</p><p><strong>Bước 3:</strong> Xoay nút E-STOP và nhấn Acknowledge.</p>', comments:[{author:'Nguyễn Tuấn Phong',role:'owner',text:'Bước 2 cần nêu rõ hơn về kiểm tra an toàn.',time:'01/06/2024 09:15'}], versions:['v1.0 - Le Van C - 01/06/2024'] },
   { id:2, name:'SAS Installation Guide', color:'#3b82f6', status:'draft', content:'<h2>Hướng dẫn cài đặt SAS</h2><p>Tài liệu hướng dẫn cài đặt SAS cho hệ thống GSC v18...</p>', comments:[], versions:['v1.0 - Nguyễn Tuấn Phong - 01/06/2024'] },
@@ -2742,9 +2788,12 @@ function createRoom() {
   }, btn);
 }
 
+//#endregion
+
 // ============================================================
 // SPREADSHEET (Main app)
 // ============================================================
+//#region SPREADSHEET (Main app)
 var sRows=10,sCols=7,sData={},sSelected=null;
 
 function colL(i){return String.fromCharCode(65+i);}
@@ -2784,9 +2833,12 @@ function sRecalc(){for(var id in sData){var el=document.getElementById('sc-'+id)
 
 function exportSheetCSV(){var rows=[];for(var r=0;r<sRows;r++){var row=[];for(var c=0;c<sCols;c++){var id=sCellId(r,c);row.push(sEval(id)||'');}rows.push(row.join(','));}var blob=new Blob(['﻿'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='spreadsheet.csv';a.click();showToast('Đã xuất CSV — mở bằng Excel!','success');}
 
+//#endregion
+
 // ============================================================
 // TRASH & STORAGE MANAGEMENT
 // ============================================================
+//#region TRASH & STORAGE MANAGEMENT
 // ── PERSONAL FILES ──
 function switchPersonalTab(tab, el) {
   document.querySelectorAll('.personal-tab').forEach(function(t){t.style.color='#888';t.style.borderBottomColor='transparent';});
@@ -4302,9 +4354,12 @@ function showPublicGroupDetail(gid) {
   }
 }
 
+//#endregion
+
 // ============================================================
 // TRASH & STORAGE
 // ============================================================
+//#region TRASH & STORAGE
 var trash = [];
 
 function updateTrashBadge() {
@@ -4630,3 +4685,5 @@ function _storCard(icon, label, count, color) {
     + '</div>';
 }
 
+
+//#endregion
