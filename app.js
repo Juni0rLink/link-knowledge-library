@@ -2152,7 +2152,8 @@ function showModulePage(id, name, groupId, el) {
         }).join('');
   }
 
-  var uploadBtn = isAdmin
+  var isColleagueUser = currentUser && ['owner','admin','colleague'].includes(currentUser.role);
+  var uploadBtn = isColleagueUser
     ? '<label style="background:#0891b2;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">+ Upload tài liệu<input type="file" multiple style="display:none" onchange="uploadModuleFile(this,'+id+')"></label>'
     + '<button onclick="pickFromLibrary('+id+')" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-left:6px">📚 Từ thư viện</button>'
     : '';
@@ -4198,6 +4199,8 @@ function prefetchModuleFileCounts(moduleIds, cb) {
   moduleIds.forEach(function(mid) {
     fbGet('/moduleData/'+mid+'/files', function(err, files) {
       window._moduleFileCounts[mid] = (!err && files && files.length) ? files.length : 0;
+      // Also cache file names to detect duplicates
+      window._moduleFileCounts[mid+'_names'] = (!err && files) ? files.map(function(f){ return f.name; }) : [];
       if (--pending === 0) cb();
     });
   });
@@ -4241,8 +4244,17 @@ function showPublicGroupDetail(gid) {
   });
 
   // Uploaded files matching this group name (from sharedFiles)
+  // But exclude files that have been moved into a specific module (in moduleData)
+  var moduleFileNames = [];
+  (g.modules||[]).forEach(function(m){
+    if (window._moduleFileCounts && window._moduleFileCounts[m.id+'_names']) {
+      moduleFileNames = moduleFileNames.concat(window._moduleFileCounts[m.id+'_names']);
+    }
+  });
   var matchedFiles = sharedFiles.filter(function(f){
-    return (f.category||'').toLowerCase() === g.name.toLowerCase();
+    if ((f.category||'').toLowerCase() !== g.name.toLowerCase()) return false;
+    // Hide if already in a module (avoid duplicate display)
+    return moduleFileNames.indexOf(f.name||f.file) < 0;
   });
   var filesHtml = '';
   if (matchedFiles.length) {
