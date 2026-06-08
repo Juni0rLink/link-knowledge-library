@@ -3050,7 +3050,7 @@ function insertNoteImageByUrl() {
 function uploadNoteImage(input) {
   var file = input.files[0]; if(!file) return;
   var prog = document.getElementById('note-img-progress');
-  if(prog) prog.style.display = 'block';
+  if(prog) { prog.style.display = 'block'; prog.textContent = 'Đang upload... 0%'; }
   uploadToCloud(file, function(err, f) {
     if(prog) prog.style.display = 'none';
     if(err) { showToast('Lỗi upload: '+err,'error'); return; }
@@ -3059,6 +3059,8 @@ function uploadNoteImage(input) {
     document.execCommand('insertHTML', false, '<img src="'+f.url+'" style="max-width:100%;border-radius:8px;margin:8px 0;display:block" alt="'+file.name+'">');
     document.getElementById('note-img-modal').remove();
     showToast('✅ Đã chèn ảnh', 'success');
+  }, function(pct) {
+    if(prog) prog.textContent = 'Đang upload... ' + pct + '%';
   });
   input.value = '';
 }
@@ -3426,14 +3428,14 @@ function showDuplicateDialog(file, dupInfo, onReplace, onKeepBoth, onCancel) {
   document.getElementById('dup-cancel').onclick  = function(){ d.remove(); onCancel(); };
 }
 
-function uploadToCloud(file, onDone) {
+function uploadToCloud(file, onDone, onProgress) {
   var TEN_MB = 10 * 1024 * 1024;
   // If PDF > 10MB → try compress first, then upload
   if (file.size > TEN_MB && file.type === 'application/pdf') {
     compressPDF(file, 9, function(err, compressedFile) {
       if (compressedFile.size <= TEN_MB) {
         // Compression successful → upload normally
-        uploadToCloud(compressedFile, onDone);
+        uploadToCloud(compressedFile, onDone, onProgress);
       } else {
         // Still too large → chunked upload
         uploadToCloudinaryLarge(compressedFile, onDone);
@@ -3451,6 +3453,11 @@ function uploadToCloud(file, onDone) {
   fd.append('upload_preset', UPLOAD_PRESET);
   var xhr = new XMLHttpRequest();
   xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/auto/upload');
+  if (onProgress && xhr.upload) {
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+    };
+  }
   xhr.onload = function() {
     try {
       var res = JSON.parse(xhr.responseText);
@@ -3476,7 +3483,7 @@ function uploadSharedFile(input) {
   var prog = document.getElementById('shared-upload-progress');
 
   function doUpload(file, nameOverride) {
-    if (prog) { prog.style.display='block'; prog.textContent='Đang upload: '+file.name+'...'; }
+    if (prog) { prog.style.display='block'; prog.textContent='Đang upload: '+file.name+'... 0%'; }
     uploadToCloud(file, function(err, f) {
       if (!err) {
         if (nameOverride) f.name = nameOverride;
@@ -3489,6 +3496,8 @@ function uploadSharedFile(input) {
         showToast('✅ Upload xong: ' + f.name, 'success');
       } else { showToast('Lỗi upload: ' + file.name, 'error'); }
       if (prog) prog.style.display='none';
+    }, function(pct) {
+      if (prog) prog.textContent = 'Đang upload: '+file.name+'... '+pct+'%';
     });
   }
 
