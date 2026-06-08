@@ -4186,7 +4186,7 @@ function renderPublicModulesGrid() {
     html += '<div onclick="showPublicGroupDetail('+g.id+')" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer">'
       +'<div style="font-size:28px;margin-bottom:8px">'+g.icon+'</div>'
       +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+g.name+'</div>'
-      +'<div style="font-size:11px;color:#aaa">'+((g.modules||[]).length)+' modules'+(sharedFiles.filter(function(f){return (f.category||'').toLowerCase()===g.name.toLowerCase();}).length?' · '+sharedFiles.filter(function(f){return (f.category||'').toLowerCase()===g.name.toLowerCase();}).length+' files':'')+'</div>'
+      +'<div style="font-size:11px;color:#aaa">'+((g.modules||[]).length)+' modules</div>'
       +'</div>';
   });
   grid.innerHTML = html;
@@ -4281,7 +4281,7 @@ function showPublicGroupDetail(gid) {
   container.innerHTML = '<div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-bottom:4px">'
     +'<button onclick="renderPublicModulesGrid()" style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600">&larr; Quay lại</button>'
     +'<span style="font-size:15px;font-weight:700;color:#1e293b">'+g.icon+' '+g.name+'</span>'
-    +'<span style="font-size:12px;color:#aaa;margin-left:4px">'+mods.length+' modules · '+matchedFiles.length+' files</span>'
+    +'<span style="font-size:12px;color:#aaa;margin-left:4px" id="grp-count-'+gid+'">'+mods.length+' modules'+(matchedFiles.length?' · '+matchedFiles.length+' files':'')+'</span>'
     +'</div>'
     +(modsHtml ? '<div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">'+modsHtml+'</div>' : '')
     +filesHtml
