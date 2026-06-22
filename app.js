@@ -2930,21 +2930,33 @@ function createPersonalSheet(){var name=prompt('Tên bảng tính:');if(!name)re
 function renderPersonalSheets(){var list=document.getElementById('personal-sheets-list');if(!list)return;if(!personalSheets.length){list.innerHTML='<p style="color:#aaa;font-style:italic;text-align:center;padding:20px">Chưa có bảng tính nào.</p>';return;}list.innerHTML=personalSheets.map(function(s,i){return '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">📊</span><div style="flex:1"><div style="font-weight:700;font-size:13px">'+escHtml(s.name)+'</div><div style="font-size:11px;color:#888">'+s.date+'</div></div><button onclick="personalSheets.splice('+i+',1);renderPersonalSheets()" class="btn-sm reject-btn">🗑️</button></div>';}).join('');}
 function publishPersonalFile(i) {
   var f = personalFiles[i]; if (!f) return;
-  // Only show categories that exist as module groups
-  var catOptions = moduleGroups.map(function(g){ return g.name; }).join('\n');
-  var cat = prompt('Đưa vào phân vùng nào?\n' + catOptions, moduleGroups[0]&&moduleGroups[0].name||'Chung');
-  if (!cat) return; // user cancelled category selection
-  if (!confirm('📤 Di chuyển "' + (f.name||'') + '" lên Thư viện chung?\n\nOK = Di chuyển (xóa khỏi File cá nhân)\nCancel = Hủy')) return;
-  // Move: add to shared + remove from personal
-  var pub = Object.assign({}, f, { id: Date.now(), category: cat, author: currentUser ? currentUser.name : '', date: new Date().toLocaleDateString('vi-VN') });
-  sharedFiles.push(pub);
-  // Remove from personal using id match (safer than index)
-  personalFiles = personalFiles.filter(function(x){ return x.id !== f.id; });
-  fbSaveSharedFiles(); fbClearCache();
-  fbSavePersonal();
-  renderPersonalFiles();
-  renderSharedFileList();
-  showToast('✅ Đã di chuyển lên Thư viện chung: ' + cat, 'success');
+  if (!moduleGroups.length) { showToast('Chưa có phân vùng nào trong Thư viện', 'warning'); return; }
+  // Build a modal with <select> so user can only pick an existing category
+  var opts = moduleGroups.map(function(g){ return '<option value="'+escHtml(g.name)+'">'+escHtml(g.name)+'</option>'; }).join('');
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:320px;box-shadow:0 8px 40px rgba(0,0,0,.2)">'
+    + '<div style="font-weight:700;font-size:15px;margin-bottom:16px">📤 Chọn phân vùng đích</div>'
+    + '<select id="_pub-cat-sel" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:16px">'+opts+'</select>'
+    + '<div style="display:flex;gap:8px;justify-content:flex-end">'
+    + '<button id="_pub-cancel" style="padding:8px 16px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer">Hủy</button>'
+    + '<button id="_pub-ok" style="padding:8px 16px;border:none;border-radius:8px;background:#7c3aed;color:#fff;cursor:pointer;font-weight:600">Di chuyển</button>'
+    + '</div></div>';
+  document.body.appendChild(modal);
+  document.getElementById('_pub-cancel').onclick = function(){ document.body.removeChild(modal); };
+  document.getElementById('_pub-ok').onclick = function(){
+    var cat = document.getElementById('_pub-cat-sel').value;
+    document.body.removeChild(modal);
+    if (!cat) return;
+    var pub = Object.assign({}, f, { id: Date.now(), category: cat, author: currentUser ? currentUser.name : '', date: new Date().toLocaleDateString('vi-VN') });
+    sharedFiles.push(pub);
+    personalFiles = personalFiles.filter(function(x){ return x.id !== f.id; });
+    fbSaveSharedFiles(); fbClearCache();
+    fbSavePersonal();
+    renderPersonalFiles();
+    renderSharedFileList();
+    showToast('✅ Đã di chuyển lên Thư viện chung: ' + cat, 'success');
+  };
 }
 
 function renderPersonalFiles(){
