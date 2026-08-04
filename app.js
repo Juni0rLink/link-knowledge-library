@@ -390,6 +390,19 @@ function doLogin() {
     var uid = data.localId;
     sessionStorage.setItem('lkl_id_token', data.idToken || '');
     fbGet('/users/' + uid, function(e2, profile) {
+      // Block pending/rejected accounts before launching the app
+      if (profile && profile.status === 'pending') {
+        sessionStorage.removeItem('lkl_id_token');
+        err.textContent = '⏳ Tài khoản của bạn đang chờ Admin phê duyệt. Vui lòng thử lại sau.';
+        err.style.display = 'block';
+        return;
+      }
+      if (profile && profile.status === 'rejected') {
+        sessionStorage.removeItem('lkl_id_token');
+        err.textContent = '🚫 Yêu cầu đăng ký của bạn đã bị từ chối. Liên hệ Admin để biết thêm.';
+        err.style.display = 'block';
+        return;
+      }
       if (profile && profile.role) {
         currentUser = { email: email, name: profile.name || email, role: profile.role, uid: uid };
       } else {
