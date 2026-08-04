@@ -716,6 +716,9 @@ function doRegister() {
       err.style.display = 'block'; return;
     }
     var uid = data.localId;
+    // Lưu idToken tạm thời để fbAuthParam() có token khi ghi DB (rules yêu cầu auth != null)
+    // Sẽ bị xóa ngay sau khi ghi xong — user vẫn ở trạng thái chưa đăng nhập
+    sessionStorage.setItem('lkl_id_token', data.idToken || '');
     // Save profile to DB as pending
     var profile = { name: name, email: email, dept: dept, reason: reason, role: 'colleague', status: 'pending', time: new Date().toLocaleString('vi-VN') };
     fbSet('/users/' + uid, profile);
@@ -730,6 +733,8 @@ function doRegister() {
       fbSet('/shared/pendingRegs', arr);
       pendingRegs = arr;
       updateRegBadge();
+      // Xóa token tạm — user chưa được duyệt nên không được coi là đã đăng nhập
+      sessionStorage.removeItem('lkl_id_token');
     });
 
     ok.innerHTML = '✅ Đăng ký thành công!<br>'
