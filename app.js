@@ -706,11 +706,18 @@ function doRegister() {
     // Save profile to DB as pending
     var profile = { name: name, email: email, dept: dept, reason: reason, role: 'colleague', status: 'pending', time: new Date().toLocaleString('vi-VN') };
     fbSet('/users/' + uid, profile);
-    // Add to pending registrations list
+    // Read current pendingRegs from Firebase first (new user's session may not have loaded it)
+    // to avoid overwriting existing pending registrations
     var reg = { id: uid, name: name, email: email, dept: dept, reason: reason, time: new Date().toLocaleString('vi-VN') };
-    pendingRegs.push(reg);
-    fbSet('/shared/pendingRegs', pendingRegs);
-    updateRegBadge();
+    fbGet('/shared/pendingRegs', function(e3, existing) {
+      var arr = [];
+      if (!e3 && existing) arr = Array.isArray(existing) ? existing : Object.values(existing);
+      arr = arr.filter(function(r){ return r && r.id; }); // strip nulls
+      arr.push(reg);
+      fbSet('/shared/pendingRegs', arr);
+      pendingRegs = arr;
+      updateRegBadge();
+    });
 
     ok.innerHTML = '✅ Đăng ký thành công!<br>'
       + '📧 Email: <strong>' + email + '</strong><br>'

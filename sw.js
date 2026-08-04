@@ -1,7 +1,7 @@
 // Cache version — update this string on every deploy to bust all caches
 // GitHub Pages serves this file fresh (no-cache headers), so any change here
 // triggers a new SW installation and clears all old caches automatically.
-var CACHE = 'lkl-20260608-008';
+var CACHE = 'lkl-20260608-009';
 
 // Files that should ALWAYS be fresh from network (core app)
 var NETWORK_FIRST = [
